@@ -1,0 +1,54 @@
+import { Schema, model } from 'mongoose';
+import { User } from '../types/user.types';
+import { AddressSchema } from '../schemas/common/address.schema';
+import {
+  RiderInfoSchema,
+  SellerInfoSchema,
+} from '../schemas/user/user.schemas';
+
+const UserSchema = new Schema<User>(
+  {
+    name: { type: String, required: true },
+    email: { type: String, required: true, unique: true, lowercase: true },
+    phone: { type: String },
+    passwordHash: { type: String, required: true },
+    role: {
+      type: String,
+      enum: ['consumer', 'seller', 'rider', 'admin'],
+      default: 'consumer',
+    },
+    emailVerified: { type: Boolean, default: false },
+    address: { type: AddressSchema },
+    riderInfo: { type: RiderInfoSchema },
+    sellerInfo: { type: SellerInfoSchema },
+  },
+  {
+    timestamps: true,
+  },
+);
+
+UserSchema.pre('validate', function (next) {
+  const user = this as any;
+
+  const isRider = user.role === 'rider';
+  const isSeller = user.role === 'seller';
+  const isConsumerOrAdmin = user.role === 'consumer' || user.role === 'admin';
+
+  if (isRider && (!user.riderInfo || user.sellerInfo)) {
+    return next(new Error('Riders must have riderInfo and no sellerInfo'));
+  }
+
+  if (isSeller && (!user.sellerInfo || user.riderInfo)) {
+    return next(new Error('Sellers must have sellerInfo and no riderInfo'));
+  }
+
+  if (isConsumerOrAdmin && (user.riderInfo || user.sellerInfo)) {
+    return next(
+      new Error('Consumers/Admins must not have riderInfo or sellerInfo'),
+    );
+  }
+
+  next();
+});
+
+export const UserModel = model('User', UserSchema);
