@@ -25,6 +25,10 @@ export const RiderInfoSchema = new Schema({
     enum: kycStatusEnum,
     default: 'pending',
   },
+  score: {
+    upvotes: { type: Number, default: 0 },
+    downvotes: { type: Number, default: 0 },
+  },
 });
 
 export const SellerInfoSchema = new Schema({

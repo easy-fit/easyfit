@@ -15,6 +15,10 @@ export interface RiderInfo {
   vehicleType: 'bike' | 'motorcycle';
   licensePlate?: string;
   kycStatus: KycStatus;
+  score?: {
+    upvotes: number;
+    downvotes: number;
+  };
 }
 
 export interface SellerInfo {
