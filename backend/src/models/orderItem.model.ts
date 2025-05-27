@@ -14,6 +14,12 @@ const OrderItemSchema = new Schema<OrderItem>(
     unitPrice: { type: Number, required: true },
     quantity: { type: Number, required: true },
     metadata: { type: OrderItemMetadataSchema, required: true },
+    returnStatus: {
+      type: String,
+      enum: ['kept', 'returned', 'undecided'],
+      default: 'undecided',
+      required: true,
+    },
   },
   { timestamps: true },
 );
