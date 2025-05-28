@@ -1,5 +1,5 @@
 import { Schema, model } from 'mongoose';
-import { ReturnDamageRequest } from '../types/return.types';
+import { ReturnDamageRequest } from '../types/returnDamage.types';
 
 const ReturnDamageRequestSchema = new Schema<ReturnDamageRequest>(
   {
