@@ -8,6 +8,12 @@ export interface OrderItemMetadata {
   variantColor: string;
 }
 
+export interface OrderItemReturnVerification {
+  checkedBy: Types.ObjectId;
+  checkedAt: Date;
+  result: 'match' | 'mismatch';
+}
+
 export interface OrderItem {
   orderId: Types.ObjectId;
   variantId: Types.ObjectId;
@@ -15,4 +21,21 @@ export interface OrderItem {
   quantity: number;
   returnStatus: OrderItemReturnStatus;
   metadata: OrderItemMetadata;
+  returnVerification?: OrderItemReturnVerification;
+}
+
+export interface CreateOrderItemDTO {
+  orderId: Types.ObjectId;
+  variantId: Types.ObjectId;
+  unitPrice: number;
+  quantity: number;
+  returnStatus: OrderItemReturnStatus;
+  metadata: OrderItemMetadata;
+  returnVerification?: OrderItemReturnVerification;
+}
+
+export interface UpdateOrderItemDTO {
+  returnStatus?: OrderItemReturnStatus;
+  metadata?: Partial<OrderItemMetadata>;
+  returnVerification?: OrderItemReturnVerification;
 }

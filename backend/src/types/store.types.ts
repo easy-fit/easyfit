@@ -45,3 +45,28 @@ export interface Store {
   tags: string[];
   isOpen: boolean;
 }
+
+export interface CreateStoreDTO {
+  sellerId: Types.ObjectId;
+  name: string;
+  address: StoreAddress;
+  pickupHours: PickupHours;
+  options: StoreOptions;
+  contactEmail: string;
+  contactPhone?: string;
+  storeId: number;
+  storeType: StoreType;
+  tags: string[];
+}
+
+export interface UpdateStoreDTO {
+  name?: string;
+  address?: StoreAddress;
+  pickupHours?: PickupHours;
+  options?: StoreOptions;
+  contactEmail?: string;
+  contactPhone?: string;
+  status?: StoreStatus;
+  tags?: string[];
+  isOpen?: boolean;
+}

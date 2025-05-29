@@ -18,3 +18,20 @@ export interface WalletTransaction {
   method?: WalletTransactionMethod;
   description?: string;
 }
+
+export interface CreateWalletTransactionDTO {
+  userId: Types.ObjectId;
+  role: 'seller' | 'rider';
+  orderId?: Types.ObjectId;
+  amount: number;
+  direction: WalletTransactionDirection;
+  type: WalletTransactionType;
+  method?: WalletTransactionMethod;
+  description?: string;
+}
+
+export interface UpdateWalletTransactionDTO {
+  amount?: number;
+  method?: WalletTransactionMethod;
+  description?: string;
+}

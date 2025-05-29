@@ -8,4 +8,5 @@ export interface GeoPoint {
 export interface RiderLocation {
   riderId: Types.ObjectId;
   location: GeoPoint;
+  isAvailable?: boolean;
 }

@@ -51,4 +51,20 @@ export interface Order {
   paymentStatus: PaymentStatus;
   deliveryVerification: DeliveryVerification;
   isStolen: boolean;
+  isActive: boolean;
+}
+
+export interface CreateOrderDTO {
+  userId: Types.ObjectId;
+  total: number;
+  shipping: ShippingInfo;
+  holdId: string;
+  deliveryVerification: DeliveryVerification;
+}
+
+export interface UpdateOrderDTO {
+  status?: OrderStatus;
+  paymentStatus?: PaymentStatus;
+  deliveryVerification?: DeliveryVerification;
+  isStolen?: boolean;
 }
