@@ -28,4 +28,9 @@ export class ReturnDamageController {
     const request = await ReturnDamageService.updateRequest(req.params.id, dto);
     res.status(200).json({ request });
   });
+
+  static deleteRequest = catchAsync(async (req: Request, res: Response) => {
+    await ReturnDamageService.deleteRequest(req.params.id);
+    res.status(204).send();
+  });
 }
