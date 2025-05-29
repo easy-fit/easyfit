@@ -1,6 +1,6 @@
 import express, { Application, NextFunction, Request, Response } from 'express';
 import { AppError } from './utils/appError';
-import { globalErrorHandler } from './controllers/errorController';
+import { globalErrorHandler } from './controllers/error.controller';
 
 export const app: Application = express();
 

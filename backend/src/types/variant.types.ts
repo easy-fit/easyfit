@@ -14,3 +14,20 @@ export interface Variant {
   images: VariantImage[];
   price: number;
 }
+
+export interface CreateVariantDTO {
+  productId: Types.ObjectId;
+  size: string;
+  color: string;
+  stock: number;
+  price: number;
+  images: VariantImage[];
+}
+
+export interface UpdateVariantDTO {
+  size?: string;
+  color?: string;
+  stock?: number;
+  price?: number;
+  images?: VariantImage[];
+}

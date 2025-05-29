@@ -1,4 +1,5 @@
 import { Schema, model } from 'mongoose';
+import { RiderLocation } from '../types/riderLocation.types';
 
 const GeoPointSchema = new Schema({
   type: {
@@ -12,7 +13,7 @@ const GeoPointSchema = new Schema({
   },
 });
 
-const RiderLocationSchema = new Schema(
+const RiderLocationSchema = new Schema<RiderLocation>(
   {
     riderId: {
       type: Schema.Types.ObjectId,
@@ -21,6 +22,7 @@ const RiderLocationSchema = new Schema(
       unique: true,
     },
     location: { type: GeoPointSchema, required: true },
+    isAvailable: { type: Boolean, default: true },
   },
   { timestamps: true },
 );

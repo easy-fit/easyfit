@@ -13,7 +13,7 @@ const ProductSchema = new Schema<Product>(
     },
     category: {
       type: String,
-      enum: ['ropa', 'accesorio', 'calzado', 'fragancia'],
+      enum: ['clothing', 'accessory', 'footwear', 'fragrance'],
       required: true,
     },
   },

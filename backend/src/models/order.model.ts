@@ -47,6 +47,7 @@ const OrderSchema = new Schema<Order>(
       required: true,
     },
     isStolen: { type: Boolean, default: false },
+    isActive: { type: Boolean, default: true },
   },
   { timestamps: true },
 );

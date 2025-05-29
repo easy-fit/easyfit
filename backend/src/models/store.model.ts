@@ -32,7 +32,7 @@ const StoreSchema = new Schema<Store>(
       required: true,
     },
     tags: [String],
-    isOpen: { type: Boolean, default: true },
+    isOpen: { type: Boolean, default: false },
   },
   { timestamps: true },
 );

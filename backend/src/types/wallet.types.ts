@@ -16,3 +16,17 @@ export interface Wallet {
   lastActivity?: Date;
   payoutMethod: PayoutMethod;
 }
+
+export interface CreateWalletDTO {
+  userId?: Types.ObjectId;
+  storeId?: Types.ObjectId;
+  payoutMethod: PayoutMethod;
+}
+
+export interface UpdateWalletDTO {
+  availableBalance?: number;
+  pendingBalance?: number;
+  lastActivity?: Date;
+  lastPayout?: Date;
+  payoutMethod?: PayoutMethod;
+}

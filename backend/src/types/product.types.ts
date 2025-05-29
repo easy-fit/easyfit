@@ -10,3 +10,17 @@ export interface Product {
   status: ProductStatus;
   category: ProductCategory;
 }
+
+export interface CreateProductDTO {
+  storeId: Types.ObjectId;
+  title: string;
+  description?: string;
+  category: ProductCategory;
+}
+
+export interface UpdateProductDTO {
+  title?: string;
+  description?: string;
+  category?: ProductCategory;
+  status?: ProductStatus;
+}

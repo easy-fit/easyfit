@@ -9,3 +9,14 @@ export interface ReturnDamageRequest {
   reviewedBy?: Types.ObjectId;
   resolutionNote?: string;
 }
+
+export interface CreateReturnDamageDTO {
+  orderItemIds: Types.ObjectId[];
+  evidencePhotos: string[];
+}
+
+export interface UpdateReturnDamageDTO {
+  status?: ReturnDamageRequestStatus;
+  reviewedBy?: Types.ObjectId;
+  resolutionNote?: string;
+}

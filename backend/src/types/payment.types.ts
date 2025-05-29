@@ -10,3 +10,15 @@ export interface Payment {
   status: PaymentStatus;
   externalId: string;
 }
+
+export interface CreatePaymentDTO {
+  orderId: Types.ObjectId;
+  type: PaymentType;
+  amount: number;
+  status: PaymentStatus;
+  externalId: string;
+}
+
+export interface UpdatePaymentDTO {
+  status?: PaymentStatus;
+}
