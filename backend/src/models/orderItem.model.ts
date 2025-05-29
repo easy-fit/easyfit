@@ -7,6 +7,12 @@ const OrderItemMetadataSchema = new Schema({
   variantColor: { type: String, required: true },
 });
 
+const returnVerificationSchema = new Schema({
+  checkedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+  checkedAt: { type: Date },
+  result: { type: String, enum: ['match', 'mismatch'] },
+});
+
 const OrderItemSchema = new Schema<OrderItem>(
   {
     orderId: { type: Schema.Types.ObjectId, ref: 'Order', required: true },
@@ -19,6 +25,17 @@ const OrderItemSchema = new Schema<OrderItem>(
       enum: ['kept', 'returned', 'undecided'],
       default: 'undecided',
       required: true,
+    },
+    returnVerification: {
+      type: returnVerificationSchema,
+      default: null,
+      validate: {
+        validator: function (this: any) {
+          return !this.returnVerification || this.returnStatus === 'returned';
+        },
+        message:
+          'Return verification can only be set if returnStatus is "returned".',
+      },
     },
   },
   { timestamps: true },

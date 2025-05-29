@@ -15,7 +15,7 @@ const WalletTransactionSchema = new Schema<WalletTransaction>(
     },
     method: {
       type: String,
-      enum: ['cbu', 'cvu', 'alias', 'mp', 'manual'],
+      enum: ['cbu', 'cvu', 'alias', 'manual'],
     },
     description: { type: String },
   },
