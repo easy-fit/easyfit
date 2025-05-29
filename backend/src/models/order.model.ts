@@ -52,4 +52,7 @@ const OrderSchema = new Schema<Order>(
   { timestamps: true },
 );
 
+OrderSchema.index({ userId: 1 });
+OrderSchema.index({ createdAt: -1 });
+
 export const OrderModel = model('Order', OrderSchema);

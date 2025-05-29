@@ -8,9 +8,9 @@ import {
 
 const UserSchema = new Schema<User>(
   {
-    name: { type: String, required: true },
+    name: { type: String, required: true, trim: true, lowercase: true },
     email: { type: String, required: true, unique: true, lowercase: true },
-    phone: { type: String },
+    phone: { type: String, unique: true },
     passwordHash: { type: String, required: true },
     role: {
       type: String,
@@ -54,5 +54,9 @@ UserSchema.pre('validate', function (next) {
 
   next();
 });
+
+UserSchema.index({ email: 1 }, { unique: true });
+UserSchema.index({ phone: 1 }, { unique: true, sparse: true });
+UserSchema.index({ role: 1 });
 
 export const UserModel = model('User', UserSchema);

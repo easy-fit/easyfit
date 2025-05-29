@@ -22,4 +22,7 @@ const ProductSchema = new Schema<Product>(
   },
 );
 
+ProductSchema.index({ storeId: 1 });
+ProductSchema.index({ title: 'text', description: 'text' });
+
 export const ProductModel = model('Product', ProductSchema);

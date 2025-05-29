@@ -15,4 +15,6 @@ const WalletSchema = new Schema<Wallet>(
   { timestamps: true },
 );
 
+WalletSchema.index({ ownerId: 1, ownerType: 1 }, { unique: true });
+
 export const WalletModel = model('Wallet', WalletSchema);

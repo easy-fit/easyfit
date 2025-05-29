@@ -37,4 +37,7 @@ const StoreSchema = new Schema<Store>(
   { timestamps: true },
 );
 
+StoreSchema.index({ sellerId: 1 });
+StoreSchema.index({ 'address.location': '2dsphere' });
+
 export const StoreModel = model('Store', StoreSchema);

@@ -22,4 +22,7 @@ const PaymentSchema = new Schema<Payment>(
   },
 );
 
+PaymentSchema.index({ orderId: 1 });
+PaymentSchema.index({ externalId: 1 }, { unique: true });
+
 export const PaymentModel = model('Payment', PaymentSchema);

@@ -19,4 +19,7 @@ const VariantSchema = new Schema<Variant>(
   { timestamps: true },
 );
 
+VariantSchema.index({ productId: 1 });
+VariantSchema.index({ stock: 1 });
+
 export const VariantModel = model('Variant', VariantSchema);

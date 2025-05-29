@@ -15,4 +15,6 @@ const KycSessionSchema = new Schema<KycSession>(
   { timestamps: true },
 );
 
+KycSessionSchema.index({ status: 1 });
+
 export const KycSessionModel = model('KycSession', KycSessionSchema);
