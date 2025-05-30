@@ -31,7 +31,7 @@ export class UserService {
     this.ensureUserExists(user);
   }
 
-  private static async ensureUserNotExists(email: string, phone: string) {
+  static async ensureUserNotExists(email: string, phone: string) {
     const existingUser = await UserModel.findOne({
       $or: [{ email }, { phone }],
     });

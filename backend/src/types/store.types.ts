@@ -40,7 +40,7 @@ export interface Store {
   ratingCount: number;
   ratingSum: number;
   averageRating: number;
-  storeId: number;
+  storeInternalId: number;
   storeType: StoreType;
   tags: string[];
   isOpen: boolean;
@@ -54,7 +54,7 @@ export interface CreateStoreDTO {
   options: StoreOptions;
   contactEmail: string;
   contactPhone?: string;
-  storeId: number;
+  storeInteralId: number;
   storeType: StoreType;
   tags: string[];
 }

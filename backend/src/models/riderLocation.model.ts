@@ -27,6 +27,7 @@ const RiderLocationSchema = new Schema<RiderLocation>(
   { timestamps: true },
 );
 
+RiderLocationSchema.index({ riderId: 1 }, { unique: true });
 RiderLocationSchema.index({ location: '2dsphere' });
 
 export const RiderLocationModel = model('RiderLocation', RiderLocationSchema);

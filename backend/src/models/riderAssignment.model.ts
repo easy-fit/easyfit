@@ -17,6 +17,9 @@ const RiderAssignmentSchema = new Schema<RiderAssignment>(
   { timestamps: true },
 );
 
+RiderAssignmentSchema.index({ orderId: 1 }, { unique: true });
+RiderAssignmentSchema.index({ riderId: 1, status: 1 });
+
 export const RiderAssignmentModel = model(
   'RiderAssignment',
   RiderAssignmentSchema,

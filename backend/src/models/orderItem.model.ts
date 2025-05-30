@@ -41,4 +41,6 @@ const OrderItemSchema = new Schema<OrderItem>(
   { timestamps: true },
 );
 
+OrderItemSchema.index({ orderId: 1 });
+
 export const OrderItemModel = model('OrderItem', OrderItemSchema);
