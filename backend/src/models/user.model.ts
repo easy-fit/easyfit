@@ -9,8 +9,8 @@ import {
 const UserSchema = new Schema<User>(
   {
     name: { type: String, required: true, trim: true, lowercase: true },
-    email: { type: String, required: true, unique: true, lowercase: true },
-    phone: { type: String, unique: true },
+    email: { type: String, required: true, lowercase: true },
+    phone: { type: String, required: true },
     passwordHash: { type: String, required: true },
     role: {
       type: String,
@@ -23,6 +23,7 @@ const UserSchema = new Schema<User>(
     passwordResetToken: { type: String },
     passwordResetExpires: { type: Date },
     passwordChangedAt: { type: Date },
+    refreshToken: { type: String, default: null },
     riderInfo: { type: RiderInfoSchema },
     sellerInfo: { type: SellerInfoSchema },
   },

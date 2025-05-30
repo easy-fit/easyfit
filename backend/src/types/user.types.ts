@@ -46,6 +46,7 @@ export interface User {
   passwordResetToken?: string;
   passwordResetExpires?: Date;
   passwordChangedAt?: Date;
+  refreshToken?: string;
   riderInfo?: RiderInfo;
   sellerInfo?: SellerInfo;
 }
@@ -79,4 +80,29 @@ export interface UpdateUserDTO {
   };
   riderInfo?: Partial<RiderInfo>;
   sellerInfo?: Partial<SellerInfo>;
+}
+
+export interface RegisterDTO {
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+  address?: {
+    formatted?: string;
+    location?: {
+      type: 'Point';
+      coordinates: [number, number];
+    };
+  };
+  riderInfo?: RiderInfo;
+  sellerInfo?: SellerInfo;
+}
+
+export interface LoginDTO {
+  email: string;
+  password: string;
+}
+
+export interface RefreshTokenDTO {
+  refreshToken: string;
 }
