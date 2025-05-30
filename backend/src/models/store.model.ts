@@ -1,5 +1,6 @@
 import { Schema, model } from 'mongoose';
 import { Store } from '../types/store.types';
+import { getNextSequenceValue } from '../utils/counter';
 import { AddressSchema } from '../schemas/common/address.schema';
 import {
   PickupHoursEntrySchema,
@@ -25,7 +26,7 @@ const StoreSchema = new Schema<Store>(
     ratingCount: { type: Number, default: 0 },
     ratingSum: { type: Number, default: 0 },
     averageRating: { type: Number, default: 0 },
-    storeId: { type: Number, required: true, unique: true },
+    storeInternalId: { type: Number, required: true, unique: true },
     storeType: {
       type: String,
       enum: ['physical', 'online'],
@@ -36,6 +37,13 @@ const StoreSchema = new Schema<Store>(
   },
   { timestamps: true },
 );
+
+StoreSchema.pre('save', async function (NextFunction) {
+  if (this.isNew) {
+    this.storeInternalId = await getNextSequenceValue('stores');
+  }
+  NextFunction();
+});
 
 StoreSchema.index({ sellerId: 1 });
 StoreSchema.index({ 'address.location': '2dsphere' });
