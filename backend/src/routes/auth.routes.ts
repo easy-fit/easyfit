@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { AuthController } from '../controllers/auth.controller';
-import { assignRoleFromPath } from '../middlewares/auth';
+import { assignRoleFromPath, protect } from '../middlewares/auth';
 
 export const authRoutes = Router();
 
@@ -12,5 +12,8 @@ authRoutes.post(
   AuthController.register,
 );
 authRoutes.post('/login', AuthController.login);
+
+authRoutes.use(protect);
+
 authRoutes.post('/logout', AuthController.logout);
 authRoutes.post('/refresh-token', AuthController.refreshToken);
