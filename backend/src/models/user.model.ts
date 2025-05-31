@@ -3,7 +3,7 @@ import { User } from '../types/user.types';
 import { AddressSchema } from '../schemas/common/address.schema';
 import {
   RiderInfoSchema,
-  SellerInfoSchema,
+  MerchantInfoSchema,
 } from '../schemas/user/user.schemas';
 
 const UserSchema = new Schema<User>(
@@ -14,8 +14,8 @@ const UserSchema = new Schema<User>(
     passwordHash: { type: String, required: true },
     role: {
       type: String,
-      enum: ['consumer', 'seller', 'rider', 'admin'],
-      default: 'consumer',
+      enum: ['customer', 'merchant', 'rider', 'admin'],
+      default: 'customer',
     },
     emailVerified: { type: Boolean, default: false },
     birthDate: { type: Date, required: true },
@@ -25,7 +25,7 @@ const UserSchema = new Schema<User>(
     passwordChangedAt: { type: Date },
     refreshToken: { type: String, default: null },
     riderInfo: { type: RiderInfoSchema },
-    sellerInfo: { type: SellerInfoSchema },
+    merchantInfo: { type: MerchantInfoSchema },
   },
   {
     timestamps: true,
@@ -36,20 +36,20 @@ UserSchema.pre('validate', function (next) {
   const user = this as any;
 
   const isRider = user.role === 'rider';
-  const isSeller = user.role === 'seller';
-  const isConsumerOrAdmin = user.role === 'consumer' || user.role === 'admin';
+  const isMerchant = user.role === 'merchant';
+  const isCustomerOrAdmin = user.role === 'customer' || user.role === 'admin';
 
-  if (isRider && (!user.riderInfo || user.sellerInfo)) {
-    return next(new Error('Riders must have riderInfo and no sellerInfo'));
+  if (isRider && (!user.riderInfo || user.merchantInfo)) {
+    return next(new Error('Riders must have riderInfo and no merchantInfo'));
   }
 
-  if (isSeller && (!user.sellerInfo || user.riderInfo)) {
-    return next(new Error('Sellers must have sellerInfo and no riderInfo'));
+  if (isMerchant && (!user.merchantInfo || user.riderInfo)) {
+    return next(new Error('Merchants must have merchantInfo and no riderInfo'));
   }
 
-  if (isConsumerOrAdmin && (user.riderInfo || user.sellerInfo)) {
+  if (isCustomerOrAdmin && (user.riderInfo || user.merchantInfo)) {
     return next(
-      new Error('Consumers/Admins must not have riderInfo or sellerInfo'),
+      new Error('Customers/Admins must not have riderInfo or merchantInfo'),
     );
   }
 

@@ -10,7 +10,7 @@ export type WalletTransactionMethod = 'cbu' | 'cvu' | 'alias' | 'manual';
 
 export interface WalletTransaction {
   userId: Types.ObjectId;
-  role: 'seller' | 'rider';
+  role: 'merchant' | 'rider';
   orderId?: Types.ObjectId;
   amount: number;
   direction: WalletTransactionDirection;
@@ -21,7 +21,7 @@ export interface WalletTransaction {
 
 export interface CreateWalletTransactionDTO {
   userId: Types.ObjectId;
-  role: 'seller' | 'rider';
+  role: 'merchant' | 'rider';
   orderId?: Types.ObjectId;
   amount: number;
   direction: WalletTransactionDirection;

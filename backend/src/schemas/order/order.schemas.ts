@@ -13,7 +13,7 @@ export const ShippingSchema = new Schema({
   cost: { type: Number, required: true },
   subsidizedBy: {
     type: String,
-    enum: ['seller', 'platform', 'user'],
+    enum: ['merchant', 'platform', 'user'],
     default: 'user',
   },
   type: {

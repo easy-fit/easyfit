@@ -9,7 +9,7 @@ import {
 
 const StoreSchema = new Schema<Store>(
   {
-    sellerId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    merchantId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     name: { type: String, required: true },
     address: { type: AddressSchema, required: true },
     pickupHours: { type: [PickupHoursEntrySchema], required: true },
@@ -45,7 +45,7 @@ StoreSchema.pre('save', async function (NextFunction) {
   NextFunction();
 });
 
-StoreSchema.index({ sellerId: 1 });
+StoreSchema.index({ merchantId: 1 });
 StoreSchema.index({ 'address.location': '2dsphere' });
 
 export const StoreModel = model('Store', StoreSchema);

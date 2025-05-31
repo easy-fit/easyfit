@@ -29,7 +29,7 @@ export interface StoreOptions {
 }
 
 export interface Store {
-  sellerId: Types.ObjectId;
+  merchantId: Types.ObjectId;
   name: string;
   address: StoreAddress;
   pickupHours: PickupHours;
@@ -47,7 +47,7 @@ export interface Store {
 }
 
 export interface CreateStoreDTO {
-  sellerId: Types.ObjectId;
+  merchantId: Types.ObjectId;
   name: string;
   address: StoreAddress;
   pickupHours: PickupHours;

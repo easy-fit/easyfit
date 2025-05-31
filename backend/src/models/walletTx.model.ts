@@ -4,7 +4,7 @@ import { WalletTransaction } from '../types/walletTx.types';
 const WalletTransactionSchema = new Schema<WalletTransaction>(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    role: { type: String, enum: ['seller', 'rider'], required: true },
+    role: { type: String, enum: ['merchant', 'rider'], required: true },
     orderId: { type: Schema.Types.ObjectId, ref: 'Order' },
     amount: { type: Number, required: true }, // in cents
     direction: { type: String, enum: ['in', 'out'], required: true },

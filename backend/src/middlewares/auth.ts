@@ -78,12 +78,12 @@ export const assignRoleFromPath = (
 ) => {
   const path = req.path;
 
-  if (path.includes('/register/rider')) {
+  if (path.includes('/register/riders')) {
     req.body.role = 'rider';
   } else if (path.includes('/register/stores')) {
-    req.body.role = 'seller';
+    req.body.role = 'merchant';
   } else {
-    req.body.role = 'consumer'; // Default para /register
+    req.body.role = 'customer'; // Default para /register
   }
 
   next();
