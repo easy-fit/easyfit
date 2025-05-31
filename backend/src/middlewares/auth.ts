@@ -4,17 +4,24 @@ import { User } from '../types/user.types';
 import { AppError } from '../utils/appError';
 import { JWT_CONFIG } from '../config/env';
 import { UserModel } from '../models/user.model';
-import { signAccessToken, signRefreshToken, cookieOptions } from '../utils/jwt';
+import {
+  signAccessToken,
+  signRefreshToken,
+  accessTokenCookieOptions,
+  refreshTokenCookieOptions,
+} from '../utils/jwt';
 
 export const createSendToken = (
-  user: User,
+  user: any,
   statusCode: number,
   res: Response,
 ): void => {
-  const accessToken = signAccessToken(user._id.toString());
-  const refreshToken = signRefreshToken(user._id.toString());
+  const userId = user._id.toString();
+  const accessToken = signAccessToken(userId);
+  const refreshToken = signRefreshToken(userId);
 
-  res.cookie('jwt', refreshToken, cookieOptions);
+  res.cookie('refresh', refreshToken, refreshTokenCookieOptions);
+  res.cookie('jwt', accessToken, accessTokenCookieOptions);
 
   res.status(statusCode).json({
     status: 'success',
@@ -73,7 +80,7 @@ export const assignRoleFromPath = (
 
   if (path.includes('/register/rider')) {
     req.body.role = 'rider';
-  } else if (path.includes('/register/seller')) {
+  } else if (path.includes('/register/stores')) {
     req.body.role = 'seller';
   } else {
     req.body.role = 'consumer'; // Default para /register

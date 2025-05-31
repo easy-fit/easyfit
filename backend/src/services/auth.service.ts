@@ -51,9 +51,7 @@ export class AuthService {
       throw new AppError('Invalid refresh token', 403);
     }
 
-    user.refreshToken = signRefreshToken(user._id.toString());
-    await user.save({ validateBeforeSave: false });
-
-    return user;
+    const accessToken = signAccessToken(user._id.toString());
+    return { user, accessToken };
   }
 }

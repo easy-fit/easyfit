@@ -56,6 +56,22 @@ UserSchema.pre('validate', function (next) {
   next();
 });
 
+UserSchema.set('toJSON', {
+  transform: (_doc, ret) => {
+    delete ret.passwordHash;
+    delete ret.refreshToken;
+    return ret;
+  },
+});
+
+UserSchema.set('toObject', {
+  transform: (_doc, ret) => {
+    delete ret.passwordHash;
+    delete ret.refreshToken;
+    return ret;
+  },
+});
+
 UserSchema.index({ email: 1 }, { unique: true });
 UserSchema.index({ phone: 1 }, { unique: true, sparse: true });
 UserSchema.index({ role: 1 });

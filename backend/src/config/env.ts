@@ -13,6 +13,7 @@ export const ENV = {
 
 export const JWT_CONFIG = {
   SECRET: process.env.JWT_SECRET || '',
+  REFRESH_TOKEN_SECRET: process.env.REFRESH_TOKEN_SECRET || '',
   ACCESS_EXPIRES_IN: process.env.JWT_ACCESS_EXPIRES_IN || '7d',
   REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || '',
   COOKIE_DOMAIN: process.env.COOKIE_DOMAIN || '',
