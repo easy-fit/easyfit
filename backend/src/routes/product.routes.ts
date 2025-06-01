@@ -1,15 +1,28 @@
 import { Router } from 'express';
 import { ProductController } from '../controllers/product.controller';
+import { protect, restrictTo } from '../middlewares/auth';
 
 export const productRoutes = Router();
 
 productRoutes
   .route('/')
-  .get(ProductController.getProducts)
-  .post(ProductController.createProduct);
+  .get(protect, restrictTo('admin'), ProductController.getProducts)
+  .post(
+    protect,
+    restrictTo('admin', 'merchant'),
+    ProductController.createProduct,
+  );
 
 productRoutes
   .route('/:id')
   .get(ProductController.getProductById)
-  .patch(ProductController.updateProduct)
-  .delete(ProductController.deleteProduct);
+  .patch(
+    protect,
+    restrictTo('admin', 'merchant'),
+    ProductController.updateProduct,
+  )
+  .delete(
+    protect,
+    restrictTo('admin', 'merchant'),
+    ProductController.deleteProduct,
+  );

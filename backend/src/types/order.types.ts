@@ -23,7 +23,7 @@ export type PaymentStatus =
 
 export type ShippingType = 'basic' | 'advanced' | 'premium';
 
-export type ShippingSubsidy = 'seller' | 'platform' | 'user';
+export type ShippingSubsidy = 'merchant' | 'platform' | 'user';
 
 export interface ShippingInfo {
   cost: number;

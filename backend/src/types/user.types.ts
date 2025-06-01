@@ -1,4 +1,4 @@
-export type UserRole = 'consumer' | 'seller' | 'rider' | 'admin';
+export type UserRole = 'customer' | 'merchant' | 'rider' | 'admin';
 export type KycStatus =
   | 'verified'
   | 'rejected'
@@ -14,17 +14,25 @@ export interface RiderInfo {
   vehicleType: 'bike' | 'motorcycle';
   licensePlate?: string;
   kycStatus: KycStatus;
+  photoUrl?: string;
   score?: {
     upvotes: number;
     downvotes: number;
   };
 }
 
-export interface SellerInfo {
+export interface MerchantInfo {
   dni: string;
   cuit: string;
   storeCount: number;
   kycStatus: KycStatus;
+}
+
+export interface EmailVerification {
+  code?: string;
+  expires?: Date;
+  attempts: number;
+  verified: boolean;
 }
 
 export interface User {
@@ -34,7 +42,6 @@ export interface User {
   phone: string;
   passwordHash: string;
   role: UserRole;
-  emailVerified: boolean;
   birthDate: Date;
   address?: {
     formatted: string;
@@ -47,8 +54,9 @@ export interface User {
   passwordResetExpires?: Date;
   passwordChangedAt?: Date;
   refreshToken?: string;
+  emailVerification: EmailVerification;
   riderInfo?: RiderInfo;
-  sellerInfo?: SellerInfo;
+  merchantInfo?: MerchantInfo;
 }
 
 export interface CreateUserDTO {
@@ -64,7 +72,7 @@ export interface CreateUserDTO {
     };
   };
   riderInfo?: RiderInfo;
-  sellerInfo?: SellerInfo;
+  merchantInfo?: MerchantInfo;
 }
 
 export interface UpdateUserDTO {
@@ -79,7 +87,7 @@ export interface UpdateUserDTO {
     };
   };
   riderInfo?: Partial<RiderInfo>;
-  sellerInfo?: Partial<SellerInfo>;
+  merchantInfo?: Partial<MerchantInfo>;
 }
 
 export interface RegisterDTO {
@@ -87,6 +95,7 @@ export interface RegisterDTO {
   email: string;
   phone: string;
   password: string;
+  birthDate: Date;
   address?: {
     formatted?: string;
     location?: {
@@ -95,7 +104,7 @@ export interface RegisterDTO {
     };
   };
   riderInfo?: RiderInfo;
-  sellerInfo?: SellerInfo;
+  merchantInfo?: MerchantInfo;
 }
 
 export interface LoginDTO {

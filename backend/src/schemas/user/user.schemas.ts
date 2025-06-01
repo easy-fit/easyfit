@@ -19,6 +19,7 @@ export const RiderInfoSchema = new Schema({
     required: true,
   },
   licensePlate: { type: String },
+  photoUrl: { type: String, default: 'default.png' },
   kycStatus: {
     type: String,
     enum: kycStatusEnum,
@@ -30,7 +31,7 @@ export const RiderInfoSchema = new Schema({
   },
 });
 
-export const SellerInfoSchema = new Schema({
+export const MerchantInfoSchema = new Schema({
   dni: { type: String, required: true },
   cuit: { type: String, required: true },
   storeCount: { type: Number, default: 0 },

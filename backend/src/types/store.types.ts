@@ -28,8 +28,19 @@ export interface StoreOptions {
   freeShipping: ShippingOption;
 }
 
+export interface StoreCustomization {
+  logoUrl?: string;
+  bannerUrl?: string;
+  socialLinks?: {
+    instagram?: string;
+    facebook?: string;
+    twitter?: string;
+    tiktok?: string;
+  };
+}
+
 export interface Store {
-  sellerId: Types.ObjectId;
+  merchantId: Types.ObjectId;
   name: string;
   address: StoreAddress;
   pickupHours: PickupHours;
@@ -42,12 +53,13 @@ export interface Store {
   averageRating: number;
   storeInternalId: number;
   storeType: StoreType;
+  customization?: StoreCustomization;
   tags: string[];
   isOpen: boolean;
 }
 
 export interface CreateStoreDTO {
-  sellerId: Types.ObjectId;
+  merchantId: Types.ObjectId;
   name: string;
   address: StoreAddress;
   pickupHours: PickupHours;
@@ -56,6 +68,7 @@ export interface CreateStoreDTO {
   contactPhone?: string;
   storeInteralId: number;
   storeType: StoreType;
+  customization?: StoreCustomization;
   tags: string[];
 }
 
@@ -68,5 +81,6 @@ export interface UpdateStoreDTO {
   contactPhone?: string;
   status?: StoreStatus;
   tags?: string[];
+  customization?: StoreCustomization;
   isOpen?: boolean;
 }

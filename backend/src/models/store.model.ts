@@ -5,11 +5,12 @@ import { AddressSchema } from '../schemas/common/address.schema';
 import {
   PickupHoursEntrySchema,
   ShippingOptionSchema,
+  StoreCustomizationSchema,
 } from '../schemas/store/store.schemas';
 
 const StoreSchema = new Schema<Store>(
   {
-    sellerId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    merchantId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     name: { type: String, required: true },
     address: { type: AddressSchema, required: true },
     pickupHours: { type: [PickupHoursEntrySchema], required: true },
@@ -32,6 +33,7 @@ const StoreSchema = new Schema<Store>(
       enum: ['physical', 'online'],
       required: true,
     },
+    customization: StoreCustomizationSchema,
     tags: [String],
     isOpen: { type: Boolean, default: false },
   },
@@ -45,7 +47,7 @@ StoreSchema.pre('save', async function (NextFunction) {
   NextFunction();
 });
 
-StoreSchema.index({ sellerId: 1 });
+StoreSchema.index({ merchantId: 1 });
 StoreSchema.index({ 'address.location': '2dsphere' });
 
 export const StoreModel = model('Store', StoreSchema);

@@ -4,17 +4,24 @@ import { User } from '../types/user.types';
 import { AppError } from '../utils/appError';
 import { JWT_CONFIG } from '../config/env';
 import { UserModel } from '../models/user.model';
-import { signAccessToken, signRefreshToken, cookieOptions } from '../utils/jwt';
+import {
+  signAccessToken,
+  signRefreshToken,
+  accessTokenCookieOptions,
+  refreshTokenCookieOptions,
+} from '../utils/jwt';
 
 export const createSendToken = (
-  user: User,
+  user: any,
   statusCode: number,
   res: Response,
 ): void => {
-  const accessToken = signAccessToken(user._id.toString());
-  const refreshToken = signRefreshToken(user._id.toString());
+  const userId = user._id.toString();
+  const accessToken = signAccessToken(userId);
+  const refreshToken = signRefreshToken(userId);
 
-  res.cookie('jwt', refreshToken, cookieOptions);
+  res.cookie('refresh', refreshToken, refreshTokenCookieOptions);
+  res.cookie('jwt', accessToken, accessTokenCookieOptions);
 
   res.status(statusCode).json({
     status: 'success',
@@ -29,9 +36,7 @@ export const protect = async (
   next: NextFunction,
 ) => {
   let token;
-  if (req.headers.authorization?.startsWith('Bearer')) {
-    token = req.headers.authorization.split(' ')[1];
-  }
+  token = req.cookies.jwt || req.headers.authorization?.replace('Bearer ', '');
 
   if (!token) {
     return next(new AppError('You are not logged in!', 401));
@@ -71,12 +76,12 @@ export const assignRoleFromPath = (
 ) => {
   const path = req.path;
 
-  if (path.includes('/register/rider')) {
+  if (path.includes('/register/riders')) {
     req.body.role = 'rider';
-  } else if (path.includes('/register/seller')) {
-    req.body.role = 'seller';
+  } else if (path.includes('/register/stores')) {
+    req.body.role = 'merchant';
   } else {
-    req.body.role = 'consumer'; // Default para /register
+    req.body.role = 'customer'; // Default para /register
   }
 
   next();
