@@ -5,6 +5,7 @@ import { AddressSchema } from '../schemas/common/address.schema';
 import {
   PickupHoursEntrySchema,
   ShippingOptionSchema,
+  StoreCustomizationSchema,
 } from '../schemas/store/store.schemas';
 
 const StoreSchema = new Schema<Store>(
@@ -32,6 +33,7 @@ const StoreSchema = new Schema<Store>(
       enum: ['physical', 'online'],
       required: true,
     },
+    customization: StoreCustomizationSchema,
     tags: [String],
     isOpen: { type: Boolean, default: false },
   },

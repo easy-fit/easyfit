@@ -1,12 +1,10 @@
 import { Request, Response } from 'express';
 import { UserService } from '../services/user.service';
-import { AppError } from '../utils/appError';
 import { CreateUserDTO, UpdateUserDTO } from '../types/user.types';
 import { catchAsync } from '../utils/catchAsync';
 
 export class UserController {
   static getMe = catchAsync(async (req: Request, res: Response) => {
-    if (!req.user) throw new AppError('Unauthorized', 401);
     const user = await UserService.getUserById(req.user._id);
     res.status(200).json({ user });
   });

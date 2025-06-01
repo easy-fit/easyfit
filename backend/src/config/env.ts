@@ -18,3 +18,8 @@ export const JWT_CONFIG = {
   REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || '',
   COOKIE_DOMAIN: process.env.COOKIE_DOMAIN || '',
 };
+
+export const SENDGRID_CONFIG = {
+  API_KEY: process.env.SENDGRID_API_KEY!,
+  FROM_EMAIL: process.env.FROM_EMAIL!,
+};

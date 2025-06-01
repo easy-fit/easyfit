@@ -36,9 +36,7 @@ export const protect = async (
   next: NextFunction,
 ) => {
   let token;
-  if (req.headers.authorization?.startsWith('Bearer')) {
-    token = req.headers.authorization.split(' ')[1];
-  }
+  token = req.cookies.jwt || req.headers.authorization?.replace('Bearer ', '');
 
   if (!token) {
     return next(new AppError('You are not logged in!', 401));

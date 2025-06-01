@@ -19,6 +19,7 @@ export const RiderInfoSchema = new Schema({
     required: true,
   },
   licensePlate: { type: String },
+  photoUrl: { type: String, default: 'default.png' },
   kycStatus: {
     type: String,
     enum: kycStatusEnum,

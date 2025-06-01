@@ -15,3 +15,14 @@ export const ShippingOptionSchema = new Schema({
   minOrderAmount: Number,
   promoLabel: String,
 });
+
+export const StoreCustomizationSchema = new Schema({
+  logoUrl: String,
+  bannerUrl: String,
+  socialLinks: {
+    instagram: String,
+    facebook: String,
+    twitter: String,
+    tiktok: String,
+  },
+});

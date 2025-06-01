@@ -14,6 +14,7 @@ export interface RiderInfo {
   vehicleType: 'bike' | 'motorcycle';
   licensePlate?: string;
   kycStatus: KycStatus;
+  photoUrl?: string;
   score?: {
     upvotes: number;
     downvotes: number;
@@ -27,6 +28,13 @@ export interface MerchantInfo {
   kycStatus: KycStatus;
 }
 
+export interface EmailVerification {
+  code?: string;
+  expires?: Date;
+  attempts: number;
+  verified: boolean;
+}
+
 export interface User {
   _id: string;
   name: string;
@@ -34,7 +42,6 @@ export interface User {
   phone: string;
   passwordHash: string;
   role: UserRole;
-  emailVerified: boolean;
   birthDate: Date;
   address?: {
     formatted: string;
@@ -47,6 +54,7 @@ export interface User {
   passwordResetExpires?: Date;
   passwordChangedAt?: Date;
   refreshToken?: string;
+  emailVerification: EmailVerification;
   riderInfo?: RiderInfo;
   merchantInfo?: MerchantInfo;
 }

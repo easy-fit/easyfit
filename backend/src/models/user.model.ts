@@ -17,13 +17,18 @@ const UserSchema = new Schema<User>(
       enum: ['customer', 'merchant', 'rider', 'admin'],
       default: 'customer',
     },
-    emailVerified: { type: Boolean, default: false },
     birthDate: { type: Date, required: true },
     address: { type: AddressSchema },
     passwordResetToken: { type: String },
     passwordResetExpires: { type: Date },
     passwordChangedAt: { type: Date },
     refreshToken: { type: String, default: null },
+    emailVerification: {
+      code: { type: String },
+      expires: { type: Date },
+      verified: { type: Boolean, default: false },
+      attempts: { type: Number, default: 0 },
+    },
     riderInfo: { type: RiderInfoSchema },
     merchantInfo: { type: MerchantInfoSchema },
   },
@@ -60,6 +65,8 @@ UserSchema.set('toJSON', {
   transform: (_doc, ret) => {
     delete ret.passwordHash;
     delete ret.refreshToken;
+    delete ret.passwordResetToken;
+    delete ret.passwordResetExpires;
     return ret;
   },
 });
@@ -68,6 +75,8 @@ UserSchema.set('toObject', {
   transform: (_doc, ret) => {
     delete ret.passwordHash;
     delete ret.refreshToken;
+    delete ret.passwordResetToken;
+    delete ret.passwordResetExpires;
     return ret;
   },
 });
