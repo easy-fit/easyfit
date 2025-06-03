@@ -86,3 +86,15 @@ export const assignRoleFromPath = (
 
   next();
 };
+
+export const isEmailVerified = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  if (!req.user.emailVerification?.verified) {
+    return next(new AppError('Email is not verified', 403));
+  }
+
+  next();
+};

@@ -126,12 +126,13 @@ export class AuthService {
   }
 
   static async verifyEmail(email: string, code: string) {
-    const hashedCode = crypto.createHash('sha256').update(code).digest('hex');
-
     const user = await UserModel.findOne({ email });
+
     if (!user || user.emailVerification.verified) {
       throw new AppError('Invalid operation', 400);
     }
+
+    const hashedCode = crypto.createHash('sha256').update(code).digest('hex');
 
     if (user.emailVerification.attempts >= 3) {
       throw new AppError(

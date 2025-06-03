@@ -1,12 +1,13 @@
 import { Router } from 'express';
 import { ReturnDamageController } from '../controllers/returnDamage.controller';
-import { protect, restrictTo } from '../middlewares/auth';
+import { protect, restrictTo, isEmailVerified } from '../middlewares/auth';
 
 export const returnDamageRoutes = Router();
 
 returnDamageRoutes.use(protect);
 returnDamageRoutes.use(restrictTo('admin', 'merchant'));
 
+returnDamageRoutes.use(isEmailVerified);
 returnDamageRoutes
   .route('/')
   .get(restrictTo('admin'), ReturnDamageController.getRequests)

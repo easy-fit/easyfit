@@ -80,7 +80,8 @@ export class AuthController {
   });
 
   static verifyEmail = catchAsync(async (req: Request, res: Response) => {
-    const { email, code } = req.body;
+    const { code } = req.body;
+    const { email } = req.user;
 
     if (!email || !code) {
       throw new AppError('Email and verification code are required', 400);
@@ -95,7 +96,7 @@ export class AuthController {
 
   static sendVerificationCode = catchAsync(
     async (req: Request, res: Response) => {
-      const { email } = req.body;
+      const { email } = req.user;
 
       if (!email) {
         throw new AppError('Email is required', 400);

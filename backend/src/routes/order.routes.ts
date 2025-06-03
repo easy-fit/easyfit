@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { OrderController } from '../controllers/order.controller';
-import { protect, restrictTo } from '../middlewares/auth';
+import { protect, restrictTo, isEmailVerified } from '../middlewares/auth';
 
 export const orderRoutes = Router();
 
@@ -9,7 +9,7 @@ orderRoutes.use(protect);
 orderRoutes
   .route('/')
   .get(restrictTo('admin'), OrderController.getOrders)
-  .post(restrictTo('customer'), OrderController.createOrder);
+  .post(restrictTo('customer'), isEmailVerified, OrderController.createOrder);
 
 orderRoutes
   .route('/:id')
