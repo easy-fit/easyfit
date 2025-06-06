@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { AuthService } from '../services/auth.service';
+import { AuthService } from '../services/auth/auth.service';
 import { catchAsync } from '../utils/catchAsync';
 import { AppError } from '../utils/appError';
 import { createSendToken } from '../middlewares/auth';
@@ -18,6 +18,8 @@ export class AuthController {
 
   static logout = catchAsync(async (req: Request, res: Response) => {
     await AuthService.logout(req.user._id);
+    res.clearCookie('jwt', accessTokenCookieOptions);
+    res.clearCookie('refresh', accessTokenCookieOptions);
     res.status(200).json({ message: 'Logged out successfully' });
   });
 
