@@ -1,15 +1,5 @@
 import { Schema } from 'mongoose';
 
-const kycStatusEnum = [
-  'verified',
-  'rejected',
-  'disabled',
-  'documents-requested',
-  'resubmission-requested',
-  'pending',
-  'requires-action',
-];
-
 export const RiderInfoSchema = new Schema({
   dni: { type: String, required: true },
   cuil: { type: String, required: true },
@@ -20,10 +10,14 @@ export const RiderInfoSchema = new Schema({
   },
   licensePlate: { type: String },
   photoUrl: { type: String, default: 'default.png' },
-  kycStatus: {
-    type: String,
-    enum: kycStatusEnum,
-    default: 'pending',
+  kyc: {
+    status: {
+      type: String,
+      default: 'pending',
+    },
+    applicantId: { type: String, default: '' },
+    reviewResult: { type: String, default: 'pending' },
+    updatedAt: { type: Date, default: Date.now },
   },
   score: {
     upvotes: { type: Number, default: 0 },
@@ -35,9 +29,13 @@ export const MerchantInfoSchema = new Schema({
   dni: { type: String, required: true },
   cuit: { type: String, required: true },
   storeCount: { type: Number, default: 0 },
-  kycStatus: {
-    type: String,
-    enum: kycStatusEnum,
-    default: 'pending',
+  kyc: {
+    status: {
+      type: String,
+      default: 'pending',
+    },
+    applicantId: { type: String, default: '' },
+    reviewResult: { type: String, default: 'pending' },
+    updatedAt: { type: Date, default: Date.now },
   },
 });

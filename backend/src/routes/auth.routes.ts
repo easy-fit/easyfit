@@ -9,7 +9,11 @@ import {
 export const authRoutes = Router();
 
 authRoutes.post('/register', assignRoleFromPath, AuthController.register);
-authRoutes.post('/register/rider', assignRoleFromPath, AuthController.register);
+authRoutes.post(
+  '/register/riders',
+  assignRoleFromPath,
+  AuthController.register,
+);
 authRoutes.post(
   '/register/stores',
   assignRoleFromPath,

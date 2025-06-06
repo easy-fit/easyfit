@@ -9,7 +9,11 @@ orderRoutes.use(protect);
 orderRoutes
   .route('/')
   .get(restrictTo('admin'), OrderController.getOrders)
-  .post(restrictTo('customer'), isEmailVerified, OrderController.createOrder);
+  .post(
+    restrictTo('customer', 'admin'),
+    isEmailVerified,
+    OrderController.createOrder,
+  );
 
 orderRoutes
   .route('/:id')

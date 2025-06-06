@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { StoreController } from '../controllers/store.controller';
-import { protect, restrictTo, isEmailVerified } from '../middlewares/auth';
+import { protect, restrictTo, isKYCVerified } from '../middlewares/auth';
 
 export const storeRoutes = Router();
 
@@ -10,7 +10,7 @@ storeRoutes
   .post(
     protect,
     restrictTo('admin', 'merchant'),
-    isEmailVerified,
+    isKYCVerified,
     StoreController.createStore,
   );
 
@@ -20,12 +20,12 @@ storeRoutes
   .patch(
     protect,
     restrictTo('admin', 'merchant'),
-    isEmailVerified,
+    isKYCVerified,
     StoreController.updateStore,
   )
   .delete(
     protect,
     restrictTo('admin', 'merchant'),
-    isEmailVerified,
+    isKYCVerified,
     StoreController.deleteStore,
   );
