@@ -6,6 +6,7 @@ import { productRoutes } from './product.routes';
 import { orderRoutes } from './order.routes';
 import { returnDamageRoutes } from './returnDamage.routes';
 import { authRoutes } from './auth.routes';
+import { kycRoutes } from './kyc.routes';
 
 const router = Router();
 
@@ -15,5 +16,6 @@ router.use('/products', productRoutes);
 router.use('/orders', orderRoutes);
 router.use('/returns', returnDamageRoutes);
 router.use('/auth', authRoutes);
+router.use('/kyc', kycRoutes);
 
 export default router;

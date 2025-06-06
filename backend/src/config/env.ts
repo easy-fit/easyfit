@@ -7,8 +7,6 @@ export const ENV = {
   PORT: process.env.PORT || 3000,
   MONGO_URI: process.env.MONGO_URI || '',
   DATABASE_PASSWORD: process.env.DATABASE_PASSWORD || '',
-  SUMSUB_APP_TOKEN: process.env.SUMSUB_APP_TOKEN || '',
-  SUMSUB_SECRET_KEY: process.env.SUMSUB_SECRET_KEY || '',
 };
 
 export const JWT_CONFIG = {
@@ -22,4 +20,11 @@ export const JWT_CONFIG = {
 export const SENDGRID_CONFIG = {
   API_KEY: process.env.SENDGRID_API_KEY!,
   FROM_EMAIL: process.env.FROM_EMAIL!,
+};
+
+export const SUMSUB_CONFIG = {
+  SUMSUB_API_TOKEN: process.env.SUMSUB_API_TOKEN || '',
+  SUMSUB_SECRET_KEY: process.env.SUMSUB_SECRET_KEY || '',
+  SUMSUB_WEBHOOK_SECRET: process.env.SUMSUB_WEBHOOK_SECRET || '',
+  SUMSUB_LEVEL_NAME: process.env.SUMSUB_LEVEL_NAME || 'easyfit-dev',
 };

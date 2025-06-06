@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { AuthService } from '../services/auth.service';
+import { AuthService } from '../services/auth/auth.service';
 import { catchAsync } from '../utils/catchAsync';
 import { AppError } from '../utils/appError';
 import { createSendToken } from '../middlewares/auth';
@@ -18,6 +18,8 @@ export class AuthController {
 
   static logout = catchAsync(async (req: Request, res: Response) => {
     await AuthService.logout(req.user._id);
+    res.clearCookie('jwt', accessTokenCookieOptions);
+    res.clearCookie('refresh', accessTokenCookieOptions);
     res.status(200).json({ message: 'Logged out successfully' });
   });
 
@@ -80,7 +82,8 @@ export class AuthController {
   });
 
   static verifyEmail = catchAsync(async (req: Request, res: Response) => {
-    const { email, code } = req.body;
+    const { code } = req.body;
+    const { email } = req.user;
 
     if (!email || !code) {
       throw new AppError('Email and verification code are required', 400);
@@ -95,7 +98,7 @@ export class AuthController {
 
   static sendVerificationCode = catchAsync(
     async (req: Request, res: Response) => {
-      const { email } = req.body;
+      const { email } = req.user;
 
       if (!email) {
         throw new AppError('Email is required', 400);

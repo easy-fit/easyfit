@@ -1,11 +1,19 @@
 import { Router } from 'express';
 import { AuthController } from '../controllers/auth.controller';
-import { assignRoleFromPath, protect } from '../middlewares/auth';
+import {
+  assignRoleFromPath,
+  protect,
+  isEmailVerified,
+} from '../middlewares/auth';
 
 export const authRoutes = Router();
 
 authRoutes.post('/register', assignRoleFromPath, AuthController.register);
-authRoutes.post('/register/rider', assignRoleFromPath, AuthController.register);
+authRoutes.post(
+  '/register/riders',
+  assignRoleFromPath,
+  AuthController.register,
+);
 authRoutes.post(
   '/register/stores',
   assignRoleFromPath,
@@ -21,6 +29,10 @@ authRoutes.use(protect);
 authRoutes.post('/verify-email', AuthController.verifyEmail);
 authRoutes.post('/verify-email/resend', AuthController.sendVerificationCode);
 
-authRoutes.patch('/update-password', AuthController.updatePassword);
+authRoutes.patch(
+  '/update-password',
+  isEmailVerified,
+  AuthController.updatePassword,
+);
 authRoutes.post('/logout', AuthController.logout);
 authRoutes.post('/refresh-token', AuthController.refreshToken);
