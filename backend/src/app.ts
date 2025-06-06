@@ -3,8 +3,11 @@ import cookieParser from 'cookie-parser';
 import { AppError } from './utils/appError';
 import { globalErrorHandler } from './controllers/error.controller';
 import apiRoutes from './routes';
+import webhooks from './routes/webhooks/index';
 
 export const app: Application = express();
+
+app.use('/webhooks', webhooks);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
