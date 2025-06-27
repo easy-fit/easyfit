@@ -8,7 +8,7 @@ export class UserService {
   }
 
   static async getUserById(userId: string) {
-    const user = await UserModel.findById(userId).select('-passwordHash');
+    const user = await UserModel.findById(userId);
     this.ensureUserExists(user);
     return user;
   }
@@ -18,10 +18,10 @@ export class UserService {
     return UserModel.create(data);
   }
 
-  static async updateUser(userId: string, updates: UpdateUserDTO) {
-    const user = await UserModel.findByIdAndUpdate(userId, updates, {
+  static async updateUser(userId: string, data: UpdateUserDTO) {
+    const user = await UserModel.findByIdAndUpdate(userId, data, {
       new: true,
-    }).select('-passwordHash');
+    });
     this.ensureUserExists(user);
     return user;
   }
