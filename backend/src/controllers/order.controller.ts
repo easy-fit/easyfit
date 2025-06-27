@@ -10,24 +10,27 @@ export class OrderController {
   });
 
   static getOrderById = catchAsync(async (req: Request, res: Response) => {
-    const order = await OrderService.getOrderById(req.params.id);
+    const orderId = req.params.id;
+    const order = await OrderService.getOrderById(orderId);
     res.status(200).json({ order });
   });
 
   static createOrder = catchAsync(async (req: Request, res: Response) => {
-    const dto: CreateOrderDTO = req.body;
-    const order = await OrderService.createOrder(dto);
+    const data: CreateOrderDTO = req.body;
+    const order = await OrderService.createOrder(data);
     res.status(201).json({ order });
   });
 
   static updateOrder = catchAsync(async (req: Request, res: Response) => {
-    const dto: UpdateOrderDTO = req.body;
-    const order = await OrderService.updateOrder(req.params.id, dto);
+    const data: UpdateOrderDTO = req.body;
+    const orderId = req.params.id;
+    const order = await OrderService.updateOrder(orderId, data);
     res.status(200).json({ order });
   });
 
   static deleteOrder = catchAsync(async (req: Request, res: Response) => {
-    await OrderService.deleteOrder(req.params.id);
+    const orderId = req.params.id;
+    await OrderService.deleteOrder(orderId);
     res.status(204).json({ status: 'success' });
   });
 }

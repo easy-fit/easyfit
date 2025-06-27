@@ -17,8 +17,8 @@ export class PaymentService {
     return PaymentModel.create(data);
   }
 
-  static async updatePayment(paymentId: string, updates: UpdatePaymentDTO) {
-    const payment = await PaymentModel.findByIdAndUpdate(paymentId, updates, {
+  static async updatePayment(paymentId: string, data: UpdatePaymentDTO) {
+    const payment = await PaymentModel.findByIdAndUpdate(paymentId, data, {
       new: true,
     });
     this.ensurePaymentExists(payment);

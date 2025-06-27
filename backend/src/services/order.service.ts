@@ -19,8 +19,8 @@ export class OrderService {
     return OrderModel.create(data);
   }
 
-  static async updateOrder(orderId: string, updates: UpdateOrderDTO) {
-    const order = await OrderModel.findByIdAndUpdate(orderId, updates, {
+  static async updateOrder(orderId: string, data: UpdateOrderDTO) {
+    const order = await OrderModel.findByIdAndUpdate(orderId, data, {
       new: true,
     });
     this.ensureOrderExists(order);

@@ -1,4 +1,4 @@
-import sgMail from '../config/sendgrid';
+import sgMail from '../lib/sendgrid.client';
 import { SENDGRID_CONFIG } from '../config/env';
 
 interface EmailPayload {
