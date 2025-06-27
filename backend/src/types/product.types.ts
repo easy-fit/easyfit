@@ -1,7 +1,21 @@
 import { Types } from 'mongoose';
 
 export type ProductStatus = 'published' | 'archived' | 'deleted';
-export type ProductCategory = 'ropa' | 'accesorio' | 'calzado' | 'fragancia';
+export type ProductCategory =
+  | 'clothing'
+  | 'accessories'
+  | 'footwear'
+  | 'fragrance';
+
+export interface ProductFilterOptions {
+  search?: string;
+  category?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  page?: number;
+  limit?: number;
+  sort?: string;
+}
 
 export interface Product {
   storeId: Types.ObjectId;
@@ -9,12 +23,13 @@ export interface Product {
   description: string;
   status: ProductStatus;
   category: ProductCategory;
+  slug: string;
 }
 
 export interface CreateProductDTO {
-  storeId: Types.ObjectId;
   title: string;
   description?: string;
+  status?: ProductStatus;
   category: ProductCategory;
 }
 
@@ -23,4 +38,5 @@ export interface UpdateProductDTO {
   description?: string;
   category?: ProductCategory;
   status?: ProductStatus;
+  slug?: string;
 }
