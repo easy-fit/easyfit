@@ -4,6 +4,9 @@ import {
   CreateReturnDamageDTO,
   UpdateReturnDamageDTO,
 } from '../types/returnDamage.types';
+import { R2 } from '../config/env';
+
+const { BUCKET_RETURNS } = R2;
 
 export class ReturnDamageService {
   static async getRequests() {
@@ -20,14 +23,10 @@ export class ReturnDamageService {
     return ReturnDamageRequestModel.create(data);
   }
 
-  static async updateRequest(id: string, updates: UpdateReturnDamageDTO) {
-    const request = await ReturnDamageRequestModel.findByIdAndUpdate(
-      id,
-      updates,
-      {
-        new: true,
-      },
-    );
+  static async updateRequest(id: string, data: UpdateReturnDamageDTO) {
+    const request = await ReturnDamageRequestModel.findByIdAndUpdate(id, data, {
+      new: true,
+    });
 
     this.ensureRequestExists(request);
 

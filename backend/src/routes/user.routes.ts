@@ -6,6 +6,8 @@ export const userRoutes = Router();
 
 userRoutes.use(protect);
 userRoutes.get('/me', UserController.getMe);
+userRoutes.patch('/me', UserController.updateMe);
+userRoutes.patch('/me/address', UserController.updateMyAddress);
 
 userRoutes.use(restrictTo('admin'));
 userRoutes

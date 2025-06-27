@@ -2,18 +2,34 @@ import { Types } from 'mongoose';
 export type StoreStatus = 'active' | 'inactive' | 'disabled';
 export type StoreType = 'physical' | 'online';
 
+export interface StoreFilterOptions {
+  search?: string;
+  tags?: string | string[];
+  status?: string;
+  isOpen?: boolean;
+  rating?: number;
+  page?: number;
+  limit?: number;
+  sort?: string;
+  nearLocation?: {
+    longitude: number;
+    latitude: number;
+    maxDistance?: number;
+  };
+}
+
 export interface StoreAddress {
   formatted: string;
   location: {
     type: 'Point';
-    coordinates: [number, number]; // [lng, lat]
+    coordinates: [number, number];
   };
 }
 
 export interface PickupHoursEntry {
   day: 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
-  open: string; // Ej: "09:00"
-  close: string; // Ej: "18:00"
+  open: string;
+  close: string;
 }
 
 export type PickupHours = PickupHoursEntry[];
@@ -22,6 +38,7 @@ export interface ShippingOption {
   enabled: boolean;
   minOrderAmount?: number;
   promoLabel?: string;
+  subsidizedBy?: string;
 }
 
 export interface StoreOptions {
@@ -56,10 +73,10 @@ export interface Store {
   customization?: StoreCustomization;
   tags: string[];
   isOpen: boolean;
+  slug: string;
 }
 
 export interface CreateStoreDTO {
-  merchantId: Types.ObjectId;
   name: string;
   address: StoreAddress;
   pickupHours: PickupHours;
@@ -73,7 +90,6 @@ export interface CreateStoreDTO {
 }
 
 export interface UpdateStoreDTO {
-  name?: string;
   address?: StoreAddress;
   pickupHours?: PickupHours;
   options?: StoreOptions;

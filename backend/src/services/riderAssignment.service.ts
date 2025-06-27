@@ -22,11 +22,11 @@ export class RiderAssignmentService {
 
   static async updateAssignment(
     assignmentId: string,
-    updates: UpdateRiderAssignmentDTO,
+    data: UpdateRiderAssignmentDTO,
   ) {
     const assignment = await RiderAssignmentModel.findByIdAndUpdate(
       assignmentId,
-      updates,
+      data,
       { new: true },
     );
 

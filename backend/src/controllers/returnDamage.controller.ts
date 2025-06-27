@@ -13,24 +13,27 @@ export class ReturnDamageController {
   });
 
   static getRequestById = catchAsync(async (req: Request, res: Response) => {
-    const request = await ReturnDamageService.getRequestById(req.params.id);
+    const requestId = req.params.id;
+    const request = await ReturnDamageService.getRequestById(requestId);
     res.status(200).json({ request });
   });
 
   static createRequest = catchAsync(async (req: Request, res: Response) => {
-    const dto: CreateReturnDamageDTO = req.body;
-    const request = await ReturnDamageService.createRequest(dto);
+    const data: CreateReturnDamageDTO = req.body;
+    const request = await ReturnDamageService.createRequest(data);
     res.status(201).json({ request });
   });
 
   static updateRequest = catchAsync(async (req: Request, res: Response) => {
-    const dto: UpdateReturnDamageDTO = req.body;
-    const request = await ReturnDamageService.updateRequest(req.params.id, dto);
+    const data: UpdateReturnDamageDTO = req.body;
+    const requestId = req.params.id;
+    const request = await ReturnDamageService.updateRequest(requestId, data);
     res.status(200).json({ request });
   });
 
   static deleteRequest = catchAsync(async (req: Request, res: Response) => {
-    await ReturnDamageService.deleteRequest(req.params.id);
+    const requestId = req.params.id;
+    await ReturnDamageService.deleteRequest(requestId);
     res.status(204).send();
   });
 }

@@ -17,8 +17,8 @@ export class WalletService {
     return WalletModel.create(data);
   }
 
-  static async updateWallet(walletId: string, updates: UpdateWalletDTO) {
-    const wallet = await WalletModel.findByIdAndUpdate(walletId, updates, {
+  static async updateWallet(walletId: string, data: UpdateWalletDTO) {
+    const wallet = await WalletModel.findByIdAndUpdate(walletId, data, {
       new: true,
     });
 

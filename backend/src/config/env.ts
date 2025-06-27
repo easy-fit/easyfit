@@ -28,3 +28,13 @@ export const SUMSUB_CONFIG = {
   SUMSUB_WEBHOOK_SECRET: process.env.SUMSUB_WEBHOOK_SECRET || '',
   SUMSUB_LEVEL_NAME: process.env.SUMSUB_LEVEL_NAME || 'easyfit-dev',
 };
+
+export const R2 = {
+  ACCESS_KEY_ID: process.env.R2_ACCESS_KEY_ID!,
+  SECRET_ACCESS_KEY: process.env.R2_SECRET_ACCESS_KEY!,
+  ACCOUNT_ID: process.env.R2_ACCOUNT_ID!,
+  REGION: process.env.R2_REGION || 'auto',
+  BUCKET_PRODUCTS: process.env.R2_BUCKET_PRODUCTS!,
+  BUCKET_RETURNS: process.env.R2_BUCKET_RETURNS!,
+  BUCKET_ASSETS: process.env.R2_BUCKET_ASSETS!,
+};

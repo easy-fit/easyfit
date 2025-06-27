@@ -2,32 +2,92 @@ import { Request, Response } from 'express';
 import { ProductService } from '../services/product.service';
 import { catchAsync } from '../utils/catchAsync';
 import { CreateProductDTO, UpdateProductDTO } from '../types/product.types';
+import { CreateVariantDTO } from '../types/variant.types';
 
 export class ProductController {
-  static getProducts = catchAsync(async (_req: Request, res: Response) => {
-    const products = await ProductService.getProducts();
-    res.status(200).json({ total: products.length, products });
+  static getProducts = catchAsync(async (req: Request, res: Response) => {
+    const {
+      search,
+      category,
+      minPrice,
+      maxPrice,
+      sort = '-createdAt',
+      page = 1,
+      limit = 20,
+    } = req.query;
+
+    const filterOptions = {
+      search: search as string,
+      category: category as string,
+      minPrice: minPrice ? Number(minPrice) : undefined,
+      maxPrice: maxPrice ? Number(maxPrice) : undefined,
+      page: Number(page),
+      limit: Number(limit),
+      sort: sort as string,
+    };
+
+    const result = await ProductService.getProducts(filterOptions);
+
+    res.status(200).json({
+      status: 'success',
+      results: result.products.length,
+      pagination: {
+        total: result.total,
+        page: result.page,
+        pages: result.pages,
+        limit: result.limit,
+      },
+      data: {
+        products: result.products,
+      },
+    });
   });
 
+  static getProductsByStore = catchAsync(
+    async (req: Request, res: Response) => {
+      const storeSlug = req.params.storeSlug;
+      const products = await ProductService.getProductsByStore(storeSlug);
+      res.status(200).json({ total: products.length, products });
+    },
+  );
+
   static getProductById = catchAsync(async (req: Request, res: Response) => {
-    const product = await ProductService.getProductById(req.params.id);
+    const productId = req.params.id;
+    const product = await ProductService.getProductById(productId);
+    res.status(200).json({ product });
+  });
+
+  static getProductBySlug = catchAsync(async (req: Request, res: Response) => {
+    const { storeSlug, slug } = req.params;
+    const product = await ProductService.getProductBySlug(storeSlug, slug);
     res.status(200).json({ product });
   });
 
   static createProduct = catchAsync(async (req: Request, res: Response) => {
-    const dto: CreateProductDTO = req.body;
-    const product = await ProductService.createProduct(dto);
-    res.status(201).json({ product });
+    const { product, variants, storeId } = req.body as {
+      product: CreateProductDTO;
+      variants: CreateVariantDTO[];
+      storeId: string;
+    };
+
+    const result = await ProductService.createProduct(
+      product,
+      variants,
+      storeId,
+    );
+    res.status(201).json({ data: result });
   });
 
   static updateProduct = catchAsync(async (req: Request, res: Response) => {
-    const dto: UpdateProductDTO = req.body;
-    const product = await ProductService.updateProduct(req.params.id, dto);
-    res.status(200).json({ product });
+    const data: UpdateProductDTO = req.body;
+    const productId = req.params.id;
+    const product = await ProductService.updateProduct(productId, data);
+    res.status(200).json({ data: product });
   });
 
   static deleteProduct = catchAsync(async (req: Request, res: Response) => {
-    await ProductService.deleteProduct(req.params.id);
+    const productId = req.params.id;
+    await ProductService.deleteProduct(productId);
     res.status(204).json({ status: 'success' });
   });
 }

@@ -58,6 +58,31 @@ export const protect = async (
   }
 };
 
+export const optionalAuth = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  let token;
+  token = req.cookies.jwt || req.headers.authorization?.replace('Bearer ', '');
+
+  if (!token) {
+    return next();
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_CONFIG.SECRET) as { id: string };
+    const user = await UserModel.findById(decoded.id);
+    if (user) {
+      req.user = user;
+    }
+  } catch (err) {
+    // Silently ignore invalid tokens for optional auth
+  }
+
+  next();
+};
+
 export const restrictTo =
   (...roles: string[]) =>
   (req: Request, res: Response, next: NextFunction) => {
@@ -156,13 +181,13 @@ export const isKYCVerified = (
   }
   if (
     req.user.role === 'rider' &&
-    req.user.riderInfo?.kyc.status !== 'verified'
+    req.user.riderInfo?.kyc.reviewResult !== 'verified'
   ) {
     return next(new AppError('KYC not verified', 403));
   }
   if (
     req.user.role === 'merchant' &&
-    req.user.merchantInfo?.kyc.status !== 'verified'
+    req.user.merchantInfo?.kyc.reviewResult !== 'verified'
   ) {
     return next(new AppError('KYC not verified', 403));
   }

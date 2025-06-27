@@ -2,9 +2,10 @@ import { Schema, model } from 'mongoose';
 import { Variant } from '../types/variant.types';
 
 const VariantImageSchema = new Schema({
-  key: { type: String, required: true },
+  key: { type: String },
   altText: { type: String },
   order: { type: Number },
+  contentType: { type: String },
 });
 
 const VariantSchema = new Schema<Variant>(
@@ -15,11 +16,12 @@ const VariantSchema = new Schema<Variant>(
     stock: { type: Number, required: true },
     images: { type: [VariantImageSchema], default: [] },
     price: { type: Number, required: true },
+    isDefault: { type: Boolean, default: false },
   },
   { timestamps: true },
 );
 
-VariantSchema.index({ productId: 1 });
 VariantSchema.index({ stock: 1 });
+VariantSchema.index({ productId: 1, isDefault: -1 });
 
 export const VariantModel = model('Variant', VariantSchema);

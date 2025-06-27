@@ -20,11 +20,8 @@ export class WalletTransactionService {
     return WalletTransactionModel.create(data);
   }
 
-  static async updateTransaction(
-    id: string,
-    updates: UpdateWalletTransactionDTO,
-  ) {
-    const tx = await WalletTransactionModel.findByIdAndUpdate(id, updates, {
+  static async updateTransaction(id: string, data: UpdateWalletTransactionDTO) {
+    const tx = await WalletTransactionModel.findByIdAndUpdate(id, data, {
       new: true,
     });
     this.ensureTransactionExists(tx);

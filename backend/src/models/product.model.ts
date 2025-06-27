@@ -16,13 +16,15 @@ const ProductSchema = new Schema<Product>(
       enum: ['clothing', 'accessory', 'footwear', 'fragrance'],
       required: true,
     },
+    slug: { type: String, required: true },
   },
   {
     timestamps: true,
   },
 );
 
-ProductSchema.index({ storeId: 1 });
 ProductSchema.index({ title: 'text', description: 'text' });
+ProductSchema.index({ storeId: 1, slug: 1 }, { unique: true });
+ProductSchema.index({ storeId: 1, status: 1 });
 
 export const ProductModel = model('Product', ProductSchema);
