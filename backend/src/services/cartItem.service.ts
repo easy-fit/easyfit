@@ -1,7 +1,7 @@
 import { CartItemModel } from '../models/cartItem.model';
 import { AppError } from '../utils/appError';
 import { CreateCartItemDTO } from '../types/cartItem.types';
-import { VariantService } from './variant.service';
+import { VariantService } from './variant/variant.service';
 
 export class CartItemService {
   static async getCartItemsByUser(userId: string) {
