@@ -1,5 +1,5 @@
 import { Schema, model } from 'mongoose';
-import { Store } from '../types/store.types';
+import { Store, StoreType } from '../types/store.types';
 import { getNextSequenceValue } from '../utils/counter';
 import { AddressSchema } from '../schemas/common/address.schema';
 import {
@@ -7,6 +7,7 @@ import {
   ShippingOptionSchema,
   StoreCustomizationSchema,
 } from '../schemas/store/store.schemas';
+import { STORE_TAGS_VALUES } from '../types/store.constants';
 
 const StoreSchema = new Schema<Store>(
   {
@@ -34,20 +35,26 @@ const StoreSchema = new Schema<Store>(
       required: true,
     },
     customization: StoreCustomizationSchema,
-    tags: [String],
+    tags: {
+      type: [String],
+      enum: STORE_TAGS_VALUES,
+      default: [],
+    },
     isOpen: { type: Boolean, default: false },
+    slug: { type: String, required: true },
   },
   { timestamps: true },
 );
 
-StoreSchema.pre('save', async function (NextFunction) {
-  if (this.isNew) {
+StoreSchema.pre('validate', async function (next) {
+  if (this.isNew && !this.storeInternalId) {
     this.storeInternalId = await getNextSequenceValue('stores');
   }
-  NextFunction();
+  next();
 });
 
 StoreSchema.index({ merchantId: 1 });
 StoreSchema.index({ 'address.location': '2dsphere' });
+StoreSchema.index({ slug: 1 }, { unique: true });
 
 export const StoreModel = model('Store', StoreSchema);
