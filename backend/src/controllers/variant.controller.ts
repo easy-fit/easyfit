@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { VariantService } from '../services/variant.service';
+import { VariantService } from '../services/variant/variant.service';
 import { catchAsync } from '../utils/catchAsync';
 import {
   UpdateVariantDTO,

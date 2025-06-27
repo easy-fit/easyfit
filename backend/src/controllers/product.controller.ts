@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { ProductService } from '../services/product.service';
+import { ProductService } from '../services/product/product.service';
 import { catchAsync } from '../utils/catchAsync';
 import { CreateProductDTO, UpdateProductDTO } from '../types/product.types';
 import { CreateVariantDTO } from '../types/variant.types';

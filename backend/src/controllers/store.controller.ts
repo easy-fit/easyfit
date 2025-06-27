@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { StoreService } from '../services/store.service';
+import { StoreService } from '../services/store/store.service';
 import { catchAsync } from '../utils/catchAsync';
 import {
   CreateStoreDTO,
