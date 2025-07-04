@@ -3,7 +3,9 @@ import { AppError } from '../../utils/appError';
 
 export class VariantStockService {
   static async checkStockAvailable(variantId: string, requestedQty: number) {
-    const variant = await VariantModel.findById(variantId).select('stock');
+    const variant = await VariantModel.findById(variantId)
+      .select('stock')
+      .lean();
     if (!variant) {
       throw new AppError('Variant not found', 404);
     }
@@ -17,13 +19,13 @@ export class VariantStockService {
     const variant = await VariantModel.findByIdAndUpdate(
       variantId,
       { stock: newStock },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     );
-    
+
     if (!variant) {
       throw new AppError('Variant not found', 404);
     }
-    
+
     return variant;
   }
 
@@ -39,7 +41,7 @@ export class VariantStockService {
 
     variant.stock -= quantity;
     await variant.save();
-    
+
     return variant;
   }
 
@@ -47,13 +49,13 @@ export class VariantStockService {
     const variant = await VariantModel.findByIdAndUpdate(
       variantId,
       { $inc: { stock: quantity } },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     );
-    
+
     if (!variant) {
       throw new AppError('Variant not found', 404);
     }
-    
+
     return variant;
   }
 

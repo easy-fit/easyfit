@@ -34,7 +34,14 @@ export class StoreFilterService {
     const skip = (page - 1) * limit;
 
     if (nearLocation && nearLocation.longitude && nearLocation.latitude) {
-      return this.getStoresNearLocation(nearLocation, filter, sort, skip, limit, page);
+      return this.getStoresNearLocation(
+        nearLocation,
+        filter,
+        sort,
+        skip,
+        limit,
+        page,
+      );
     } else {
       return this.getStoresWithoutLocation(filter, sort, skip, limit, page);
     }

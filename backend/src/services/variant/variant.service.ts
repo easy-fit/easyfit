@@ -39,7 +39,8 @@ export class VariantService {
     }
 
     // Process images through VariantImageService and get signed URLs
-    const imageProcessingResult = await VariantImageService.processVariantImages(data.images);
+    const imageProcessingResult =
+      await VariantImageService.processVariantImages(data.images);
     const processedData = {
       ...data,
       images: imageProcessingResult.processedImages,
@@ -85,7 +86,7 @@ export class VariantService {
     const updatedVariant = await VariantModel.findByIdAndUpdate(
       variantId,
       data,
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     );
 
     return updatedVariant;

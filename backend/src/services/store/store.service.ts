@@ -8,6 +8,7 @@ import { AppError } from '../../utils/appError';
 import { STORE_TAGS_VALUES } from '../../types/store.constants';
 import { StoreAssetService } from './storeAsset.service';
 import { StoreFilterService } from './storeFilter.service';
+import { isDeliveryLocationValid } from '../../utils/distance';
 import slugify from 'slugify';
 
 export class StoreService {
@@ -19,6 +20,13 @@ export class StoreService {
     const store = await StoreModel.findById(storeId);
     this.ensureStoreExists(store);
     return store;
+  }
+
+  static async getStoreLocationById(storeId: string) {
+    const store = await StoreModel.findById(storeId).select('address').lean();
+
+    this.ensureStoreExists(store);
+    return store?.address.location.coordinates;
   }
 
   static async getStoreBySlug(storeSlug: string) {
@@ -42,6 +50,18 @@ export class StoreService {
       throw new AppError('Store with this name already exists', 400);
     }
 
+    if (data.address) {
+      const storeCoordinates = {
+        latitude: data.address.location.coordinates[0],
+        longitude: data.address.location.coordinates[1],
+      };
+
+      const isValidDeliveryLocation = isDeliveryLocationValid(storeCoordinates);
+      if (!isValidDeliveryLocation) {
+        throw new AppError('Invalid delivery address', 400);
+      }
+    }
+
     this.checkStoreTags(data.tags);
 
     const slug = slugify(data.name, {
@@ -57,6 +77,18 @@ export class StoreService {
   static async updateStore(storeId: string, data: UpdateStoreDTO) {
     if (data.tags) {
       this.checkStoreTags(data.tags);
+    }
+
+    if (data.address) {
+      const storeCoordinates = {
+        latitude: data.address.location.coordinates[1],
+        longitude: data.address.location.coordinates[0],
+      };
+
+      const isValidDeliveryLocation = isDeliveryLocationValid(storeCoordinates);
+      if (!isValidDeliveryLocation) {
+        throw new AppError('Invalid delivery address', 400);
+      }
     }
 
     const store = await StoreModel.findByIdAndUpdate(storeId, data, {
