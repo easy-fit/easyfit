@@ -1,4 +1,3 @@
-import { Types } from 'mongoose';
 import { OrderModel } from '../models/order.model';
 import { AppError } from '../utils/appError';
 import { CreateOrderDTO, UpdateOrderDTO } from '../types/order.types';
@@ -33,7 +32,7 @@ export class OrderService {
     this.ensureOrderExists(order);
   }
 
-  private static async ensureNoActiveOrder(userId: Types.ObjectId | string) {
+  private static async ensureNoActiveOrder(userId: string) {
     const existingOrder = await OrderModel.findOne({
       userId,
       isActive: true,

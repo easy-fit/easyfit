@@ -9,7 +9,7 @@ export interface OrderItemMetadata {
 }
 
 export interface OrderItemReturnVerification {
-  checkedBy: Types.ObjectId;
+  checkedBy: string;
   checkedAt: Date;
   result: 'match' | 'mismatch';
 }
@@ -25,8 +25,8 @@ export interface OrderItem {
 }
 
 export interface CreateOrderItemDTO {
-  orderId: Types.ObjectId;
-  variantId: Types.ObjectId;
+  orderId: string;
+  variantId: string;
   unitPrice: number;
   quantity: number;
   returnStatus: OrderItemReturnStatus;

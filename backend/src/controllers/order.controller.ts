@@ -15,12 +15,6 @@ export class OrderController {
     res.status(200).json({ order });
   });
 
-  static createOrder = catchAsync(async (req: Request, res: Response) => {
-    const data: CreateOrderDTO = req.body;
-    const order = await OrderService.createOrder(data);
-    res.status(201).json({ order });
-  });
-
   static updateOrder = catchAsync(async (req: Request, res: Response) => {
     const data: UpdateOrderDTO = req.body;
     const orderId = req.params.id;

@@ -6,14 +6,7 @@ export const orderRoutes = Router();
 
 orderRoutes.use(protect);
 
-orderRoutes
-  .route('/')
-  .get(restrictTo('admin'), OrderController.getOrders)
-  .post(
-    restrictTo('customer', 'admin'),
-    isEmailVerified,
-    OrderController.createOrder,
-  );
+orderRoutes.route('/').get(restrictTo('admin'), OrderController.getOrders);
 
 orderRoutes
   .route('/:id')

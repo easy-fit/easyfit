@@ -21,7 +21,7 @@ export type PaymentStatus =
   | 'paid_partially_stolen'
   | 'paid_partial';
 
-export type ShippingType = 'basic' | 'advanced' | 'premium';
+export type ShippingType = 'simple' | 'advanced' | 'premium';
 
 export type ShippingSubsidy = 'merchant' | 'platform' | 'user';
 
@@ -55,7 +55,7 @@ export interface Order {
 }
 
 export interface CreateOrderDTO {
-  userId: Types.ObjectId;
+  userId: string;
   total: number;
   shipping: ShippingInfo;
   holdId: string;

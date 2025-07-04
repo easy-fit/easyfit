@@ -18,9 +18,11 @@ export const ShippingSchema = new Schema({
   },
   type: {
     type: String,
-    enum: ['basic', 'advanced', 'premium'],
+    enum: ['simple', 'advanced', 'premium'],
     required: true,
+    default: 'simple',
   },
   tryOnEnabled: { type: Boolean, required: true },
   distanceKm: { type: Number },
+  durationMinutes: { type: Number },
 });
