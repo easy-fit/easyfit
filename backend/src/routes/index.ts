@@ -7,6 +7,8 @@ import { returnDamageRoutes } from './returnDamage.routes';
 import { productRoutes } from './product.routes';
 import { authRoutes } from './auth.routes';
 import { kycRoutes } from './kyc.routes';
+import { cartRoutes } from './cart.routes';
+import { checkoutRoutes } from './checkout.routes';
 
 const router = Router();
 
@@ -17,5 +19,7 @@ router.use('/returns', returnDamageRoutes);
 router.use('/auth', authRoutes);
 router.use('/kyc', kycRoutes);
 router.use('/products', productRoutes);
+router.use('/cart', cartRoutes);
+router.use('/checkout', checkoutRoutes);
 
 export default router;
