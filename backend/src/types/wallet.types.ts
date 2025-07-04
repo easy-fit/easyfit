@@ -18,8 +18,8 @@ export interface Wallet {
 }
 
 export interface CreateWalletDTO {
-  userId?: Types.ObjectId;
-  storeId?: Types.ObjectId;
+  userId?: string;
+  storeId?: string;
   payoutMethod: PayoutMethod;
 }
 

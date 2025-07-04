@@ -20,9 +20,9 @@ export interface WalletTransaction {
 }
 
 export interface CreateWalletTransactionDTO {
-  userId: Types.ObjectId;
+  userId: string;
   role: 'merchant' | 'rider';
-  orderId?: Types.ObjectId;
+  orderId?: string;
   amount: number;
   direction: WalletTransactionDirection;
   type: WalletTransactionType;

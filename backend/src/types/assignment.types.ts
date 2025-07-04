@@ -17,8 +17,8 @@ export interface RiderAssignment {
 }
 
 export interface CreateRiderAssignmentDTO {
-  orderId: Types.ObjectId;
-  riderId: Types.ObjectId;
+  orderId: string;
+  riderId: string;
   status?: RiderAssignmentStatus;
   assignedAt?: Date;
   pickedUpAt?: Date;

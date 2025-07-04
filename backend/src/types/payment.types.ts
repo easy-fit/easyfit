@@ -12,7 +12,7 @@ export interface Payment {
 }
 
 export interface CreatePaymentDTO {
-  orderId: Types.ObjectId;
+  orderId: string;
   type: PaymentType;
   amount: number;
   status: PaymentStatus;

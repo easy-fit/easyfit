@@ -1,3 +1,5 @@
+import { Address } from './global';
+
 export type UserRole = 'customer' | 'merchant' | 'rider' | 'admin';
 export interface Kyc {
   status: string;
@@ -41,13 +43,7 @@ export interface User {
   passwordHash: string;
   role: UserRole;
   birthDate: Date;
-  address?: {
-    formatted: string;
-    location: {
-      type: 'Point';
-      coordinates: [number, number]; // [lng, lat]
-    };
-  };
+  address?: Address;
   passwordResetToken?: string;
   passwordResetExpires?: Date;
   passwordChangedAt?: Date;
@@ -62,13 +58,7 @@ export interface CreateUserDTO {
   email: string;
   phone: string;
   password: string;
-  address?: {
-    formatted: string;
-    location: {
-      type: 'Point';
-      coordinates: [number, number];
-    };
-  };
+  address?: Address;
   riderInfo?: RiderInfo;
   merchantInfo?: MerchantInfo;
 }
@@ -77,13 +67,7 @@ export interface UpdateUserDTO {
   name?: string;
   email?: string;
   phone?: string;
-  address?: {
-    formatted?: string;
-    location?: {
-      type: 'Point';
-      coordinates: [number, number];
-    };
-  };
+  address?: Address;
   riderInfo?: Partial<RiderInfo>;
   merchantInfo?: Partial<MerchantInfo>;
 }
@@ -94,13 +78,7 @@ export interface RegisterDTO {
   phone: string;
   password: string;
   birthDate: Date;
-  address?: {
-    formatted?: string;
-    location?: {
-      type: 'Point';
-      coordinates: [number, number];
-    };
-  };
+  address?: Address;
   riderInfo?: RiderInfo;
   merchantInfo?: MerchantInfo;
 }
