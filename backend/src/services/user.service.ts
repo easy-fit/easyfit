@@ -1,6 +1,7 @@
 import { UserModel } from '../models/user.model';
 import { AppError } from '../utils/appError';
 import { CreateUserDTO, UpdateUserDTO } from '../types/user.types';
+import { isDeliveryLocationValid } from '../utils/distance';
 
 export class UserService {
   static async getUsers() {
@@ -19,6 +20,17 @@ export class UserService {
   }
 
   static async updateUser(userId: string, data: UpdateUserDTO) {
+    if (data.address) {
+      const userCoordinates = {
+        latitude: data.address.location.coordinates[0],
+        longitude: data.address.location.coordinates[1],
+      };
+
+      const isValidDeliveryLocation = isDeliveryLocationValid(userCoordinates);
+      if (!isValidDeliveryLocation) {
+        throw new AppError('Invalid delivery address', 400);
+      }
+    }
     const user = await UserModel.findByIdAndUpdate(userId, data, {
       new: true,
     });
