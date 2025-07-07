@@ -1,17 +1,15 @@
-import { mercadoPagoClient } from '../lib/mercadopago.client';
+import { mercadoPagoClient } from '../../lib/mercadopago.client';
 import {
   CreatePaymentRequest,
   CreatePreferenceRequest,
   PaymentProcessingRequest,
-} from '../types/mercadoPago.types';
-import { MERCADO_PAGO, ENV } from '../config/env';
-import { AppError } from '../utils/appError';
-import { User } from '../types/user.types';
-import { PaymentService } from './payment.service';
-import { CheckoutService } from './checkout.service';
+} from '../../types/mercadoPago.types';
+import { MERCADO_PAGO, ENV } from '../../config/env';
+import { AppError } from '../../utils/appError';
+import { User } from '../../types/user.types';
 import { v4 as uuidv4 } from 'uuid';
 
-export class MercadoPagoService {
+export class PaymentMercadoPagoService {
   static async createPayment(paymentData: CreatePaymentRequest) {
     try {
       const idempotencyKey = uuidv4();
@@ -29,59 +27,6 @@ export class MercadoPagoService {
         `MercadoPago payment creation failed: ${error.message}`,
         400,
       );
-    }
-  }
-
-  static async handleWebhook(payload: any) {
-    try {
-      if (
-        payload.action === 'payment.created' ||
-        payload.action === 'payment.updated'
-      ) {
-        const paymentId = payload.data?.id;
-
-        if (!paymentId) {
-          console.log('No payment ID in webhook payload');
-          return;
-        }
-
-        const existingPayment = await PaymentService.getPaymentByExternalId(
-          paymentId.toString(),
-        );
-
-        if (existingPayment) {
-          console.log(
-            `Payment ${paymentId} already processed via process-payment endpoint`,
-          );
-          return;
-        }
-
-        const payment = await this.getPayment(paymentId);
-
-        const externalRef = payment.external_reference;
-        if (!externalRef || !externalRef.startsWith('session-')) {
-          console.log('Invalid external_reference format:', externalRef);
-          return;
-        }
-
-        const sessionId = externalRef.replace('session-', '');
-
-        if (payment.status === 'approved') {
-          await CheckoutService.completePaymentFromWebhook(sessionId, payment);
-        } else if (
-          payment.status === 'rejected' ||
-          payment.status === 'cancelled'
-        ) {
-          await CheckoutService.handleFailedPayment(sessionId, payment);
-        }
-
-        console.log(
-          `Payment ${paymentId} processed via webhook with status: ${payment.status}`,
-        );
-      }
-    } catch (error: any) {
-      console.error('Error processing MercadoPago webhook:', error.message);
-      throw new AppError('Webhook processing failed', 500);
     }
   }
 

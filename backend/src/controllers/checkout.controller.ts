@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
-import { CheckoutService } from '../services/checkout.service';
-import { MercadoPagoService } from '../services/mercadoPago.service';
+import { CheckoutService } from '../services/checkout/checkout.service';
 import { catchAsync } from '../utils/catchAsync';
 import { UpdateCheckoutSessionDTO } from '../types/checkout.types';
 import { PaymentProcessingRequest } from '../types/mercadoPago.types';
