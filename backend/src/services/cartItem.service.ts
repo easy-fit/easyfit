@@ -80,7 +80,7 @@ export class CartItemService {
       select: 'size color price productId',
       populate: {
         path: 'productId',
-        select: 'storeId',
+        select: 'storeId title',
       },
     });
 

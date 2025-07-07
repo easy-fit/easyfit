@@ -9,11 +9,6 @@ const CheckoutSessionSchema = new Schema<CheckoutSession>(
     subtotal: { type: Number, required: true },
     shipping: { type: ShippingSchema, required: true },
     total: { type: Number, required: true },
-    paymentMethod: {
-      type: String,
-      enum: ['credit', 'debit', 'mercado_pago', ''],
-      default: '',
-    },
     status: {
       type: String,
       enum: ['active', 'completed', 'cancelled'],

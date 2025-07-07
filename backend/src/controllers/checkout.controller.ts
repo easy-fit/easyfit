@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
 import { CheckoutService } from '../services/checkout.service';
+import { MercadoPagoService } from '../services/mercadoPago.service';
 import { catchAsync } from '../utils/catchAsync';
 import { UpdateCheckoutSessionDTO } from '../types/checkout.types';
+import { PaymentProcessingRequest } from '../types/mercadoPago.types';
 
 export class CheckoutController {
   static getCheckoutSessions = catchAsync(
@@ -20,7 +22,9 @@ export class CheckoutController {
   static getCheckoutSessionById = catchAsync(
     async (req: Request, res: Response) => {
       const sessionId = req.params.id;
-      const checkoutSession = await CheckoutService.getCheckoutSessionById(sessionId);
+      const checkoutSession = await CheckoutService.getCheckoutSessionById(
+        sessionId,
+      );
 
       res.status(200).json({
         status: 'success',
@@ -33,18 +37,17 @@ export class CheckoutController {
 
   static createCheckoutSession = catchAsync(
     async (req: Request, res: Response) => {
-      const userId = req.user?._id;
+      const user = req.user;
       const userAddress = req.user?.address || {};
 
-      const checkoutSession = await CheckoutService.createCheckoutSession(
-        userId,
-        userAddress,
-      );
+      const { checkoutSession, preferenceId } =
+        await CheckoutService.createCheckoutSession(user, userAddress);
 
       res.status(201).json({
         status: 'success',
         data: {
           checkoutSession,
+          preferenceId,
         },
       });
     },
@@ -65,6 +68,25 @@ export class CheckoutController {
         data: {
           checkoutSession,
         },
+      });
+    },
+  );
+
+  static processPayment = catchAsync(
+    async (req: Request, res: Response) => {
+      const sessionId = req.params.id;
+      const paymentData: PaymentProcessingRequest = req.body;
+      const user = req.user;
+
+      const result = await CheckoutService.processPayment(
+        sessionId,
+        paymentData,
+        user,
+      );
+
+      res.status(200).json({
+        status: 'success',
+        data: result,
       });
     },
   );
