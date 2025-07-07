@@ -2,12 +2,6 @@ import { Types } from 'mongoose';
 
 export type OrderItemReturnStatus = 'kept' | 'returned' | 'undecided';
 
-export interface OrderItemMetadata {
-  productTitle: string;
-  variantSize: string;
-  variantColor: string;
-}
-
 export interface OrderItemReturnVerification {
   checkedBy: string;
   checkedAt: Date;
@@ -20,7 +14,6 @@ export interface OrderItem {
   unitPrice: number;
   quantity: number;
   returnStatus: OrderItemReturnStatus;
-  metadata: OrderItemMetadata;
   returnVerification?: OrderItemReturnVerification;
 }
 
@@ -30,12 +23,10 @@ export interface CreateOrderItemDTO {
   unitPrice: number;
   quantity: number;
   returnStatus: OrderItemReturnStatus;
-  metadata: OrderItemMetadata;
   returnVerification?: OrderItemReturnVerification;
 }
 
 export interface UpdateOrderItemDTO {
   returnStatus?: OrderItemReturnStatus;
-  metadata?: Partial<OrderItemMetadata>;
   returnVerification?: OrderItemReturnVerification;
 }

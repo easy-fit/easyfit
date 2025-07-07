@@ -1,5 +1,11 @@
 export interface Address {
-  formatted: string;
+  formatted: {
+    street: string;
+    streetNumber: string;
+    city: string;
+    province: string;
+    postalCode: string;
+  };
   location: {
     type: 'Point';
     coordinates: [number, number];

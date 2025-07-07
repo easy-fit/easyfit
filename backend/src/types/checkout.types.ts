@@ -3,12 +3,11 @@ import { ShippingInfo, ShippingType } from './order.types';
 
 export type CheckoutStatus = 'active' | 'completed' | 'cancelled';
 
-export type PaymentMethod = 'credit' | 'debit' | 'mercado_pago';
-
 export interface CheckoutCartItem {
   variantId: string;
   quantity: number;
   price: number;
+  unit_price: number;
   metadata: {};
 }
 
@@ -18,16 +17,13 @@ export interface CheckoutSession {
   subtotal: number;
   shipping: ShippingInfo;
   total: number;
-  paymentMethod?: PaymentMethod;
   status: CheckoutStatus;
 }
 
 export interface CreateCheckoutSessionDTO {
-  paymentMethod?: PaymentMethod;
   shipping: ShippingInfo;
 }
 
 export interface UpdateCheckoutSessionDTO {
-  paymentMethod?: PaymentMethod;
   deliveryType?: ShippingType;
 }

@@ -15,6 +15,7 @@ export type OrderStatus =
 
 export type PaymentStatus =
   | 'hold_placed'
+  | 'paid_full_debit'
   | 'paid_full'
   | 'paid_shipping_only'
   | 'cancelled'
@@ -44,10 +45,11 @@ export interface DeliveryVerification {
 
 export interface Order {
   userId: Types.ObjectId;
+  checkoutSessionId: Types.ObjectId;
   total: number;
   shipping: ShippingInfo;
   status: OrderStatus;
-  holdId: string;
+  paymentId: string;
   paymentStatus: PaymentStatus;
   deliveryVerification: DeliveryVerification;
   isStolen: boolean;

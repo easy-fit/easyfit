@@ -54,6 +54,7 @@ export interface Store {
   merchantId: Types.ObjectId;
   name: string;
   address: Address;
+  cuit?: string;
   pickupHours: PickupHours;
   options: StoreOptions;
   contactEmail: string;
@@ -73,6 +74,7 @@ export interface Store {
 export interface CreateStoreDTO {
   name: string;
   address: Address;
+  cuit?: string;
   pickupHours: PickupHours;
   options: StoreOptions;
   contactEmail: string;
@@ -85,6 +87,7 @@ export interface CreateStoreDTO {
 
 export interface UpdateStoreDTO {
   address?: Address;
+  cuit?: string;
   pickupHours?: PickupHours;
   options?: StoreOptions;
   contactEmail?: string;
