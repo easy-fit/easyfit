@@ -15,7 +15,7 @@ export class UserService {
   }
 
   static async createUser(data: CreateUserDTO) {
-    await this.ensureUserNotExists(data.email, data.phone);
+    await this.ensureUserNotExists(data.email);
     return UserModel.create(data);
   }
 
@@ -43,10 +43,8 @@ export class UserService {
     this.ensureUserExists(user);
   }
 
-  static async ensureUserNotExists(email: string, phone: string) {
-    const existingUser = await UserModel.findOne({
-      $or: [{ email }, { phone }],
-    });
+  static async ensureUserNotExists(email: string) {
+    const existingUser = await UserModel.findOne({ email });
 
     if (existingUser) {
       throw new AppError('User with this email or phone already exists', 400);

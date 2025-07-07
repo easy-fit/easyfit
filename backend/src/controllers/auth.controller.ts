@@ -2,12 +2,14 @@ import { Request, Response } from 'express';
 import { AuthService } from '../services/auth/auth.service';
 import { catchAsync } from '../utils/catchAsync';
 import { AppError } from '../utils/appError';
+import { RegisterDTO } from '../types/user.types';
 import { createSendToken } from '../middlewares/auth';
 import { accessTokenCookieOptions } from '../utils/jwt';
 
 export class AuthController {
   static register = catchAsync(async (req: Request, res: Response) => {
-    const user = await AuthService.register(req.body);
+    const data: RegisterDTO = req.body;
+    const user = await AuthService.register(data);
     createSendToken(user, 201, res);
   });
 

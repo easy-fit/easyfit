@@ -9,15 +9,27 @@ import {
 const UserSchema = new Schema<User>(
   {
     name: { type: String, required: true, trim: true, lowercase: true },
+    surname: { type: String, required: true, trim: true, lowercase: true },
     email: { type: String, required: true, lowercase: true },
-    phone: { type: String, required: true },
     passwordHash: { type: String, required: true },
     role: {
       type: String,
       enum: ['customer', 'merchant', 'rider', 'admin'],
       default: 'customer',
     },
-    birthDate: { type: Date, required: true },
+    additionalInfo: {
+      dni: { type: String, trim: true },
+      dniType: {
+        type: String,
+        enum: ['DNI', 'CI', 'LC', 'LE'],
+        default: 'dni',
+      },
+      birthDate: { type: Date },
+      phone: {
+        areaCode: { type: String, trim: true },
+        number: { type: String, trim: true },
+      },
+    },
     address: { type: AddressSchema },
     passwordResetToken: { type: String },
     passwordResetExpires: { type: Date },
