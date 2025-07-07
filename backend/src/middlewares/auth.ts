@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { AppError } from '../utils/appError';
-import { JWT_CONFIG, SUMSUB_CONFIG } from '../config/env';
+import { JWT_CONFIG, SUMSUB_CONFIG, MERCADO_PAGO } from '../config/env';
 import { UserModel } from '../models/user.model';
 import {
   signAccessToken,
@@ -168,6 +168,70 @@ export const validateSumsubWebhook = (
   } catch (err) {
     console.error('Error validating webhook:', err);
     return next(new AppError('Error validating webhook', 500));
+  }
+};
+
+export const validateMercadoPagoWebhook = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const signature = req.headers['x-signature'] as string;
+    const requestId = req.headers['x-request-id'] as string;
+    const dataId = req.query['data.id'] as string;
+
+    if (!signature) {
+      throw new AppError('Missing x-signature header', 401);
+    }
+
+    const signatureParts = signature.split(',');
+    let timestamp: string | undefined;
+    let receivedSignature: string | undefined;
+
+    for (const part of signatureParts) {
+      const [key, value] = part.split('=');
+      if (key === 'ts') {
+        timestamp = value;
+      } else if (key === 'v1') {
+        receivedSignature = value;
+      }
+    }
+
+    if (!timestamp || !receivedSignature) {
+      throw new AppError('Invalid x-signature format', 401);
+    }
+
+    let signatureTemplate = '';
+
+    if (dataId) {
+      const normalizedDataId = /^[a-zA-Z0-9]+$/.test(dataId)
+        ? dataId.toLowerCase()
+        : dataId;
+      signatureTemplate += `id:${normalizedDataId};`;
+    }
+
+    if (requestId) {
+      signatureTemplate += `request-id:${requestId};`;
+    }
+
+    signatureTemplate += `ts:${timestamp};`;
+
+    const expectedSignature = crypto
+      .createHmac('sha256', MERCADO_PAGO.WEBHOOK_SECRET)
+      .update(signatureTemplate)
+      .digest('hex');
+
+    if (expectedSignature !== receivedSignature) {
+      throw new AppError('Invalid webhook signature', 401);
+    }
+
+    next();
+  } catch (error: any) {
+    if (error instanceof AppError) {
+      throw error;
+    }
+    throw new AppError('Webhook verification failed', 401);
   }
 };
 
