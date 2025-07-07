@@ -22,6 +22,11 @@ const statusEnum = [
 const OrderSchema = new Schema<Order>(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    checkoutSessionId: {
+      type: Schema.Types.ObjectId,
+      ref: 'CheckoutSession',
+      required: true,
+    },
     total: { type: Number, required: true },
     shipping: { type: ShippingSchema, required: true },
     status: {
@@ -29,12 +34,13 @@ const OrderSchema = new Schema<Order>(
       enum: statusEnum,
       default: 'order_placed',
     },
-    holdId: { type: String, required: true },
+    paymentId: { type: String, required: true },
     paymentStatus: {
       type: String,
       enum: [
         'hold_placed',
         'paid_full',
+        'paid_full_debit',
         'paid_shipping_only',
         'cancelled',
         'paid_partially_stolen',

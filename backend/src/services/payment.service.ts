@@ -1,6 +1,5 @@
 import { PaymentModel } from '../models/payment.model';
 import { AppError } from '../utils/appError';
-import { CreatePaymentDTO, UpdatePaymentDTO } from '../types/payment.types';
 
 export class PaymentService {
   static async getPayments() {
@@ -13,11 +12,11 @@ export class PaymentService {
     return payment;
   }
 
-  static async createPayment(data: CreatePaymentDTO) {
+  static async createPayment(data: any) {
     return PaymentModel.create(data);
   }
 
-  static async updatePayment(paymentId: string, data: UpdatePaymentDTO) {
+  static async updatePayment(paymentId: string, data: any) {
     const payment = await PaymentModel.findByIdAndUpdate(paymentId, data, {
       new: true,
     });
@@ -29,6 +28,10 @@ export class PaymentService {
   static async deletePayment(paymentId: string) {
     const payment = await PaymentModel.findByIdAndDelete(paymentId);
     this.ensurePaymentExists(payment);
+  }
+
+  static async getPaymentByExternalId(externalId: string) {
+    return PaymentModel.findOne({ externalId });
   }
 
   private static ensurePaymentExists(payment: any): void {

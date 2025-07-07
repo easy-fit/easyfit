@@ -3,7 +3,7 @@ import { Payment } from '../types/payment.types';
 
 const PaymentSchema = new Schema<Payment>(
   {
-    orderId: { type: Schema.Types.ObjectId, ref: 'Order', required: true },
+    orderId: { type: Schema.Types.ObjectId, ref: 'Order' },
     type: {
       type: String,
       enum: ['hold', 'capture', 'refund'],
