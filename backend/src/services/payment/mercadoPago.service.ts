@@ -9,7 +9,7 @@ import { AppError } from '../../utils/appError';
 import { User } from '../../types/user.types';
 import { v4 as uuidv4 } from 'uuid';
 
-export class PaymentMercadoPagoService {
+export class MercadoPagoService {
   static async createPayment(paymentData: CreatePaymentRequest) {
     try {
       const idempotencyKey = uuidv4();
@@ -38,7 +38,7 @@ export class PaymentMercadoPagoService {
   ) {
     try {
       const capture =
-        paymentData.payment_type_id === 'credit_card' ? false : true;
+        paymentData.selectedPaymentMethod === 'credit_card' ? false : true;
 
       const paymentRequest: CreatePaymentRequest = {
         transaction_amount: paymentData.transaction_amount,
@@ -48,7 +48,7 @@ export class PaymentMercadoPagoService {
         issuer_id: paymentData.issuer_id,
         token: paymentData.token,
         external_reference: sessionId,
-        notification_url: MERCADO_PAGO.WEBHOOK_URL,
+        notification_url: MERCADO_PAGO.MP_WEBHOOK_URL,
         payer: {
           first_name: userInfo?.name || '',
           last_name: userInfo?.surname || '',
@@ -192,7 +192,7 @@ export class PaymentMercadoPagoService {
           },
         },
         back_urls: {
-          success: `${ENV.FRONTEND_URL}/checkout/success?session=${sessionId}`,
+          success: 'google.com',
           failure: `${ENV.FRONTEND_URL}/checkout/failure?session=${sessionId}`,
           pending: `${ENV.FRONTEND_URL}/checkout/pending?session=${sessionId}`,
         },
@@ -207,7 +207,7 @@ export class PaymentMercadoPagoService {
           cost: cost,
           free_shipping: false,
         },
-        notification_url: MERCADO_PAGO.WEBHOOK_URL,
+        notification_url: MERCADO_PAGO.MP_WEBHOOK_URL,
         external_reference: `session-${sessionId}`,
       };
 

@@ -2,14 +2,67 @@ import { CheckoutSessionModel } from '../../models/checkout.model';
 import { AppError } from '../../utils/appError';
 import { PaymentService } from '../payment/payment.service';
 import { OrderService } from '../order.service';
-import { PaymentMercadoPagoService } from '../payment/paymentMercadoPago.service';
+import { MercadoPagoService } from '../payment/mercadoPago.service';
 import { VariantService } from '../variant/variant.service';
-import { CheckoutSessionService } from './checkoutSession.service';
 import { CheckoutPaymentService } from './checkoutPayment.service';
+import { CheckoutService } from './checkout.service';
 
 export class CheckoutWebhookService {
+  static async handleMercadoPagoWebhook(payload: any) {
+    try {
+      if (
+        payload.action === 'payment.created' ||
+        payload.action === 'payment.updated'
+      ) {
+        const paymentId = payload.data?.id;
+
+        if (!paymentId) {
+          console.log('No payment ID in webhook payload');
+          return;
+        }
+
+        const existingPayment =
+          await PaymentService.getInternalPaymentByExternalId(
+            paymentId.toString(),
+          );
+
+        if (existingPayment) {
+          console.log(
+            `Payment ${paymentId} already processed via process-payment endpoint`,
+          );
+          return;
+        }
+
+        const payment = await MercadoPagoService.getPayment(paymentId);
+
+        const externalRef = payment.external_reference;
+        if (!externalRef || !externalRef.startsWith('session-')) {
+          console.log('Invalid external_reference format:', externalRef);
+          return;
+        }
+
+        const sessionId = externalRef.replace('session-', '');
+
+        if (payment.status === 'approved') {
+          await this.completePaymentFromWebhook(sessionId, payment);
+        } else if (
+          payment.status === 'rejected' ||
+          payment.status === 'cancelled'
+        ) {
+          await this.handleFailedPayment(sessionId, payment);
+        }
+
+        console.log(
+          `Payment ${paymentId} processed via webhook with status: ${payment.status}`,
+        );
+      }
+    } catch (error: any) {
+      console.error('Error processing MercadoPago webhook:', error.message);
+      throw new AppError('Webhook processing failed', 500);
+    }
+  }
   static async completePaymentFromWebhook(sessionId: string, payment: any) {
-    const session = await CheckoutSessionService.getCheckoutSessionById(sessionId);
+    const session = await CheckoutService.getCheckoutSessionById(sessionId);
 
     if (session.status !== 'active') {
       throw new AppError(
@@ -18,9 +71,8 @@ export class CheckoutWebhookService {
       );
     }
 
-    const isStockAvailable = await CheckoutPaymentService.validateStockAvailability(
-      session.cartItems,
-    );
+    const isStockAvailable =
+      await CheckoutPaymentService.validateStockAvailability(session.cartItems);
     if (!isStockAvailable) {
       await this.handleStockFailureRefund(sessionId, payment, session);
       throw new AppError('Stock unavailable, payment refunded', 400);
@@ -35,7 +87,7 @@ export class CheckoutWebhookService {
 
   static async handleFailedPayment(sessionId: string, payment: any) {
     try {
-      const session = await CheckoutSessionService.getCheckoutSessionById(sessionId);
+      const session = await CheckoutService.getCheckoutSessionById(sessionId);
 
       if (session.status === 'active') {
         await CheckoutSessionModel.findByIdAndUpdate(sessionId, {
@@ -43,12 +95,16 @@ export class CheckoutWebhookService {
         });
       }
 
-      await PaymentService.createPayment({
+      PaymentService.createInternalPayment({
         orderId: null,
         type: 'capture',
         amount: payment.transaction_amount || session.total,
         status: 'failed',
         externalId: payment.id?.toString() || '',
+      }).catch((error) => {
+        console.error(
+          `Failed to create payment record for failed payment ${payment.id}: ${error.message}`,
+        );
       });
 
       console.log(
@@ -71,7 +127,7 @@ export class CheckoutWebhookService {
     console.error(`Stock validation failed for session ${sessionId}`);
 
     try {
-      await PaymentMercadoPagoService.refundPayment(payment.id?.toString() || '');
+      await MercadoPagoService.refundPayment(payment.id?.toString() || '');
 
       await CheckoutSessionModel.findByIdAndUpdate(sessionId, {
         status: 'cancelled',
@@ -79,12 +135,16 @@ export class CheckoutWebhookService {
 
       console.log(`Payment ${payment.id} refunded due to stock unavailability`);
 
-      PaymentService.createPayment({
+      PaymentService.createInternalPayment({
         orderId: null,
         type: 'refund',
         amount: payment.transaction_amount || session.total,
         status: 'refunded',
         externalId: payment.id?.toString() || '',
+      }).catch((refundError) => {
+        console.error(
+          `Failed to create refund record for payment ${payment.id}: ${refundError.message}`,
+        );
       });
 
       console.log(
@@ -108,7 +168,6 @@ export class CheckoutWebhookService {
 
     const order = await OrderService.createOrder(
       session.userId.toString(),
-      session.id.toString(),
       session.cartItems,
       session.total,
       session.shipping,
@@ -116,7 +175,7 @@ export class CheckoutWebhookService {
       payment.id?.toString() || '',
     );
 
-    PaymentService.createPayment({
+    PaymentService.createInternalPayment({
       orderId: order._id.toString(),
       type: paymentType,
       amount: payment.transaction_amount || session.total,

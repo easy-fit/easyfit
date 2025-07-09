@@ -218,7 +218,7 @@ export const validateMercadoPagoWebhook = (
     signatureTemplate += `ts:${timestamp};`;
 
     const expectedSignature = crypto
-      .createHmac('sha256', MERCADO_PAGO.WEBHOOK_SECRET)
+      .createHmac('sha256', MERCADO_PAGO.MP_WEBHOOK_SECRET)
       .update(signatureTemplate)
       .digest('hex');
 

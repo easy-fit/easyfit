@@ -1,12 +1,12 @@
 import { Request, Response } from 'express';
-import { PaymentWebhookService } from '../services/payment/paymentWebhook.service';
-import { PaymentMercadoPagoService } from '../services/payment/paymentMercadoPago.service';
+import { CheckoutWebhookService } from '../services/checkout/checkoutWebhook.service';
+import { MercadoPagoService } from '../services/payment/mercadoPago.service';
 import { catchAsync } from '../utils/catchAsync';
 
 export class MercadoPagoController {
   static getPaymentById = catchAsync(async (req: Request, res: Response) => {
     const paymentId = req.params.id;
-    const paymentDetails = await PaymentMercadoPagoService.getPayment(paymentId);
+    const paymentDetails = await MercadoPagoService.getPayment(paymentId);
 
     res.status(200).json({
       status: 'success',
@@ -18,7 +18,7 @@ export class MercadoPagoController {
 
   static handleWebhook = catchAsync(async (req: Request, res: Response) => {
     const payload = req.body;
-    const response = await PaymentWebhookService.handleMercadoPagoWebhook(payload);
+    const response = await CheckoutWebhookService.handleMercadoPagoWebhook(payload);
 
     res.status(200).json({
       status: 'success',

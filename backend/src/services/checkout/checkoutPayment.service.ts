@@ -5,33 +5,36 @@ import { PaymentProcessingRequest } from '../../types/mercadoPago.types';
 import { VariantService } from '../variant/variant.service';
 import { PaymentService } from '../payment/payment.service';
 import { OrderService } from '../order.service';
-import { PaymentMercadoPagoService } from '../payment/paymentMercadoPago.service';
-import { CheckoutSessionService } from './checkoutSession.service';
+import { MercadoPagoService } from '../payment/mercadoPago.service';
+import { CheckoutService } from './checkout.service';
 
 export class CheckoutPaymentService {
-  static async processPayment(
+  static async createMercadoPagoPayment(
     sessionId: string,
     paymentData: PaymentProcessingRequest,
     user: User,
   ) {
-    const session = await CheckoutSessionService.getCheckoutSessionById(sessionId);
+    const session = await CheckoutService.getCheckoutSessionById(
+      sessionId,
+    );
     if (session.status !== 'active') {
       throw new AppError('Cannot process payment for inactive session', 400);
     }
     try {
-      for (const item of session.cartItems) {
-        await VariantService.checkStockAvailable(item.variantId, item.quantity);
-      }
+      await this.validateStockAvailability(session.cartItems);
 
-      const mercadoPagoResponse = await PaymentMercadoPagoService.processPayment(
-        paymentData,
-        sessionId,
-        session.cartItems,
-        user,
-      );
+      const mercadoPagoResponse =
+        await MercadoPagoService.processPayment(
+          paymentData,
+          sessionId,
+          session.cartItems,
+          user,
+        );
 
       const paymentType =
-        paymentData.payment_type_id === 'credit_card' ? 'hold' : 'capture';
+        paymentData.selectedPaymentMethod === 'credit_card'
+          ? 'hold'
+          : 'capture';
 
       if (
         mercadoPagoResponse.status === 'approved' ||
@@ -39,7 +42,6 @@ export class CheckoutPaymentService {
       ) {
         const order = await OrderService.createOrder(
           session.userId.toString(),
-          session.id.toString(),
           session.cartItems,
           session.total,
           session.shipping,
@@ -48,7 +50,7 @@ export class CheckoutPaymentService {
         );
 
         await Promise.all(
-          session.cartItems.map((item) =>
+          session.cartItems.map((item: any) =>
             VariantService.decreaseStock(item.variantId, item.quantity),
           ),
         );
@@ -57,12 +59,12 @@ export class CheckoutPaymentService {
           status: 'completed',
         });
 
-        PaymentService.createPayment({
+        PaymentService.createInternalPayment({
           userId: session.userId.toString(),
           orderId: order._id.toString(),
-          paymentId: mercadoPagoResponse.id?.toString() || '',
+          externalId: mercadoPagoResponse.id?.toString() || '',
           amount: session.total,
-          paymentType,
+          type: paymentType,
           status: mercadoPagoResponse.status,
         }).catch((error) => {
           console.error(
@@ -72,7 +74,6 @@ export class CheckoutPaymentService {
 
         return {
           order,
-          payment: mercadoPagoResponse,
           paymentType,
           message: 'Payment processed successfully',
         };
