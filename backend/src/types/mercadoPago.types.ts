@@ -119,7 +119,7 @@ export interface PaymentProcessingRequest {
   issuer_id: string;
   payment_method_id: string;
   transaction_amount: number;
-  payment_type_id: string;
+  selectedPaymentMethod: string;
   payment_method_option_id?: string | null;
   processing_mode?: string | null;
   installments: number;

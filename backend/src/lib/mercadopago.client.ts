@@ -15,7 +15,7 @@ export class MercadoPagoClient {
 
   private constructor() {
     this.config = new MercadoPagoConfig({
-      accessToken: MERCADO_PAGO.ACCESS_TOKEN,
+      accessToken: MERCADO_PAGO.MP_ACCESS_TOKEN,
       options: {
         timeout: 5000,
       },

@@ -42,7 +42,7 @@ export const R2 = {
 };
 
 export const MERCADO_PAGO = {
-  ACCESS_TOKEN: process.env.MP_ACCESS_TOKEN || '',
-  WEBHOOK_SECRET: process.env.MP_WEBHOOK_SECRET || '',
-  WEBHOOK_URL: process.env.MP_WEBHOOK_URL || '',
+  MP_ACCESS_TOKEN: process.env.MP_ACCESS_TOKEN || '',
+  MP_WEBHOOK_SECRET: process.env.MP_WEBHOOK_SECRET || '',
+  MP_WEBHOOK_URL: process.env.MP_WEBHOOK_URL || '',
 };

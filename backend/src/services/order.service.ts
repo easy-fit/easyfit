@@ -16,7 +16,6 @@ export class OrderService {
 
   static async createOrder(
     userId: string,
-    sessionId: string,
     cartItems: any[],
     total: number,
     shipping: any,
@@ -46,18 +45,10 @@ export class OrderService {
     };
 
     const order = await OrderModel.create(orderData);
-
-    for (const item of cartItems) {
-      const orderItemData = {
-        orderId: order._id.toString(),
-        variantId: item.variantId,
-        unitPrice: item.unit_price,
-        quantity: item.quantity,
-        returnStatus: 'undecided' as const,
-      };
-
-      await OrderItemService.createOrderItem(orderItemData);
-    }
+    await OrderItemService.createManyOrderItems(
+      order._id.toString(),
+      cartItems,
+    );
 
     return order;
   }

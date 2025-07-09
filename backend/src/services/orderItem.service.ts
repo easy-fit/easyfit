@@ -20,6 +20,17 @@ export class OrderItemService {
     return OrderItemModel.create(data);
   }
 
+  static async createManyOrderItems(orderId: string, items: any[]) {
+    const orderItemData = items.map((item) => ({
+      orderId: orderId,
+      variantId: item.variantId,
+      unitPrice: item.unit_price,
+      quantity: item.quantity,
+      returnStatus: 'undecided' as const,
+    }));
+    await OrderItemModel.insertMany(orderItemData);
+  }
+
   static async updateOrderItem(orderItemId: string, data: UpdateOrderItemDTO) {
     const item = await OrderItemModel.findByIdAndUpdate(orderItemId, data, {
       new: true,

@@ -22,11 +22,6 @@ const statusEnum = [
 const OrderSchema = new Schema<Order>(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    checkoutSessionId: {
-      type: Schema.Types.ObjectId,
-      ref: 'CheckoutSession',
-      required: true,
-    },
     total: { type: Number, required: true },
     shipping: { type: ShippingSchema, required: true },
     status: {
@@ -34,7 +29,7 @@ const OrderSchema = new Schema<Order>(
       enum: statusEnum,
       default: 'order_placed',
     },
-    paymentId: { type: String, required: true },
+    externalPaymentId: { type: String, required: true },
     paymentStatus: {
       type: String,
       enum: [

@@ -49,7 +49,7 @@ export interface Order {
   total: number;
   shipping: ShippingInfo;
   status: OrderStatus;
-  paymentId: string;
+  externalPaymentId: string;
   paymentStatus: PaymentStatus;
   deliveryVerification: DeliveryVerification;
   isStolen: boolean;
