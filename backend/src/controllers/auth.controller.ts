@@ -74,11 +74,7 @@ export class AuthController {
       throw new AppError('Current and new password are required', 400);
     }
 
-    const user = await AuthService.updatePassword(
-      req.user._id,
-      currentPassword,
-      newPassword,
-    );
+    const user = await AuthService.updatePassword(req.user._id, currentPassword, newPassword);
 
     createSendToken(user, 200, res);
   });
@@ -98,21 +94,19 @@ export class AuthController {
     });
   });
 
-  static sendVerificationCode = catchAsync(
-    async (req: Request, res: Response) => {
-      const { email } = req.user;
+  static sendVerificationCode = catchAsync(async (req: Request, res: Response) => {
+    const { email } = req.user;
 
-      if (!email) {
-        throw new AppError('Email is required', 400);
-      }
+    if (!email) {
+      throw new AppError('Email is required', 400);
+    }
 
-      const result = await AuthService.sendVerificationCode(email);
+    const result = await AuthService.sendVerificationCode(email);
 
-      res.status(200).json({
-        status: 'success',
-        message: 'Verification code sent successfully',
-        expiresAt: result.expiresAt,
-      });
-    },
-  );
+    res.status(200).json({
+      status: 'success',
+      message: 'Verification code sent successfully',
+      expiresAt: result.expiresAt,
+    });
+  });
 }

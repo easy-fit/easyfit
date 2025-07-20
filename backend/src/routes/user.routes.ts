@@ -10,10 +10,7 @@ userRoutes.patch('/me', UserController.updateMe);
 userRoutes.patch('/me/address', UserController.updateMyAddress);
 
 userRoutes.use(restrictTo('admin'));
-userRoutes
-  .route('/')
-  .get(UserController.getUsers)
-  .post(UserController.createUser);
+userRoutes.route('/').get(UserController.getUsers).post(UserController.createUser);
 
 userRoutes
   .route('/:id')

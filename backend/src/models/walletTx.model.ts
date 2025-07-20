@@ -27,7 +27,4 @@ const WalletTransactionSchema = new Schema<WalletTransaction>(
 WalletTransactionSchema.index({ walletId: 1 });
 WalletTransactionSchema.index({ createdAt: -1 });
 
-export const WalletTransactionModel = model(
-  'WalletTransaction',
-  WalletTransactionSchema,
-);
+export const WalletTransactionModel = model('WalletTransaction', WalletTransactionSchema);

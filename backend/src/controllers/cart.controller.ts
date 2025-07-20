@@ -33,24 +33,18 @@ export class CartItemController {
     res.status(204).json({ status: 'success' });
   });
 
-  static updateCartItemQuantity = catchAsync(
-    async (req: Request, res: Response) => {
-      const itemId = req.params.id;
-      const userId = req.user?._id;
-      const data: UpdateCartItemDTO = req.body;
-      const updatedItem = await CartItemService.updateCartItemQuantity(
-        itemId,
-        data,
-        userId,
-      );
-      res.status(200).json({
-        status: 'success',
-        data: {
-          updatedItem,
-        },
-      });
-    },
-  );
+  static updateCartItemQuantity = catchAsync(async (req: Request, res: Response) => {
+    const itemId = req.params.id;
+    const userId = req.user?._id;
+    const data: UpdateCartItemDTO = req.body;
+    const updatedItem = await CartItemService.updateCartItemQuantity(itemId, data, userId);
+    res.status(200).json({
+      status: 'success',
+      data: {
+        updatedItem,
+      },
+    });
+  });
 
   static clearCart = catchAsync(async (req: Request, res: Response) => {
     const userId = req.user?._id;

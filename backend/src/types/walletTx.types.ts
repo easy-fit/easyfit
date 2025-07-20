@@ -1,11 +1,7 @@
 import { Types } from 'mongoose';
 
 export type WalletTransactionDirection = 'in' | 'out';
-export type WalletTransactionType =
-  | 'earning'
-  | 'adjustment'
-  | 'penalty'
-  | 'withdrawal';
+export type WalletTransactionType = 'earning' | 'adjustment' | 'penalty' | 'withdrawal';
 export type WalletTransactionMethod = 'cbu' | 'cvu' | 'alias' | 'manual';
 
 export interface WalletTransaction {

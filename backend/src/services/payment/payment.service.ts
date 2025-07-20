@@ -12,6 +12,12 @@ export class PaymentService {
     return payment;
   }
 
+  static async getInternalPaymentByOrderId(orderId: string) {
+    const payment = await PaymentModel.findOne({ orderId });
+    this.ensurePaymentExists(payment);
+    return payment;
+  }
+
   static async createInternalPayment(data: any) {
     return PaymentModel.create(data);
   }

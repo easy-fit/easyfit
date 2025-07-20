@@ -3,9 +3,7 @@ import { AppError } from '../../utils/appError';
 
 export class VariantStockService {
   static async checkStockAvailable(variantId: string, requestedQty: number) {
-    const variant = await VariantModel.findById(variantId)
-      .select('stock')
-      .lean();
+    const variant = await VariantModel.findById(variantId).select('stock').lean();
     if (!variant) {
       throw new AppError('Variant not found', 404);
     }

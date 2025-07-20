@@ -5,15 +5,7 @@ import { AppError } from '../../utils/appError';
 
 export class ProductFilterService {
   static async getFilteredProducts(options: ProductFilterOptions = {}) {
-    const {
-      search,
-      category,
-      minPrice,
-      maxPrice,
-      page = 1,
-      limit = 20,
-      sort = '-createdAt',
-    } = options;
+    const { search, category, minPrice, maxPrice, page = 1, limit = 20, sort = '-createdAt' } = options;
 
     const filter: any = {
       status: 'published',
@@ -91,9 +83,7 @@ export class ProductFilterService {
   }
 
   private static async getStoreIdBySlug(storeSlug: string) {
-    const store = await StoreModel.findOne({ slug: storeSlug })
-      .select('_id')
-      .lean();
+    const store = await StoreModel.findOne({ slug: storeSlug }).select('_id').lean();
 
     if (!store) {
       throw new AppError('Store not found', 404);

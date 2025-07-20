@@ -14,18 +14,14 @@ export class ProductValidationService {
     return !!existingProduct;
   }
 
-  static async validateTitleUniqueness(
-    storeId: string,
-    title: string,
-    excludeProductId?: string,
-  ) {
+  static async validateTitleUniqueness(storeId: string, title: string, excludeProductId?: string) {
     const query: any = { storeId, title };
     if (excludeProductId) {
       query._id = { $ne: excludeProductId };
     }
 
     const existingProduct = await ProductModel.findOne(query, { title: 1, _id: 0 }).lean();
-    
+
     if (existingProduct) {
       throw new AppError('Product with this title already exists in the store', 400);
     }

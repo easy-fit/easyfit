@@ -1,16 +1,10 @@
 import { ProductModel } from '../../models/product.model';
 import { AppError } from '../../utils/appError';
-import { StoreService } from '../store/store.service';
-import {
-  CreateProductDTO,
-  UpdateProductDTO,
-  ProductFilterOptions,
-} from '../../types/product.types';
+import { CreateProductDTO, UpdateProductDTO, ProductFilterOptions } from '../../types/product.types';
 import { CreateVariantDTO } from '../../types/variant.types';
 import { VariantService } from '../variant/variant.service';
 import { ProductFilterService } from './productFilter.service';
 import { ProductValidationService } from './productValidation.service';
-import { VariantImageService } from '../variant/variantImage.service';
 import { R2Service } from '../r2.service';
 import { R2 } from '../../config/env';
 
@@ -27,29 +21,25 @@ export class ProductService {
 
   static async getProductsByStore(storeSlug: string) {
     const products = await ProductFilterService.getProductsByStore(storeSlug);
-    
+
     if (!products || products.length === 0) {
       throw new AppError('No products found for this store', 404);
     }
-    
+
     return products;
   }
 
   static async getProductBySlug(storeSlug: string, slug: string) {
     const product = await ProductFilterService.getProductBySlug(storeSlug, slug);
-    
+
     if (!product) {
       throw new AppError('Product not found', 404);
     }
-    
+
     return product;
   }
 
-  static async createProduct(
-    data: CreateProductDTO,
-    variants: CreateVariantDTO[],
-    storeId: string,
-  ) {
+  static async createProduct(data: CreateProductDTO, variants: CreateVariantDTO[], storeId: string) {
     await ProductValidationService.validateTitleUniqueness(storeId, data.title);
 
     const slug = ProductValidationService.generateSlug(data.title);
@@ -85,11 +75,8 @@ export class ProductService {
       return { ...variant, images: imagesWithSignedUrls };
     });
 
-    await VariantService.createManyVariants(
-      product._id.toString(),
-      updatedVariants,
-    );
-    
+    await VariantService.createManyVariants(product._id.toString(), updatedVariants);
+
     return { product, signedUrls };
   }
 
@@ -97,20 +84,12 @@ export class ProductService {
     const product = await ProductValidationService.validateProductExists(productId);
 
     if (data.title && data.title !== product.title) {
-      await ProductValidationService.validateTitleUniqueness(
-        product.storeId.toString(),
-        data.title,
-        productId,
-      );
+      await ProductValidationService.validateTitleUniqueness(product.storeId.toString(), data.title, productId);
 
       data.slug = ProductValidationService.generateSlug(data.title);
     }
 
-    const updatedProduct = await ProductModel.findByIdAndUpdate(
-      productId,
-      data,
-      { new: true, runValidators: true },
-    );
+    const updatedProduct = await ProductModel.findByIdAndUpdate(productId, data, { new: true, runValidators: true });
 
     return updatedProduct;
   }

@@ -10,8 +10,7 @@ export class AuthPasswordService {
   static async forgotPassword(email: string) {
     const response = {
       status: 'success',
-      message:
-        'If this email belongs to an account, a password reset link will be sent shortly',
+      message: 'If this email belongs to an account, a password reset link will be sent shortly',
     };
 
     this.processPasswordReset(email).catch((err) => {
@@ -45,11 +44,7 @@ export class AuthPasswordService {
     return user;
   }
 
-  static async updatePassword(
-    userId: string,
-    currentPassword: string,
-    newPassword: string,
-  ) {
+  static async updatePassword(userId: string, currentPassword: string, newPassword: string) {
     const user = await UserModel.findById(userId).select('+passwordHash');
     if (!user) {
       throw new AppError('User not found', 404);
@@ -72,10 +67,7 @@ export class AuthPasswordService {
     if (!user) return;
 
     const resetToken = crypto.randomBytes(32).toString('hex');
-    const hashedToken = crypto
-      .createHash('sha256')
-      .update(resetToken)
-      .digest('hex');
+    const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
 
     user.passwordResetToken = hashedToken;
     user.passwordResetExpires = new Date(Date.now() + 10 * 60 * 1000);

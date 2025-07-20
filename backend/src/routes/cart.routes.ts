@@ -4,7 +4,7 @@ import { protect, restrictTo, isEmailVerified } from '../middlewares/auth';
 
 export const cartRoutes = Router();
 
-cartRoutes.use(protect, isEmailVerified, restrictTo('user', 'admin'));
+cartRoutes.use(protect, isEmailVerified, restrictTo('user'));
 
 cartRoutes
   .route('/')
@@ -12,7 +12,4 @@ cartRoutes
   .post(CartItemController.addCartItem)
   .delete(CartItemController.clearCart);
 
-cartRoutes
-  .route('/:id')
-  .delete(CartItemController.removeCartItem)
-  .patch(CartItemController.updateCartItemQuantity);
+cartRoutes.route('/:id').delete(CartItemController.removeCartItem).patch(CartItemController.updateCartItemQuantity);

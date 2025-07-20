@@ -1,9 +1,5 @@
 import { StoreModel } from '../../models/store.model';
-import {
-  CreateStoreDTO,
-  UpdateStoreDTO,
-  StoreFilterOptions,
-} from '../../types/store.types';
+import { CreateStoreDTO, UpdateStoreDTO, StoreFilterOptions } from '../../types/store.types';
 import { AppError } from '../../utils/appError';
 import { STORE_TAGS_VALUES } from '../../types/store.constants';
 import { StoreAssetService } from './storeAsset.service';
@@ -36,9 +32,7 @@ export class StoreService {
   }
 
   static async getStoreIdBySlug(storeSlug: string) {
-    const store = await StoreModel.findOne({ slug: storeSlug })
-      .select('_id')
-      .lean();
+    const store = await StoreModel.findOne({ slug: storeSlug }).select('_id').lean();
 
     this.ensureStoreExists(store);
     return store?._id;
@@ -103,10 +97,7 @@ export class StoreService {
   static async deleteStore(storeId: string) {
     const hasProducts = await this.hasProducts(storeId);
     if (hasProducts) {
-      throw new AppError(
-        'Store cannot be deleted as it contains products. Please delete the products first.',
-        400,
-      );
+      throw new AppError('Store cannot be deleted as it contains products. Please delete the products first.', 400);
     }
     await StoreModel.findByIdAndDelete(storeId);
   }
@@ -137,9 +128,7 @@ export class StoreService {
 
   private static checkStoreTags(tags: string[]) {
     if (tags && tags.length > 0) {
-      const invalidTags = tags.filter(
-        (tag) => !STORE_TAGS_VALUES.includes(tag as any),
-      );
+      const invalidTags = tags.filter((tag) => !STORE_TAGS_VALUES.includes(tag as any));
       if (invalidTags.length > 0) {
         throw new AppError(`Invalid tags: ${invalidTags.join(', ')}`, 400);
       }

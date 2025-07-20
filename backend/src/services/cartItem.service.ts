@@ -40,11 +40,7 @@ export class CartItemService {
     return CartItemModel.create(enhancedDto);
   }
 
-  static async updateCartItemQuantity(
-    itemId: string,
-    data: UpdateCartItemDTO,
-    userId: string,
-  ) {
+  static async updateCartItemQuantity(itemId: string, data: UpdateCartItemDTO, userId: string) {
     if (data.quantity < 1 || data.quantity > 6) {
       throw new AppError('Quantity must be between 1 and 6', 400);
     }
@@ -55,10 +51,7 @@ export class CartItemService {
 
     await this.checkTotalCartItems(userId, data.quantity - item.quantity);
 
-    await VariantService.checkStockAvailable(
-      item.variantId.toString(),
-      data.quantity,
-    );
+    await VariantService.checkStockAvailable(item.variantId.toString(), data.quantity);
     item.quantity = data.quantity;
     return item.save();
   }
@@ -90,15 +83,9 @@ export class CartItemService {
     return items;
   }
 
-  private static async checkTotalCartItems(
-    userId: string,
-    itemQuantity: number = 0,
-  ) {
+  private static async checkTotalCartItems(userId: string, itemQuantity: number = 0) {
     const items = await CartItemModel.find({ userId }).select('quantity');
-    const totalItems = items.reduce(
-      (total, item) => total + item.quantity,
-      itemQuantity,
-    );
+    const totalItems = items.reduce((total, item) => total + item.quantity, itemQuantity);
     if (totalItems > 6) {
       throw new AppError('Cart can only hold up to 6 items', 400);
     }
@@ -130,15 +117,10 @@ export class CartItemService {
     }
 
     const newStoreId = (newVariant.productId as any).storeId.toString();
-    const existingStoreId = (
-      cartItems[0].variantId as any
-    ).productId.storeId.toString();
+    const existingStoreId = (cartItems[0].variantId as any).productId.storeId.toString();
 
     if (newStoreId !== existingStoreId) {
-      throw new AppError(
-        'Cannot mix products from different stores in cart',
-        400,
-      );
+      throw new AppError('Cannot mix products from different stores in cart', 400);
     }
   }
 }

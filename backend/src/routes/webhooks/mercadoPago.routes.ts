@@ -4,9 +4,4 @@ import { validateMercadoPagoWebhook } from '../../middlewares/auth';
 
 export const mercadoPagoRoutes = Router();
 
-mercadoPagoRoutes.post(
-  '/webhook',
-  express.json(),
-  validateMercadoPagoWebhook,
-  MercadoPagoController.handleWebhook,
-);
+mercadoPagoRoutes.post('/webhook', express.json(), validateMercadoPagoWebhook, MercadoPagoController.handleWebhook);

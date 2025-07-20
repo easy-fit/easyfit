@@ -84,16 +84,8 @@ export class AuthService {
     return AuthPasswordService.resetPassword(token, newPassword);
   }
 
-  static async updatePassword(
-    userId: string,
-    currentPassword: string,
-    newPassword: string,
-  ) {
-    return AuthPasswordService.updatePassword(
-      userId,
-      currentPassword,
-      newPassword,
-    );
+  static async updatePassword(userId: string, currentPassword: string, newPassword: string) {
+    return AuthPasswordService.updatePassword(userId, currentPassword, newPassword);
   }
 
   static async verifyEmail(email: string, code: string) {

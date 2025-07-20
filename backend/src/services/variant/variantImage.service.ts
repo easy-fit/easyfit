@@ -70,7 +70,7 @@ export class VariantImageService {
     }
 
     await variant.save();
-    
+
     // Delete from R2 asynchronously
     R2Service.deleteObject(BUCKET_PRODUCTS, key).catch((err) =>
       console.error(`Error deleting image ${key} from R2:`, err),

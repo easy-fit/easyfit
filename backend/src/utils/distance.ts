@@ -11,10 +11,7 @@ interface DistanceResult {
   duration: number;
 }
 
-export const calculateDistance = (
-  point1: Coordinates,
-  point2: Coordinates,
-): number => {
+export const calculateDistance = (point1: Coordinates, point2: Coordinates): number => {
   const R = 6371; // Earth's radius in kilometers
   const dLat = toRadians(point2.latitude - point1.latitude);
   const dLon = toRadians(point2.longitude - point1.longitude);
@@ -44,7 +41,7 @@ const isPointInPolygon = (point: [number, number], polygon: [number, number][]):
     const [xi, yi] = polygon[i];
     const [xj, yj] = polygon[j];
 
-    if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) {
+    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) {
       inside = !inside;
     }
   }
@@ -54,27 +51,24 @@ const isPointInPolygon = (point: [number, number], polygon: [number, number][]):
 
 export const isDeliveryLocationValid = (coordinates: Coordinates): boolean => {
   const point: [number, number] = [coordinates.longitude, coordinates.latitude];
-  
+
   const deliveryZone = allowedDeliveryZones.features[0];
   if (!deliveryZone || deliveryZone.geometry.type !== 'Polygon') {
     return false;
   }
 
   const polygonCoordinates = deliveryZone.geometry.coordinates;
-  
+
   for (const ring of polygonCoordinates) {
     if (isPointInPolygon(point, ring as [number, number][])) {
       return true;
     }
   }
-  
+
   return false;
 };
 
-export const calculateCityDistance = async (
-  origin: Coordinates,
-  destination: Coordinates,
-): Promise<DistanceResult> => {
+export const calculateCityDistance = async (origin: Coordinates, destination: Coordinates): Promise<DistanceResult> => {
   try {
     const response = await axios.post(
       'https://routes.googleapis.com/directions/v2:computeRoutes',

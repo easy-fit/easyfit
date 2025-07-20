@@ -7,10 +7,7 @@ export const paymentRoutes = Router();
 paymentRoutes.use(protect);
 paymentRoutes.use(restrictTo('admin'));
 
-paymentRoutes
-  .route('/')
-  .get(PaymentController.getInternalPayments)
-  .post(PaymentController.createInternalPayment);
+paymentRoutes.route('/').get(PaymentController.getInternalPayments).post(PaymentController.createInternalPayment);
 
 paymentRoutes
   .route('/:id')
@@ -18,10 +15,4 @@ paymentRoutes
   .patch(PaymentController.updateInternalPayment)
   .delete(PaymentController.deleteInternalPayment);
 
-paymentRoutes.get(
-  '/external/:externalId',
-  PaymentController.getInternalPaymentByExternalId,
-);
-
-// Note: MercadoPago operations moved to MercadoPagoController
-// These routes should be moved to mercadoPago.routes.ts if needed
+paymentRoutes.get('/external/:externalId', PaymentController.getInternalPaymentByExternalId);

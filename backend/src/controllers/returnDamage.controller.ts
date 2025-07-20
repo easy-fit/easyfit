@@ -1,10 +1,7 @@
 import { Request, Response } from 'express';
 import { ReturnDamageService } from '../services/returnDamage.service';
 import { catchAsync } from '../utils/catchAsync';
-import {
-  CreateReturnDamageDTO,
-  UpdateReturnDamageDTO,
-} from '../types/returnDamage.types';
+import { CreateReturnDamageDTO, UpdateReturnDamageDTO } from '../types/returnDamage.types';
 
 export class ReturnDamageController {
   static getRequests = catchAsync(async (_req: Request, res: Response) => {

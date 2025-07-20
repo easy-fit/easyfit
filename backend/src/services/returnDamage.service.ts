@@ -1,9 +1,6 @@
 import { ReturnDamageRequestModel } from '../models/returnDamage.model';
 import { AppError } from '../utils/appError';
-import {
-  CreateReturnDamageDTO,
-  UpdateReturnDamageDTO,
-} from '../types/returnDamage.types';
+import { CreateReturnDamageDTO, UpdateReturnDamageDTO } from '../types/returnDamage.types';
 import { R2 } from '../config/env';
 
 const { BUCKET_RETURNS } = R2;

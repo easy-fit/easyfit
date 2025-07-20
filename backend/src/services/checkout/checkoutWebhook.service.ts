@@ -10,10 +10,7 @@ import { CheckoutService } from './checkout.service';
 export class CheckoutWebhookService {
   static async handleMercadoPagoWebhook(payload: any) {
     try {
-      if (
-        payload.action === 'payment.created' ||
-        payload.action === 'payment.updated'
-      ) {
+      if (payload.action === 'payment.created' || payload.action === 'payment.updated') {
         const paymentId = payload.data?.id;
 
         if (!paymentId) {
@@ -21,15 +18,10 @@ export class CheckoutWebhookService {
           return;
         }
 
-        const existingPayment =
-          await PaymentService.getInternalPaymentByExternalId(
-            paymentId.toString(),
-          );
+        const existingPayment = await PaymentService.getInternalPaymentByExternalId(paymentId.toString());
 
         if (existingPayment) {
-          console.log(
-            `Payment ${paymentId} already processed via process-payment endpoint`,
-          );
+          console.log(`Payment ${paymentId} already processed via process-payment endpoint`);
           return;
         }
 
@@ -45,44 +37,32 @@ export class CheckoutWebhookService {
 
         if (payment.status === 'approved') {
           await this.completePaymentFromWebhook(sessionId, payment);
-        } else if (
-          payment.status === 'rejected' ||
-          payment.status === 'cancelled'
-        ) {
+        } else if (payment.status === 'rejected' || payment.status === 'cancelled') {
           await this.handleFailedPayment(sessionId, payment);
         }
 
-        console.log(
-          `Payment ${paymentId} processed via webhook with status: ${payment.status}`,
-        );
+        console.log(`Payment ${paymentId} processed via webhook with status: ${payment.status}`);
       }
     } catch (error: any) {
       console.error('Error processing MercadoPago webhook:', error.message);
       throw new AppError('Webhook processing failed', 500);
     }
   }
+
   static async completePaymentFromWebhook(sessionId: string, payment: any) {
     const session = await CheckoutService.getCheckoutSessionById(sessionId);
 
     if (session.status !== 'active') {
-      throw new AppError(
-        `Cannot complete payment for session with status: ${session.status}`,
-        400,
-      );
+      throw new AppError(`Cannot complete payment for session with status: ${session.status}`, 400);
     }
 
-    const isStockAvailable =
-      await CheckoutPaymentService.validateStockAvailability(session.cartItems);
+    const isStockAvailable = await VariantService.checkStockAvailableForItems(session.cartItems);
     if (!isStockAvailable) {
       await this.handleStockFailureRefund(sessionId, payment, session);
       throw new AppError('Stock unavailable, payment refunded', 400);
     }
 
-    return await this.createOrderAndCompletePayment(
-      sessionId,
-      payment,
-      session,
-    );
+    return await this.createOrderAndCompletePayment(sessionId, payment, session);
   }
 
   static async handleFailedPayment(sessionId: string, payment: any) {
@@ -102,28 +82,17 @@ export class CheckoutWebhookService {
         status: 'failed',
         externalId: payment.id?.toString() || '',
       }).catch((error) => {
-        console.error(
-          `Failed to create payment record for failed payment ${payment.id}: ${error.message}`,
-        );
+        console.error(`Failed to create payment record for failed payment ${payment.id}: ${error.message}`);
       });
 
-      console.log(
-        `Payment ${payment.id} failed for session ${sessionId}, status updated to cancelled`,
-      );
+      console.log(`Payment ${payment.id} failed for session ${sessionId}, status updated to cancelled`);
     } catch (error: any) {
-      console.error(
-        `Error handling failed payment for session ${sessionId}:`,
-        error.message,
-      );
+      console.error(`Error handling failed payment for session ${sessionId}:`, error.message);
       throw new AppError('Failed to handle payment failure', 500);
     }
   }
 
-  private static async handleStockFailureRefund(
-    sessionId: string,
-    payment: any,
-    session: any,
-  ) {
+  private static async handleStockFailureRefund(sessionId: string, payment: any, session: any) {
     console.error(`Stock validation failed for session ${sessionId}`);
 
     try {
@@ -142,32 +111,22 @@ export class CheckoutWebhookService {
         status: 'refunded',
         externalId: payment.id?.toString() || '',
       }).catch((refundError) => {
-        console.error(
-          `Failed to create refund record for payment ${payment.id}: ${refundError.message}`,
-        );
+        console.error(`Failed to create refund record for payment ${payment.id}: ${refundError.message}`);
       });
 
-      console.log(
-        `Refund processed for payment ${payment.id} due to stock unavailability`,
-      );
+      console.log(`Refund processed for payment ${payment.id} due to stock unavailability`);
     } catch (refundError: any) {
-      console.error(
-        `Failed to refund payment ${payment.id}:`,
-        refundError.message,
-      );
+      console.error(`Failed to refund payment ${payment.id}:`, refundError.message);
       throw new AppError('Stock unavailable and refund failed', 500);
     }
   }
 
-  private static async createOrderAndCompletePayment(
-    sessionId: string,
-    payment: any,
-    session: any,
-  ) {
+  private static async createOrderAndCompletePayment(sessionId: string, payment: any, session: any) {
     const paymentType = 'capture';
 
     const order = await OrderService.createOrder(
       session.userId.toString(),
+      session.storeId.toString(),
       session.cartItems,
       session.total,
       session.shipping,
@@ -182,9 +141,7 @@ export class CheckoutWebhookService {
       status: 'success',
       externalId: payment.id?.toString() || '',
     }).catch((error) => {
-      console.error(
-        `Failed to create payment record for order ${order._id}: ${error.message}`,
-      );
+      console.error(`Failed to create payment record for order ${order._id}: ${error.message}`);
     });
 
     await Promise.all(
@@ -197,9 +154,7 @@ export class CheckoutWebhookService {
       status: 'completed',
     });
 
-    console.log(
-      `Order ${order._id} created successfully from webhook for session ${sessionId}`,
-    );
+    console.log(`Order ${order._id} created successfully from webhook for session ${sessionId}`);
     return order;
   }
 }

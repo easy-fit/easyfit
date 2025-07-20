@@ -1,33 +1,14 @@
 import { Request, Response } from 'express';
 import { StoreService } from '../services/store/store.service';
 import { catchAsync } from '../utils/catchAsync';
-import {
-  CreateStoreDTO,
-  UpdateStoreDTO,
-  StoreFilterOptions,
-} from '../types/store.types';
+import { CreateStoreDTO, UpdateStoreDTO, StoreFilterOptions } from '../types/store.types';
 
 export class StoreController {
   static getStores = catchAsync(async (req: Request, res: Response) => {
-    const {
-      tags,
-      status,
-      isOpen,
-      rating,
-      page = 1,
-      lat,
-      lng,
-      distance,
-      limit = 20,
-      sort = '-createdAt',
-    } = req.query;
+    const { tags, status, isOpen, rating, page = 1, lat, lng, distance, limit = 20, sort = '-createdAt' } = req.query;
 
     const filterOptions: StoreFilterOptions = {
-      tags: tags
-        ? Array.isArray(tags)
-          ? tags.map((tag) => String(tag))
-          : [String(tags)]
-        : undefined,
+      tags: tags ? (Array.isArray(tags) ? tags.map((tag) => String(tag)) : [String(tags)]) : undefined,
       status: status as string,
       isOpen: isOpen === 'true' ? true : isOpen === 'false' ? false : undefined,
       page: Number(page),

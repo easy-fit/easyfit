@@ -1,9 +1,5 @@
 import { mercadoPagoClient } from '../../lib/mercadopago.client';
-import {
-  CreatePaymentRequest,
-  CreatePreferenceRequest,
-  PaymentProcessingRequest,
-} from '../../types/mercadoPago.types';
+import { CreatePaymentRequest, CreatePreferenceRequest, PaymentProcessingRequest } from '../../types/mercadoPago.types';
 import { MERCADO_PAGO, ENV } from '../../config/env';
 import { AppError } from '../../utils/appError';
 import { User } from '../../types/user.types';
@@ -23,10 +19,7 @@ export class MercadoPagoService {
 
       return response;
     } catch (error: any) {
-      throw new AppError(
-        `MercadoPago payment creation failed: ${error.message}`,
-        400,
-      );
+      throw new AppError(`MercadoPago payment creation failed: ${error.message}`, 400);
     }
   }
 
@@ -37,8 +30,7 @@ export class MercadoPagoService {
     userInfo?: any,
   ) {
     try {
-      const capture =
-        paymentData.selectedPaymentMethod === 'credit_card' ? false : true;
+      const capture = paymentData.selectedPaymentMethod === 'credit_card' ? false : true;
 
       const paymentRequest: CreatePaymentRequest = {
         transaction_amount: paymentData.transaction_amount,
@@ -72,10 +64,7 @@ export class MercadoPagoService {
 
       return await this.createPayment(paymentRequest);
     } catch (error: any) {
-      throw new AppError(
-        `MercadoPago payment processing failed: ${error.message}`,
-        400,
-      );
+      throw new AppError(`MercadoPago payment processing failed: ${error.message}`, 400);
     }
   }
 
@@ -87,10 +76,7 @@ export class MercadoPagoService {
 
       return response;
     } catch (error: any) {
-      throw new AppError(
-        `MercadoPago payment retrieval failed: ${error.message}`,
-        400,
-      );
+      throw new AppError(`MercadoPago payment retrieval failed: ${error.message}`, 400);
     }
   }
 
@@ -112,10 +98,7 @@ export class MercadoPagoService {
       const response = await mercadoPagoClient.payment.capture(captureData);
       return response;
     } catch (error: any) {
-      throw new AppError(
-        `MercadoPago payment capture failed: ${error.message}`,
-        400,
-      );
+      throw new AppError(`MercadoPago payment capture failed: ${error.message}`, 400);
     }
   }
 
@@ -132,10 +115,7 @@ export class MercadoPagoService {
 
       return response;
     } catch (error: any) {
-      throw new AppError(
-        `MercadoPago payment cancellation failed: ${error.message}`,
-        400,
-      );
+      throw new AppError(`MercadoPago payment cancellation failed: ${error.message}`, 400);
     }
   }
 
@@ -157,19 +137,11 @@ export class MercadoPagoService {
       const response = await mercadoPagoClient.paymentRefund.create(refundData);
       return response;
     } catch (error: any) {
-      throw new AppError(
-        `MercadoPago payment refund failed: ${error.message}`,
-        400,
-      );
+      throw new AppError(`MercadoPago payment refund failed: ${error.message}`, 400);
     }
   }
 
-  static async createPreference(
-    user: User,
-    data: any,
-    sessionId: string,
-    cost: number,
-  ) {
+  static async createPreference(user: User, data: any, sessionId: string, cost: number) {
     try {
       const preferenceData: CreatePreferenceRequest = {
         items: data,
@@ -217,10 +189,7 @@ export class MercadoPagoService {
 
       return response.id;
     } catch (error: any) {
-      throw new AppError(
-        `MercadoPago preference creation failed: ${error.message}`,
-        400,
-      );
+      throw new AppError(`MercadoPago preference creation failed: ${error.message}`, 400);
     }
   }
 }

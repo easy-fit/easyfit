@@ -1,12 +1,6 @@
 import { Schema, model } from 'mongoose';
 import { OrderItem } from '../types/orderItem.types';
 
-const OrderItemMetadataSchema = new Schema({
-  productTitle: { type: String, required: true },
-  variantSize: { type: String, required: true },
-  variantColor: { type: String, required: true },
-});
-
 const returnVerificationSchema = new Schema({
   checkedBy: { type: Schema.Types.ObjectId, ref: 'User' },
   checkedAt: { type: Date },
@@ -32,8 +26,7 @@ const OrderItemSchema = new Schema<OrderItem>(
         validator: function (this: any) {
           return !this.returnVerification || this.returnStatus === 'returned';
         },
-        message:
-          'Return verification can only be set if returnStatus is "returned".',
+        message: 'Return verification can only be set if returnStatus is "returned".',
       },
     },
   },

@@ -1,6 +1,6 @@
 import { Types } from 'mongoose';
 
-export type OrderItemReturnStatus = 'kept' | 'returned' | 'undecided';
+export type OrderItemReturnStatus = 'kept' | 'returned' | 'undecided' | 'returned_damaged' | 'stolen';
 
 export interface OrderItemReturnVerification {
   checkedBy: string;

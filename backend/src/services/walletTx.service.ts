@@ -1,9 +1,6 @@
 import { WalletTransactionModel } from '../models/walletTx.model';
 import { AppError } from '../utils/appError';
-import {
-  CreateWalletTransactionDTO,
-  UpdateWalletTransactionDTO,
-} from '../types/walletTx.types';
+import { CreateWalletTransactionDTO, UpdateWalletTransactionDTO } from '../types/walletTx.types';
 
 export class WalletTransactionService {
   static async getTransactions() {

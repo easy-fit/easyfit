@@ -34,14 +34,7 @@ export class StoreFilterService {
     const skip = (page - 1) * limit;
 
     if (nearLocation && nearLocation.longitude && nearLocation.latitude) {
-      return this.getStoresNearLocation(
-        nearLocation,
-        filter,
-        sort,
-        skip,
-        limit,
-        page,
-      );
+      return this.getStoresNearLocation(nearLocation, filter, sort, skip, limit, page);
     } else {
       return this.getStoresWithoutLocation(filter, sort, skip, limit, page);
     }
@@ -62,10 +55,7 @@ export class StoreFilterService {
         $geoNear: {
           near: {
             type: 'Point' as const,
-            coordinates: [nearLocation.longitude, nearLocation.latitude] as [
-              number,
-              number,
-            ],
+            coordinates: [nearLocation.longitude, nearLocation.latitude] as [number, number],
           },
           distanceField: 'distance',
           maxDistance: maxDistance,
@@ -100,13 +90,7 @@ export class StoreFilterService {
     };
   }
 
-  private static async getStoresWithoutLocation(
-    filter: any,
-    sort: string,
-    skip: number,
-    limit: number,
-    page: number,
-  ) {
+  private static async getStoresWithoutLocation(filter: any, sort: string, skip: number, limit: number, page: number) {
     const [stores, total] = await Promise.all([
       StoreModel.find(filter).sort(sort).skip(skip).limit(limit),
       StoreModel.countDocuments(filter),

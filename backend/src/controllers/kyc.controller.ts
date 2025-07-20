@@ -10,14 +10,12 @@ export class KYCController {
     res.status(201).json({ status: 'success', data: applicant });
   });
 
-  static generateWebSDKLink = catchAsync(
-    async (req: Request, res: Response) => {
-      const userId = req.user._id;
+  static generateWebSDKLink = catchAsync(async (req: Request, res: Response) => {
+    const userId = req.user._id;
 
-      const sdkLink = await KYCService.generateWebSDKLink(userId);
-      res.status(200).json({ status: 'success', data: sdkLink });
-    },
-  );
+    const sdkLink = await KYCService.generateWebSDKLink(userId);
+    res.status(200).json({ status: 'success', data: sdkLink });
+  });
 
   static handleWebhook = catchAsync(async (req: Request, res: Response) => {
     const payload = req.body;

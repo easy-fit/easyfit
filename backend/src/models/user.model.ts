@@ -1,10 +1,7 @@
 import { Schema, model } from 'mongoose';
 import { User } from '../types/user.types';
 import { AddressSchema } from '../schemas/common/address.schema';
-import {
-  RiderInfoSchema,
-  MerchantInfoSchema,
-} from '../schemas/user/user.schemas';
+import { RiderInfoSchema, MerchantInfoSchema } from '../schemas/user/user.schemas';
 
 const UserSchema = new Schema<User>(
   {
@@ -65,9 +62,7 @@ UserSchema.pre('validate', function (next) {
   }
 
   if (isCustomerOrAdmin && (user.riderInfo || user.merchantInfo)) {
-    return next(
-      new Error('Customers/Admins must not have riderInfo or merchantInfo'),
-    );
+    return next(new Error('Customers/Admins must not have riderInfo or merchantInfo'));
   }
 
   next();

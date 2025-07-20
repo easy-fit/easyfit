@@ -9,6 +9,7 @@ import { CheckoutShippingService } from './checkoutShipping.service';
 import { CheckoutPaymentService } from './checkoutPayment.service';
 import { CheckoutWebhookService } from './checkoutWebhook.service';
 import { SHIPPING_BASE_COSTS } from '../../config/shipping';
+import { ShippingType } from '../../types/order.types';
 
 export class CheckoutService {
   static async getCheckoutSessions() {
@@ -23,10 +24,7 @@ export class CheckoutService {
     return session;
   }
 
-  static async updateCheckoutSession(
-    sessionId: string,
-    data: UpdateCheckoutSessionDTO,
-  ) {
+  static async updateCheckoutSession(sessionId: string, data: UpdateCheckoutSessionDTO) {
     const session = await CheckoutSessionModel.findById(sessionId);
 
     if (!session) {
@@ -38,22 +36,19 @@ export class CheckoutService {
     }
 
     if (data.deliveryType) {
-      const currentDeliveryTypeCost =
-        SHIPPING_BASE_COSTS[session.shipping.type];
+      const currentDeliveryTypeCost = SHIPPING_BASE_COSTS[session.shipping.type];
       const newDeliveryTypeCost = SHIPPING_BASE_COSTS[data.deliveryType];
 
       session.shipping.type = data.deliveryType;
-      session.shipping.tryOnEnabled =
-        data.deliveryType === 'premium' || data.deliveryType === 'advanced';
-      session.shipping.cost =
-        session.shipping.cost - currentDeliveryTypeCost + newDeliveryTypeCost;
+      session.shipping.tryOnEnabled = data.deliveryType === 'premium' || data.deliveryType === 'advanced';
+      session.shipping.cost = session.shipping.cost - currentDeliveryTypeCost + newDeliveryTypeCost;
       session.total = session.subtotal + session.shipping.cost;
     }
 
     return session.save();
   }
 
-  static async createCheckoutSession(user: User, userAddress: any) {
+  static async createCheckoutSession(user: User, userAddress: any, shippingType: ShippingType) {
     if (!userAddress || !userAddress.location) {
       throw new AppError('User address is required for checkout', 400);
     }
@@ -66,10 +61,9 @@ export class CheckoutService {
       return total + item.variantId.price * item.quantity;
     }, 0);
 
-    const shipping = await CheckoutShippingService.calculateShipping(
-      userAddress,
-      cartItems,
-    );
+    const shipping = await CheckoutShippingService.calculateShipping(userAddress, cartItems, shippingType);
+    const storeId = shipping.storeId;
+    delete shipping.storeId;
 
     const total = subtotal + shipping.cost;
 
@@ -82,6 +76,7 @@ export class CheckoutService {
 
     const checkoutSession = await CheckoutSessionModel.create({
       userId: user._id,
+      storeId,
       cartItems: cartItemsSnapshot,
       subtotal,
       total,
@@ -99,23 +94,12 @@ export class CheckoutService {
     return { checkoutSession, preferenceId };
   }
 
-  static async processPayment(
-    sessionId: string,
-    paymentData: PaymentProcessingRequest,
-    user: User,
-  ) {
-    return CheckoutPaymentService.createMercadoPagoPayment(
-      sessionId,
-      paymentData,
-      user,
-    );
+  static async processPayment(sessionId: string, paymentData: PaymentProcessingRequest, user: User) {
+    return CheckoutPaymentService.createMercadoPagoPayment(sessionId, paymentData, user);
   }
 
   static async completePaymentFromWebhook(sessionId: string, payment: any) {
-    return CheckoutWebhookService.completePaymentFromWebhook(
-      sessionId,
-      payment,
-    );
+    return CheckoutWebhookService.completePaymentFromWebhook(sessionId, payment);
   }
 
   static async handleFailedPayment(sessionId: string, payment: any) {
@@ -123,9 +107,6 @@ export class CheckoutService {
   }
 
   private static async cancelActiveCheckoutSessions(userId: string) {
-    await CheckoutSessionModel.updateMany(
-      { userId, status: 'active' },
-      { status: 'cancelled' },
-    );
+    await CheckoutSessionModel.updateMany({ userId, status: 'active' }, { status: 'cancelled' });
   }
 }

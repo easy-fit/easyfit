@@ -1,9 +1,4 @@
-import {
-  MercadoPagoConfig,
-  Payment,
-  Preference,
-  PaymentRefund,
-} from 'mercadopago';
+import { MercadoPagoConfig, Payment, Preference, PaymentRefund } from 'mercadopago';
 import { MERCADO_PAGO } from '../config/env';
 
 export class MercadoPagoClient {

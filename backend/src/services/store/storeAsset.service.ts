@@ -33,10 +33,7 @@ export class StoreAssetService {
     const signedUrl = signedUrls[0];
 
     // Delete old asset if it exists
-    const oldAssetKey =
-      assetType === 'logo'
-        ? store?.customization?.logoUrl
-        : store?.customization?.bannerUrl;
+    const oldAssetKey = assetType === 'logo' ? store?.customization?.logoUrl : store?.customization?.bannerUrl;
 
     if (oldAssetKey) {
       R2Service.deleteObject(R2.BUCKET_ASSETS, oldAssetKey).catch((err) =>
@@ -70,10 +67,7 @@ export class StoreAssetService {
       throw new AppError('Store not found', 404);
     }
 
-    const assetKey =
-      assetType === 'logo'
-        ? store?.customization?.logoUrl
-        : store?.customization?.bannerUrl;
+    const assetKey = assetType === 'logo' ? store?.customization?.logoUrl : store?.customization?.bannerUrl;
 
     if (!assetKey) {
       throw new AppError(`No ${assetType} found for this store`, 404);
@@ -84,11 +78,7 @@ export class StoreAssetService {
       [`customization.${assetType}Url`]: null,
     };
 
-    const updatedStore = await StoreModel.findByIdAndUpdate(
-      storeId,
-      { $unset: updateData },
-      { new: true },
-    );
+    const updatedStore = await StoreModel.findByIdAndUpdate(storeId, { $unset: updateData }, { new: true });
 
     // Delete from R2
     R2Service.deleteObject(R2.BUCKET_ASSETS, assetKey).catch((err) =>

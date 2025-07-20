@@ -1,10 +1,6 @@
 import { VariantModel } from '../../models/variant.model';
 import { AppError } from '../../utils/appError';
-import {
-  CreateVariantDTO,
-  UpdateVariantDTO,
-  VariantImage,
-} from '../../types/variant.types';
+import { CreateVariantDTO, UpdateVariantDTO, VariantImage } from '../../types/variant.types';
 import { VariantImageService } from './variantImage.service';
 import { VariantStockService } from './variantStock.service';
 
@@ -20,9 +16,7 @@ export class VariantService {
   }
 
   static async getVariantsByProductId(productId: string) {
-    const variants = await VariantModel.find({ productId })
-      .select('_id')
-      .lean();
+    const variants = await VariantModel.find({ productId }).select('_id').lean();
 
     return variants.length > 0;
   }
@@ -32,15 +26,11 @@ export class VariantService {
     if (existingVariants.length === 0) {
       data.isDefault = true;
     } else if (data.isDefault) {
-      await VariantModel.updateMany(
-        { productId, isDefault: true },
-        { $set: { isDefault: false } },
-      );
+      await VariantModel.updateMany({ productId, isDefault: true }, { $set: { isDefault: false } });
     }
 
     // Process images through VariantImageService and get signed URLs
-    const imageProcessingResult =
-      await VariantImageService.processVariantImages(data.images);
+    const imageProcessingResult = await VariantImageService.processVariantImages(data.images);
     const processedData = {
       ...data,
       images: imageProcessingResult.processedImages,
@@ -72,10 +62,7 @@ export class VariantService {
     this.ensureVariantExists(variant);
 
     if (data.isDefault) {
-      await VariantModel.updateMany(
-        { productId: variant?.productId, isDefault: true },
-        { $set: { isDefault: false } },
-      );
+      await VariantModel.updateMany({ productId: variant?.productId, isDefault: true }, { $set: { isDefault: false } });
     }
 
     // Validate stock if being updated
@@ -83,11 +70,7 @@ export class VariantService {
       await VariantStockService.validateStockLevel(data.stock);
     }
 
-    const updatedVariant = await VariantModel.findByIdAndUpdate(
-      variantId,
-      data,
-      { new: true, runValidators: true },
-    );
+    const updatedVariant = await VariantModel.findByIdAndUpdate(variantId, data, { new: true, runValidators: true });
 
     return updatedVariant;
   }
@@ -106,6 +89,19 @@ export class VariantService {
   // Stock management methods - delegated to VariantStockService
   static async checkStockAvailable(variantId: string, requestedQty: number) {
     return VariantStockService.checkStockAvailable(variantId, requestedQty);
+  }
+
+  static async checkStockAvailableForItems(cartItems: Array<{ variantId: string; quantity: number }>): Promise<boolean> {
+    try {
+      await Promise.all(
+        cartItems.map(item => 
+          VariantStockService.checkStockAvailable(item.variantId, item.quantity)
+        )
+      );
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 
   static async updateStock(variantId: string, newStock: number) {
