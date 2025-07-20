@@ -11,9 +11,7 @@ export class R2Service {
   }
 
   // Generates signed URLs for uploading multiple files to R2.
-  static async getSignedUrls(
-    params: SignUrlsRequest,
-  ): Promise<SignedUrlResult[]> {
+  static async getSignedUrls(params: SignUrlsRequest): Promise<SignedUrlResult[]> {
     const { bucket, typePrefix, files } = params;
 
     if (!files || files.length === 0) {
@@ -32,10 +30,7 @@ export class R2Service {
     return results;
   }
 
-  private static generateUniqueFileName(
-    key: string,
-    typePrefix: string,
-  ): string {
+  private static generateUniqueFileName(key: string, typePrefix: string): string {
     const uniqueId = crypto.randomBytes(8).toString('hex');
     const timestamp = Date.now();
     const cleanFileName = key.replace(/[^a-zA-Z0-9.-]/g, '_');

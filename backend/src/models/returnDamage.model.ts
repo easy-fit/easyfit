@@ -25,7 +25,4 @@ const ReturnDamageRequestSchema = new Schema<ReturnDamageRequest>(
 
 ReturnDamageRequestSchema.index({ createdAt: -1 });
 
-export const ReturnDamageRequestModel = model(
-  'ReturnDamageRequest',
-  ReturnDamageRequestSchema,
-);
+export const ReturnDamageRequestModel = model('ReturnDamageRequest', ReturnDamageRequestSchema);

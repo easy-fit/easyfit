@@ -2,10 +2,10 @@ import { Router } from 'express';
 import { ProductController } from '../controllers/product.controller';
 import { VariantController } from '../controllers/variant.controller';
 import { protect, restrictTo, isKYCVerified } from '../middlewares/auth';
-import { 
-  verifyProductOwnership, 
+import {
+  verifyProductOwnership,
   verifyVariantOwnership,
-  verifyStoreOwnershipFromBody 
+  verifyStoreOwnershipFromBody,
 } from '../middlewares/resourceAccess.middleware';
 
 export const productRoutes = Router();
@@ -14,13 +14,9 @@ export const productRoutes = Router();
 
 productRoutes.route('/').get(ProductController.getProducts);
 
-productRoutes
-  .route('/:storeSlug/products')
-  .get(ProductController.getProductsByStore);
+productRoutes.route('/:storeSlug/products').get(ProductController.getProductsByStore);
 
-productRoutes
-  .route('/:storeSlug/product/:slug')
-  .get(ProductController.getProductBySlug);
+productRoutes.route('/:storeSlug/product/:slug').get(ProductController.getProductBySlug);
 
 productRoutes.route('/:id').get(ProductController.getProductById);
 
@@ -63,10 +59,7 @@ productRoutes.use(
   variantRouter,
 );
 
-variantRouter
-  .route('/')
-  .get(VariantController.getVariants)
-  .post(VariantController.createVariant);
+variantRouter.route('/').get(VariantController.getVariants).post(VariantController.createVariant);
 
 variantRouter
   .route('/:id')

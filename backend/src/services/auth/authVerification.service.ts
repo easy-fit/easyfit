@@ -15,10 +15,7 @@ export class AuthVerificationService {
     const hashedCode = crypto.createHash('sha256').update(code).digest('hex');
 
     if (user.emailVerification.attempts >= 3) {
-      throw new AppError(
-        'Too many failed attempts. Please request a new code.',
-        429,
-      );
+      throw new AppError('Too many failed attempts. Please request a new code.', 429);
     }
 
     if (

@@ -1,24 +1,19 @@
 import { Types } from 'mongoose';
 
 export type PaymentType = 'hold' | 'capture' | 'refund';
-export type PaymentStatus = 'placed' | 'success' | 'failed';
+
+export interface FinalPaymentInfo {
+  settledAt: Date;
+  capturedAmount: number;
+  refundedAmount: number;
+}
 
 export interface Payment {
   orderId: Types.ObjectId;
+  userId: Types.ObjectId;
   type: PaymentType;
+  finalPaymentInfo?: FinalPaymentInfo;
   amount: number;
-  status: PaymentStatus;
+  status: string;
   externalId: string;
-}
-
-export interface CreatePaymentDTO {
-  orderId: Types.ObjectId;
-  type: PaymentType;
-  amount: number;
-  status: PaymentStatus;
-  externalId: string;
-}
-
-export interface UpdatePaymentDTO {
-  status?: PaymentStatus;
 }

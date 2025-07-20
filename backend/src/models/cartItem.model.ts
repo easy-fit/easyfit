@@ -10,12 +10,6 @@ const CartItemSchema = new Schema<CartItem>(
   { timestamps: true },
 );
 
-CartItemSchema.index(
-  { userId: 1, productId: 1, variantId: 1 },
-  { unique: true },
-);
+CartItemSchema.index({ userId: 1, productId: 1, variantId: 1 }, { unique: true });
 
-export const CartItemModel = mongoose.model<CartItem>(
-  'CartItem',
-  CartItemSchema,
-);
+export const CartItemModel = mongoose.model<CartItem>('CartItem', CartItemSchema);

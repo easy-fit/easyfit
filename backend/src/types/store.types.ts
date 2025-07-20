@@ -1,4 +1,6 @@
 import { Types } from 'mongoose';
+import { Address } from './global';
+
 export type StoreStatus = 'active' | 'inactive' | 'disabled';
 export type StoreType = 'physical' | 'online';
 
@@ -15,14 +17,6 @@ export interface StoreFilterOptions {
     longitude: number;
     latitude: number;
     maxDistance?: number;
-  };
-}
-
-export interface StoreAddress {
-  formatted: string;
-  location: {
-    type: 'Point';
-    coordinates: [number, number];
   };
 }
 
@@ -59,7 +53,8 @@ export interface StoreCustomization {
 export interface Store {
   merchantId: Types.ObjectId;
   name: string;
-  address: StoreAddress;
+  address: Address;
+  cuit?: string;
   pickupHours: PickupHours;
   options: StoreOptions;
   contactEmail: string;
@@ -78,7 +73,8 @@ export interface Store {
 
 export interface CreateStoreDTO {
   name: string;
-  address: StoreAddress;
+  address: Address;
+  cuit?: string;
   pickupHours: PickupHours;
   options: StoreOptions;
   contactEmail: string;
@@ -90,7 +86,8 @@ export interface CreateStoreDTO {
 }
 
 export interface UpdateStoreDTO {
-  address?: StoreAddress;
+  address?: Address;
+  cuit?: string;
   pickupHours?: PickupHours;
   options?: StoreOptions;
   contactEmail?: string;

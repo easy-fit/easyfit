@@ -7,7 +7,10 @@ export interface CartItem {
 }
 
 export interface CreateCartItemDTO {
-  userId: string;
   variantId: string;
+  quantity: number;
+}
+
+export interface UpdateCartItemDTO {
   quantity: number;
 }

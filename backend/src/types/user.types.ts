@@ -1,3 +1,5 @@
+import { Address } from './global';
+
 export type UserRole = 'customer' | 'merchant' | 'rider' | 'admin';
 export interface Kyc {
   status: string;
@@ -7,9 +9,8 @@ export interface Kyc {
 }
 
 export interface RiderInfo {
-  dni: string;
-  cuil: string;
-  vehicleType: 'bike' | 'motorcycle';
+  cuit?: string;
+  vehicleType: 'bike' | 'motorcycle' | 'car';
   licensePlate?: string;
   kyc: Kyc;
   photoUrl?: string;
@@ -19,9 +20,18 @@ export interface RiderInfo {
   };
 }
 
+export interface RiderInfoDTO {
+  cuit?: string;
+  vehicleType: 'bike' | 'motorcycle' | 'car';
+  licensePlate?: string;
+  photoUrl?: string;
+  score?: {
+    upvotes: number;
+    downvotes: number;
+  };
+}
+
 export interface MerchantInfo {
-  dni: string;
-  cuit: string;
   storeCount: number;
   kyc: Kyc;
 }
@@ -33,21 +43,25 @@ export interface EmailVerification {
   verified: boolean;
 }
 
+interface AdditionalInfo {
+  dni?: string;
+  dniType?: 'DNI' | 'CI' | 'LC' | 'LE';
+  birthDate?: Date;
+  phone?: {
+    areaCode?: string;
+    number?: string;
+  };
+}
+
 export interface User {
   _id: string;
   name: string;
+  surname: string;
   email: string;
-  phone: string;
   passwordHash: string;
+  additionalInfo?: AdditionalInfo;
   role: UserRole;
-  birthDate: Date;
-  address?: {
-    formatted: string;
-    location: {
-      type: 'Point';
-      coordinates: [number, number]; // [lng, lat]
-    };
-  };
+  address?: Address;
   passwordResetToken?: string;
   passwordResetExpires?: Date;
   passwordChangedAt?: Date;
@@ -59,16 +73,11 @@ export interface User {
 
 export interface CreateUserDTO {
   name: string;
+  surname: string;
   email: string;
-  phone: string;
   password: string;
-  address?: {
-    formatted: string;
-    location: {
-      type: 'Point';
-      coordinates: [number, number];
-    };
-  };
+  additionalInfo?: AdditionalInfo;
+  address?: Address;
   riderInfo?: RiderInfo;
   merchantInfo?: MerchantInfo;
 }
@@ -76,31 +85,18 @@ export interface CreateUserDTO {
 export interface UpdateUserDTO {
   name?: string;
   email?: string;
-  phone?: string;
-  address?: {
-    formatted?: string;
-    location?: {
-      type: 'Point';
-      coordinates: [number, number];
-    };
-  };
-  riderInfo?: Partial<RiderInfo>;
-  merchantInfo?: Partial<MerchantInfo>;
+  additionalInfo?: AdditionalInfo;
+  address?: Address;
+  riderInfo?: Partial<RiderInfoDTO>;
 }
 
 export interface RegisterDTO {
   name: string;
+  surname: string;
   email: string;
-  phone: string;
+  additionalInfo?: AdditionalInfo;
   password: string;
-  birthDate: Date;
-  address?: {
-    formatted?: string;
-    location?: {
-      type: 'Point';
-      coordinates: [number, number];
-    };
-  };
+  address?: Address;
   riderInfo?: RiderInfo;
   merchantInfo?: MerchantInfo;
 }

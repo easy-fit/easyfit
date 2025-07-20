@@ -1,6 +1,7 @@
 import { UserModel } from '../models/user.model';
 import { AppError } from '../utils/appError';
 import { CreateUserDTO, UpdateUserDTO } from '../types/user.types';
+import { isDeliveryLocationValid } from '../utils/distance';
 
 export class UserService {
   static async getUsers() {
@@ -14,11 +15,22 @@ export class UserService {
   }
 
   static async createUser(data: CreateUserDTO) {
-    await this.ensureUserNotExists(data.email, data.phone);
+    await this.ensureUserNotExists(data.email);
     return UserModel.create(data);
   }
 
   static async updateUser(userId: string, data: UpdateUserDTO) {
+    if (data.address) {
+      const userCoordinates = {
+        latitude: data.address.location.coordinates[0],
+        longitude: data.address.location.coordinates[1],
+      };
+
+      const isValidDeliveryLocation = isDeliveryLocationValid(userCoordinates);
+      if (!isValidDeliveryLocation) {
+        throw new AppError('Invalid delivery address', 400);
+      }
+    }
     const user = await UserModel.findByIdAndUpdate(userId, data, {
       new: true,
     });
@@ -31,10 +43,8 @@ export class UserService {
     this.ensureUserExists(user);
   }
 
-  static async ensureUserNotExists(email: string, phone: string) {
-    const existingUser = await UserModel.findOne({
-      $or: [{ email }, { phone }],
-    });
+  static async ensureUserNotExists(email: string) {
+    const existingUser = await UserModel.findOne({ email });
 
     if (existingUser) {
       throw new AppError('User with this email or phone already exists', 400);

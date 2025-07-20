@@ -7,6 +7,8 @@ export const ENV = {
   PORT: process.env.PORT || 3000,
   MONGO_URI: process.env.MONGO_URI || '',
   DATABASE_PASSWORD: process.env.DATABASE_PASSWORD || '',
+  FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:3001',
+  BACKEND_URL: process.env.BACKEND_URL || 'http://localhost:3000',
 };
 
 export const JWT_CONFIG = {
@@ -37,4 +39,10 @@ export const R2 = {
   BUCKET_PRODUCTS: process.env.R2_BUCKET_PRODUCTS!,
   BUCKET_RETURNS: process.env.R2_BUCKET_RETURNS!,
   BUCKET_ASSETS: process.env.R2_BUCKET_ASSETS!,
+};
+
+export const MERCADO_PAGO = {
+  MP_ACCESS_TOKEN: process.env.MP_ACCESS_TOKEN || '',
+  MP_WEBHOOK_SECRET: process.env.MP_WEBHOOK_SECRET || '',
+  MP_WEBHOOK_URL: process.env.MP_WEBHOOK_URL || '',
 };

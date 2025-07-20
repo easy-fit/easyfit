@@ -1,11 +1,7 @@
 import { Request, Response } from 'express';
-import { VariantService } from '../services/variant.service';
+import { VariantService } from '../services/variant/variant.service';
 import { catchAsync } from '../utils/catchAsync';
-import {
-  UpdateVariantDTO,
-  CreateVariantDTO,
-  VariantImage,
-} from '../types/variant.types';
+import { UpdateVariantDTO, CreateVariantDTO, VariantImage } from '../types/variant.types';
 
 export class VariantController {
   static getVariants = catchAsync(async (_req: Request, res: Response) => {
@@ -39,14 +35,12 @@ export class VariantController {
     res.status(204).json({ status: 'success' });
   });
 
-  static deleteVariantImage = catchAsync(
-    async (req: Request, res: Response) => {
-      const variantId = req.params.id;
-      const key = req.body.key;
-      const result = await VariantService.deleteVariantImage(variantId, key);
-      res.status(200).json({ data: result });
-    },
-  );
+  static deleteVariantImage = catchAsync(async (req: Request, res: Response) => {
+    const variantId = req.params.id;
+    const key = req.body.key;
+    const result = await VariantService.deleteVariantImage(variantId, key);
+    res.status(200).json({ data: result });
+  });
 
   static addVariantImage = catchAsync(async (req: Request, res: Response) => {
     const variantId = req.params.id;

@@ -56,12 +56,7 @@ function sendErrorProd(err: any, res: Response) {
   });
 }
 
-export function globalErrorHandler(
-  err: any,
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) {
+export function globalErrorHandler(err: any, req: Request, res: Response, next: NextFunction) {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';
 
@@ -73,8 +68,7 @@ export function globalErrorHandler(
 
     if (error.name === 'CastError') error = handleCastErrorDB(error);
     if (error.code === 11000) error = handleDuplicateFieldsDB(error);
-    if (error.name === 'ValidationError')
-      error = handleValidationErrorDB(error);
+    if (error.name === 'ValidationError') error = handleValidationErrorDB(error);
     if (error.name === 'JsonWebTokenError') error = handleJWTError();
     if (error.name === 'TokenExpiredError') error = handleJWTExpiredError();
 

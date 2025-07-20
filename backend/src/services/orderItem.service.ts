@@ -1,9 +1,6 @@
 import { OrderItemModel } from '../models/orderItem.model';
 import { AppError } from '../utils/appError';
-import {
-  CreateOrderItemDTO,
-  UpdateOrderItemDTO,
-} from '../types/orderItem.types';
+import { CreateOrderItemDTO, UpdateOrderItemDTO } from '../types/orderItem.types';
 
 export class OrderItemService {
   static async getOrderItems() {
@@ -16,8 +13,37 @@ export class OrderItemService {
     return item;
   }
 
+  static async getCompleteOrderData(orderId: string) {
+    const orderItems = await OrderItemModel.find({ orderId }).populate({
+      path: 'variantId',
+      populate: {
+        path: 'productId',
+        populate: {
+          path: 'storeId',
+        },
+      },
+    });
+
+    if (orderItems.length === 0) {
+      throw new AppError('No items found for this order', 404);
+    }
+
+    return orderItems;
+  }
+
   static async createOrderItem(data: CreateOrderItemDTO) {
     return OrderItemModel.create(data);
+  }
+
+  static async createManyOrderItems(orderId: string, items: any[]) {
+    const orderItemData = items.map((item) => ({
+      orderId: orderId,
+      variantId: item.variantId,
+      unitPrice: item.unit_price,
+      quantity: item.quantity,
+      returnStatus: 'undecided' as const,
+    }));
+    await OrderItemModel.insertMany(orderItemData);
   }
 
   static async updateOrderItem(orderItemId: string, data: UpdateOrderItemDTO) {
@@ -32,6 +58,14 @@ export class OrderItemService {
   static async deleteOrderItem(orderItemId: string) {
     const item = await OrderItemModel.findByIdAndDelete(orderItemId);
     this.ensureOrderItemExists(item);
+  }
+
+  static async getOrderItemsByOrderId(orderId: string) {
+    const items = await OrderItemModel.find({ orderId });
+    if (items.length === 0) {
+      throw new AppError('No items found for this order', 404);
+    }
+    return items;
   }
 
   private static ensureOrderItemExists(item: any): void {

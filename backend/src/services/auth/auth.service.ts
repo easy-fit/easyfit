@@ -10,7 +10,25 @@ import { comparePasswords, hashPassword } from '../../utils/password';
 
 export class AuthService {
   static async register(data: RegisterDTO) {
-    await UserService.ensureUserNotExists(data.email, data.phone);
+    await UserService.ensureUserNotExists(data.email);
+
+    if (data.merchantInfo?.kyc) {
+      const kyc = {
+        status: 'pending',
+        applicantId: '',
+        reviewResult: 'pending',
+      };
+      data.merchantInfo.kyc = kyc;
+    }
+
+    if (data.riderInfo?.kyc) {
+      const kyc = {
+        status: 'pending',
+        applicantId: '',
+        reviewResult: 'pending',
+      };
+      data.riderInfo.kyc = kyc;
+    }
 
     const hashedPassword = await hashPassword(data.password);
     const user = await UserModel.create({
@@ -66,16 +84,8 @@ export class AuthService {
     return AuthPasswordService.resetPassword(token, newPassword);
   }
 
-  static async updatePassword(
-    userId: string,
-    currentPassword: string,
-    newPassword: string,
-  ) {
-    return AuthPasswordService.updatePassword(
-      userId,
-      currentPassword,
-      newPassword,
-    );
+  static async updatePassword(userId: string, currentPassword: string, newPassword: string) {
+    return AuthPasswordService.updatePassword(userId, currentPassword, newPassword);
   }
 
   static async verifyEmail(email: string, code: string) {

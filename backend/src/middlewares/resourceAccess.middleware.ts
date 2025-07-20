@@ -4,6 +4,8 @@ import { AppError } from '../utils/appError';
 import { ProductModel } from '../models/product.model';
 import { StoreModel } from '../models/store.model';
 import { VariantModel } from '../models/variant.model';
+import { OrderModel } from '../models/order.model';
+import { RiderAssignmentModel } from '../models/riderAssignment.model';
 
 interface OwnershipConfig {
   resourceModel: mongoose.Model<any>;
@@ -24,9 +26,7 @@ export const createOwnershipVerifier = (config: OwnershipConfig) => {
       const userId = req.user._id;
 
       if (!mongoose.Types.ObjectId.isValid(resourceId)) {
-        return next(
-          new AppError(`Invalid ${config.resourceIdParam} format`, 400),
-        );
+        return next(new AppError(`Invalid ${config.resourceIdParam} format`, 400));
       }
 
       let query = config.resourceModel.findById(resourceId);
@@ -47,9 +47,7 @@ export const createOwnershipVerifier = (config: OwnershipConfig) => {
 
       for (const part of ownerParts) {
         if (!owner || typeof owner !== 'object') {
-          return next(
-            new AppError('Resource ownership structure is invalid', 500),
-          );
+          return next(new AppError('Resource ownership structure is invalid', 500));
         }
         owner = owner[part];
       }
@@ -61,12 +59,7 @@ export const createOwnershipVerifier = (config: OwnershipConfig) => {
       const ownerId = owner._id ? owner._id.toString() : owner.toString();
 
       if (ownerId !== userId.toString()) {
-        return next(
-          new AppError(
-            'You do not have permission to access this resource',
-            403,
-          ),
-        );
+        return next(new AppError('You do not have permission to access this resource', 403));
       }
 
       next();
@@ -99,12 +92,45 @@ export const verifyVariantOwnership = createOwnershipVerifier({
   populatePath: 'productId.storeId',
 });
 
+// Order ownership verification (customers can only access their own orders)
+export const verifyOrderOwnership = createOwnershipVerifier({
+  resourceModel: OrderModel,
+  resourceIdParam: 'id',
+  ownerPath: 'userId',
+});
+
+// Rider order ownership verification (through rider assignment)
+export const verifyRiderOrderOwnership = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // Admin bypass
+    if (req.user.role === 'admin') {
+      return next();
+    }
+
+    const orderId = req.params.id;
+    const riderId = req.user._id;
+
+    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+      return next(new AppError('Invalid order ID format', 400));
+    }
+
+    const assignment = await RiderAssignmentModel.findOne({
+      orderId,
+      riderId,
+    });
+
+    if (!assignment) {
+      return next(new AppError('You are not assigned to this order', 403));
+    }
+
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Verify store ownership when creating products (storeId in body)
-export const verifyStoreOwnershipFromBody = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
+export const verifyStoreOwnershipFromBody = async (req: Request, res: Response, next: NextFunction) => {
   try {
     // Admin bypass
     if (req.user.role === 'admin') {
@@ -129,12 +155,7 @@ export const verifyStoreOwnershipFromBody = async (
     }
 
     if (store.merchantId.toString() !== userId.toString()) {
-      return next(
-        new AppError(
-          'You do not have permission to create products in this store',
-          403,
-        ),
-      );
+      return next(new AppError('You do not have permission to create products in this store', 403));
     }
 
     next();

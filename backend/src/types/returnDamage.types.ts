@@ -11,12 +11,12 @@ export interface ReturnDamageRequest {
 }
 
 export interface CreateReturnDamageDTO {
-  orderItemIds: Types.ObjectId[];
+  orderItemIds: string;
   evidencePhotos: string[];
 }
 
 export interface UpdateReturnDamageDTO {
   status?: ReturnDamageRequestStatus;
-  reviewedBy?: Types.ObjectId;
+  reviewedBy?: string;
   resolutionNote?: string;
 }

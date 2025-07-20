@@ -19,10 +19,9 @@ const RiderLocationSchema = new Schema<RiderLocation>(
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      unique: true,
     },
     location: { type: GeoPointSchema, required: true },
-    isAvailable: { type: Boolean, default: true },
+    isAvailable: { type: Boolean, default: false },
   },
   { timestamps: true },
 );

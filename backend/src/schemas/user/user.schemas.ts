@@ -1,8 +1,7 @@
 import { Schema } from 'mongoose';
 
 export const RiderInfoSchema = new Schema({
-  dni: { type: String, required: true },
-  cuil: { type: String, required: true },
+  cuit: { type: String, required: true },
   vehicleType: {
     type: String,
     enum: ['bike', 'motorcycle'],
@@ -26,8 +25,6 @@ export const RiderInfoSchema = new Schema({
 });
 
 export const MerchantInfoSchema = new Schema({
-  dni: { type: String, required: true },
-  cuit: { type: String, required: true },
   storeCount: { type: Number, default: 0 },
   kyc: {
     status: {

@@ -1,15 +1,9 @@
 import { Types } from 'mongoose';
 
-export type OrderItemReturnStatus = 'kept' | 'returned' | 'undecided';
-
-export interface OrderItemMetadata {
-  productTitle: string;
-  variantSize: string;
-  variantColor: string;
-}
+export type OrderItemReturnStatus = 'kept' | 'returned' | 'undecided' | 'returned_damaged' | 'stolen';
 
 export interface OrderItemReturnVerification {
-  checkedBy: Types.ObjectId;
+  checkedBy: string;
   checkedAt: Date;
   result: 'match' | 'mismatch';
 }
@@ -20,22 +14,19 @@ export interface OrderItem {
   unitPrice: number;
   quantity: number;
   returnStatus: OrderItemReturnStatus;
-  metadata: OrderItemMetadata;
   returnVerification?: OrderItemReturnVerification;
 }
 
 export interface CreateOrderItemDTO {
-  orderId: Types.ObjectId;
-  variantId: Types.ObjectId;
+  orderId: string;
+  variantId: string;
   unitPrice: number;
   quantity: number;
   returnStatus: OrderItemReturnStatus;
-  metadata: OrderItemMetadata;
   returnVerification?: OrderItemReturnVerification;
 }
 
 export interface UpdateOrderItemDTO {
   returnStatus?: OrderItemReturnStatus;
-  metadata?: Partial<OrderItemMetadata>;
   returnVerification?: OrderItemReturnVerification;
 }

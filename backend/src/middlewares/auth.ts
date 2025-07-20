@@ -1,21 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { AppError } from '../utils/appError';
-import { JWT_CONFIG, SUMSUB_CONFIG } from '../config/env';
+import { JWT_CONFIG, SUMSUB_CONFIG, MERCADO_PAGO } from '../config/env';
 import { UserModel } from '../models/user.model';
-import {
-  signAccessToken,
-  signRefreshToken,
-  accessTokenCookieOptions,
-  refreshTokenCookieOptions,
-} from '../utils/jwt';
+import { signAccessToken, signRefreshToken, accessTokenCookieOptions, refreshTokenCookieOptions } from '../utils/jwt';
 import crypto from 'crypto';
 
-export const createSendToken = (
-  user: any,
-  statusCode: number,
-  res: Response,
-): void => {
+export const createSendToken = (user: any, statusCode: number, res: Response): void => {
   const userId = user._id.toString();
   const accessToken = signAccessToken(userId);
   const refreshToken = signRefreshToken(userId);
@@ -30,11 +21,7 @@ export const createSendToken = (
   });
 };
 
-export const protect = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
+export const protect = async (req: Request, res: Response, next: NextFunction) => {
   let token;
   token = req.cookies.jwt || req.headers.authorization?.replace('Bearer ', '');
 
@@ -46,9 +33,7 @@ export const protect = async (
     const decoded = jwt.verify(token, JWT_CONFIG.SECRET) as { id: string };
     const user = await UserModel.findById(decoded.id);
     if (!user) {
-      return next(
-        new AppError('The user belonging to this token no longer exists.', 401),
-      );
+      return next(new AppError('The user belonging to this token no longer exists.', 401));
     }
 
     req.user = user;
@@ -58,11 +43,7 @@ export const protect = async (
   }
 };
 
-export const optionalAuth = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
+export const optionalAuth = async (req: Request, res: Response, next: NextFunction) => {
   let token;
   token = req.cookies.jwt || req.headers.authorization?.replace('Bearer ', '');
 
@@ -86,19 +67,16 @@ export const optionalAuth = async (
 export const restrictTo =
   (...roles: string[]) =>
   (req: Request, res: Response, next: NextFunction) => {
+    if (req.user && req.user.role === 'admin') {
+      return next();
+    }
     if (!req.user || !roles.includes(req.user.role)) {
-      return next(
-        new AppError('You do not have permission to perform this action', 403),
-      );
+      return next(new AppError('You do not have permission to perform this action', 403));
     }
     next();
   };
 
-export const assignRoleFromPath = (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
+export const assignRoleFromPath = (req: Request, res: Response, next: NextFunction) => {
   const path = req.path;
 
   if (path.includes('/register/riders')) {
@@ -112,11 +90,7 @@ export const assignRoleFromPath = (
   next();
 };
 
-export const isEmailVerified = (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
+export const isEmailVerified = (req: Request, res: Response, next: NextFunction) => {
   if (!req.user.emailVerification?.verified) {
     return next(new AppError('Email is not verified', 403));
   }
@@ -124,11 +98,7 @@ export const isEmailVerified = (
   next();
 };
 
-export const validateSumsubWebhook = (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
+export const validateSumsubWebhook = (req: Request, res: Response, next: NextFunction) => {
   try {
     const payloadDigest = req.headers['x-payload-digest'] as string;
     const digestAlg = req.headers['x-payload-digest-alg'] as string;
@@ -140,9 +110,7 @@ export const validateSumsubWebhook = (
 
     if (digestAlg !== 'HMAC_SHA256_HEX') {
       console.error(`Unsupported digest algorithm: ${digestAlg}`);
-      return next(
-        new AppError(`Unsupported digest algorithm: ${digestAlg}`, 400),
-      );
+      return next(new AppError(`Unsupported digest algorithm: ${digestAlg}`, 400));
     }
 
     const rawBody = req.body;
@@ -171,24 +139,72 @@ export const validateSumsubWebhook = (
   }
 };
 
-export const isKYCVerified = (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
+export const validateMercadoPagoWebhook = (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const signature = req.headers['x-signature'] as string;
+    const requestId = req.headers['x-request-id'] as string;
+    const dataId = req.query['data.id'] as string;
+
+    if (!signature) {
+      throw new AppError('Missing x-signature header', 401);
+    }
+
+    const signatureParts = signature.split(',');
+    let timestamp: string | undefined;
+    let receivedSignature: string | undefined;
+
+    for (const part of signatureParts) {
+      const [key, value] = part.split('=');
+      if (key === 'ts') {
+        timestamp = value;
+      } else if (key === 'v1') {
+        receivedSignature = value;
+      }
+    }
+
+    if (!timestamp || !receivedSignature) {
+      throw new AppError('Invalid x-signature format', 401);
+    }
+
+    let signatureTemplate = '';
+
+    if (dataId) {
+      const normalizedDataId = /^[a-zA-Z0-9]+$/.test(dataId) ? dataId.toLowerCase() : dataId;
+      signatureTemplate += `id:${normalizedDataId};`;
+    }
+
+    if (requestId) {
+      signatureTemplate += `request-id:${requestId};`;
+    }
+
+    signatureTemplate += `ts:${timestamp};`;
+
+    const expectedSignature = crypto
+      .createHmac('sha256', MERCADO_PAGO.MP_WEBHOOK_SECRET)
+      .update(signatureTemplate)
+      .digest('hex');
+
+    if (expectedSignature !== receivedSignature) {
+      throw new AppError('Invalid webhook signature', 401);
+    }
+
+    next();
+  } catch (error: any) {
+    if (error instanceof AppError) {
+      throw error;
+    }
+    throw new AppError('Webhook verification failed', 401);
+  }
+};
+
+export const isKYCVerified = (req: Request, res: Response, next: NextFunction) => {
   if (req.user.role === 'admin') {
     return next();
   }
-  if (
-    req.user.role === 'rider' &&
-    req.user.riderInfo?.kyc.reviewResult !== 'verified'
-  ) {
+  if (req.user.role === 'rider' && req.user.riderInfo?.kyc.reviewResult !== 'verified') {
     return next(new AppError('KYC not verified', 403));
   }
-  if (
-    req.user.role === 'merchant' &&
-    req.user.merchantInfo?.kyc.reviewResult !== 'verified'
-  ) {
+  if (req.user.role === 'merchant' && req.user.merchantInfo?.kyc.reviewResult !== 'verified') {
     return next(new AppError('KYC not verified', 403));
   }
   next();

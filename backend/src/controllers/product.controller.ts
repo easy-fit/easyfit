@@ -1,20 +1,12 @@
 import { Request, Response } from 'express';
-import { ProductService } from '../services/product.service';
+import { ProductService } from '../services/product/product.service';
 import { catchAsync } from '../utils/catchAsync';
 import { CreateProductDTO, UpdateProductDTO } from '../types/product.types';
 import { CreateVariantDTO } from '../types/variant.types';
 
 export class ProductController {
   static getProducts = catchAsync(async (req: Request, res: Response) => {
-    const {
-      search,
-      category,
-      minPrice,
-      maxPrice,
-      sort = '-createdAt',
-      page = 1,
-      limit = 20,
-    } = req.query;
+    const { search, category, minPrice, maxPrice, sort = '-createdAt', page = 1, limit = 20 } = req.query;
 
     const filterOptions = {
       search: search as string,
@@ -43,13 +35,11 @@ export class ProductController {
     });
   });
 
-  static getProductsByStore = catchAsync(
-    async (req: Request, res: Response) => {
-      const storeSlug = req.params.storeSlug;
-      const products = await ProductService.getProductsByStore(storeSlug);
-      res.status(200).json({ total: products.length, products });
-    },
-  );
+  static getProductsByStore = catchAsync(async (req: Request, res: Response) => {
+    const storeSlug = req.params.storeSlug;
+    const products = await ProductService.getProductsByStore(storeSlug);
+    res.status(200).json({ total: products.length, products });
+  });
 
   static getProductById = catchAsync(async (req: Request, res: Response) => {
     const productId = req.params.id;
@@ -70,11 +60,7 @@ export class ProductController {
       storeId: string;
     };
 
-    const result = await ProductService.createProduct(
-      product,
-      variants,
-      storeId,
-    );
+    const result = await ProductService.createProduct(product, variants, storeId);
     res.status(201).json({ data: result });
   });
 

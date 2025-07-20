@@ -2,11 +2,7 @@ import { Schema, model } from 'mongoose';
 import { Store, StoreType } from '../types/store.types';
 import { getNextSequenceValue } from '../utils/counter';
 import { AddressSchema } from '../schemas/common/address.schema';
-import {
-  PickupHoursEntrySchema,
-  ShippingOptionSchema,
-  StoreCustomizationSchema,
-} from '../schemas/store/store.schemas';
+import { PickupHoursEntrySchema, ShippingOptionSchema, StoreCustomizationSchema } from '../schemas/store/store.schemas';
 import { STORE_TAGS_VALUES } from '../types/store.constants';
 
 const StoreSchema = new Schema<Store>(

@@ -2,11 +2,7 @@
 import jwt from 'jsonwebtoken';
 import { UserModel } from '../../models/user.model';
 import { AppError } from '../../utils/appError';
-import {
-  signAccessToken,
-  signRefreshToken,
-  verifyToken,
-} from '../../utils/jwt';
+import { signAccessToken, signRefreshToken, verifyToken } from '../../utils/jwt';
 
 export class AuthTokenService {
   static signRefreshToken(userId: string) {
