@@ -15,6 +15,11 @@ const PaymentSchema = new Schema<Payment>(
       type: String,
       required: true,
     },
+    finalPaymentInfo: {
+      settledAt: { type: Date },
+      capturedAmount: { type: Number, default: 0 },
+      refundedAmount: { type: Number, default: 0 },
+    },
     externalId: { type: String, required: true },
   },
   {

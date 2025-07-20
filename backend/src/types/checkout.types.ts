@@ -13,6 +13,7 @@ export interface CheckoutCartItem {
 
 export interface CheckoutSession {
   userId: Types.ObjectId;
+  storeId: Types.ObjectId;
   cartItems: CheckoutCartItem[];
   subtotal: number;
   shipping: ShippingInfo;

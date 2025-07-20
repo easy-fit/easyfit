@@ -2,6 +2,11 @@ import { OrderModel } from '../models/order.model';
 import { AppError } from '../utils/appError';
 import { UpdateOrderDTO } from '../types/order.types';
 import { OrderItemService } from './orderItem.service';
+import { OrderStoreService } from './orderStore.service';
+import { WebSocketService } from './websocket.service';
+import { RiderAssignmentOrchestrator } from './riderAssignmentOrchestrator.service';
+import { OrderStateManager } from './orderStateManager.service';
+import { TryPeriodManager } from './tryPeriodManager.service';
 
 export class OrderService {
   static async getOrders() {
@@ -9,13 +14,14 @@ export class OrderService {
   }
 
   static async getOrderById(orderId: string) {
-    const order = await OrderModel.findById(orderId);
+    const order = await OrderModel.findById(orderId).populate('storeId');
     this.ensureOrderExists(order);
     return order;
   }
 
   static async createOrder(
     userId: string,
+    storeId: string,
     cartItems: any[],
     total: number,
     shipping: any,
@@ -23,11 +29,11 @@ export class OrderService {
     externalPaymentId: string,
   ) {
     const deliveryVerificationCode = this.generateDeliveryCode();
-    const paymentStatus =
-      paymentType === 'hold' ? 'hold_placed' : 'paid_full_debit';
+    const paymentStatus = paymentType === 'hold' ? 'hold_placed' : 'paid_full_debit';
 
     const orderData = {
       userId,
+      storeId,
       total,
       shipping,
       status: 'order_placed',
@@ -45,10 +51,17 @@ export class OrderService {
     };
 
     const order = await OrderModel.create(orderData);
-    await OrderItemService.createManyOrderItems(
-      order._id.toString(),
-      cartItems,
-    );
+    await OrderItemService.createManyOrderItems(order._id.toString(), cartItems);
+
+    // Send WebSocket notification to store
+    try {
+      const orderPayload = await OrderStoreService.getCompleteOrderData(order._id.toString());
+
+      WebSocketService.notifyStoreOfNewOrder(orderPayload, storeId);
+    } catch (error) {
+      console.error('Failed to send store notification:', error);
+      // Don't fail the order creation if WebSocket fails
+    }
 
     return order;
   }
@@ -62,12 +75,62 @@ export class OrderService {
     return order;
   }
 
+  /**
+   * Handle store response (accept/reject order)
+   */
+  static async handleStoreResponse(orderId: string, storeId: string, accepted: boolean, reason?: string) {
+    const order = await OrderModel.findById(orderId);
+    this.ensureOrderExists(order);
+
+    if (order?.status !== 'order_placed') {
+      throw new AppError('Order is not in a state to be accepted/rejected', 400);
+    }
+
+    // Verify store owns this order
+    if (order.storeId.toString() !== storeId) {
+      throw new AppError('Store does not have permission to respond to this order', 403);
+    }
+
+    // Update order status
+    const newStatus = accepted ? 'order_accepted' : 'order_canceled';
+    const updatedOrder = await OrderModel.findByIdAndUpdate(orderId, { status: newStatus }, { new: true });
+
+    this.ensureOrderExists(updatedOrder);
+
+    // Send WebSocket notifications
+    try {
+      WebSocketService.emitOrderStatusUpdate({
+        order: {
+          ...updatedOrder!.toObject(),
+        },
+        previousStatus: 'order_placed',
+        newStatus: newStatus,
+        timestamp: new Date(),
+        details: { storeResponse: { accepted, reason } },
+      });
+
+      if (accepted) {
+        // Start rider assignment asynchronously
+        RiderAssignmentOrchestrator.assignRiderToOrder(orderId).catch((error) => {
+          console.error('Failed to assign rider to order:', error);
+        });
+      } else {
+        // TODO: Implement refund logic
+        console.log(`Order ${orderId} was rejected by store. Reason: ${reason}`);
+      }
+    } catch (error) {
+      console.error('Failed to send order status update:', error);
+    }
+
+    return updatedOrder;
+  }
+
   static async deleteOrder(orderId: string) {
     const order = await OrderModel.findByIdAndDelete(orderId);
     this.ensureOrderExists(order);
   }
 
-  private static async ensureNoActiveOrder(userId: string) {
+  static async ensureNoActiveOrder(userId: string) {
     const existingOrder = await OrderModel.findOne({
       userId,
       isActive: true,
@@ -80,6 +143,59 @@ export class OrderService {
 
   private static generateDeliveryCode(): string {
     return Math.floor(100000 + Math.random() * 900000).toString();
+  }
+
+  static async verifyDeliveryCode(orderId: string, code: string, riderId: string) {
+    const order = await OrderModel.findById(orderId);
+    this.ensureOrderExists(order);
+
+    if (order?.status !== 'in_transit') {
+      return {
+        success: false,
+        message: 'Order is not ready for delivery verification',
+      };
+    }
+
+    if (order.deliveryVerification.attempts.made >= order.deliveryVerification.attempts.max) {
+      await OrderModel.findByIdAndUpdate(orderId, {
+        'deliveryVerification.verifiedAt': new Date(),
+        'deliveryVerification.status': 'failed',
+      });
+      return {
+        success: false,
+        message: 'Maximum verification attempts exceeded',
+      };
+    }
+
+    if (order.deliveryVerification.code !== code) {
+      await OrderModel.findByIdAndUpdate(orderId, {
+        $inc: { 'deliveryVerification.attempts.made': 1 },
+      });
+
+      const attemptsRemaining = order.deliveryVerification.attempts.max - order.deliveryVerification.attempts.made - 1;
+
+      return {
+        success: false,
+        message: 'Invalid delivery code',
+        attemptsRemaining,
+      };
+    }
+
+    const updatedOrder = await OrderStateManager.markAsDelivered(orderId, riderId);
+
+    await OrderModel.findByIdAndUpdate(orderId, {
+      'deliveryVerification.verifiedAt': new Date(),
+      'deliveryVerification.status': 'verified',
+    });
+
+    if (order.shipping.tryOnEnabled) {
+      await TryPeriodManager.startTryPeriod(orderId);
+    }
+
+    return {
+      success: true,
+      order: updatedOrder,
+    };
   }
 
   private static ensureOrderExists(order: any): void {

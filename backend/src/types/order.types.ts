@@ -5,8 +5,12 @@ export type OrderStatus =
   | 'order_accepted'
   | 'order_canceled'
   | 'pending_rider'
+  | 'rider_assigned'
   | 'in_transit'
   | 'delivered'
+  | 'awaiting_return_pickup'
+  | 'returning_to_store'
+  | 'store_checking_returns'
   | 'purchased'
   | 'returned_ok'
   | 'returned_partial'
@@ -32,6 +36,7 @@ export interface ShippingInfo {
   type: ShippingType;
   tryOnEnabled: boolean;
   distanceKm?: number;
+  durationMinutes?: number;
 }
 
 export interface DeliveryVerification {
@@ -43,15 +48,27 @@ export interface DeliveryVerification {
   verifiedAt?: Date;
 }
 
+export interface TryPeriodInfo {
+  isActive: boolean;
+  startedAt?: Date;
+  endsAt?: Date;
+  duration?: number; // seconds
+  status: 'active' | 'expired' | 'finalized';
+  exceededTime?: number; // seconds over limit
+  finalizedAt?: Date;
+}
+
 export interface Order {
+  _id: string;
   userId: Types.ObjectId;
-  checkoutSessionId: Types.ObjectId;
+  storeId: Types.ObjectId;
   total: number;
   shipping: ShippingInfo;
   status: OrderStatus;
   externalPaymentId: string;
   paymentStatus: PaymentStatus;
   deliveryVerification: DeliveryVerification;
+  tryPeriod?: TryPeriodInfo;
   isStolen: boolean;
   isActive: boolean;
 }
@@ -69,4 +86,5 @@ export interface UpdateOrderDTO {
   paymentStatus?: PaymentStatus;
   deliveryVerification?: DeliveryVerification;
   isStolen?: boolean;
+  isActive?: boolean;
 }

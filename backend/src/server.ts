@@ -3,6 +3,7 @@ import { app } from './app';
 import { connectDB } from './config/db';
 import { ENV } from './config/env';
 import http from 'http';
+import { WebSocketOrchestrator } from './sockets/websocket.orchestrator';
 
 const startServer = async () => {
   await connectDB();
@@ -10,8 +11,15 @@ const startServer = async () => {
   const PORT = ENV.PORT || 3000;
   const server = http.createServer(app);
 
+  // Initialize WebSocket orchestrator
+  const wsOrchestrator = new WebSocketOrchestrator(server);
+
+  // Make WebSocket orchestrator available globally for services
+  (global as any).wsOrchestrator = wsOrchestrator;
+
   server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
+    console.log(`WebSocket server initialized`);
   });
 };
 
