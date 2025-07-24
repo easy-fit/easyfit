@@ -1,7 +1,10 @@
 import { OrderService } from './order.service';
+import { OrderModel } from '../models/order.model';
+import { OrderItemModel } from '../models/orderItem.model';
 import { RiderAssignmentModel } from '../models/riderAssignment.model';
 import { RiderLocationService } from './riderLocation.service';
 import { OrderStoreService } from './orderStore.service';
+import { UserService } from './user.service';
 import { WebSocketService } from './websocket.service';
 import { ErrorHandlingService } from './errorHandling.service';
 import { AppError } from '../utils/appError';
@@ -50,6 +53,7 @@ export class RiderAssignmentOrchestrator {
   }
 
   static async executeRiderAssignment(orderId: string): Promise<string | null> {
+    // Get order and store data efficiently
     const order = await OrderService.getOrderById(orderId);
 
     if (order?.status !== 'order_accepted') {
@@ -58,33 +62,20 @@ export class RiderAssignmentOrchestrator {
 
     const store = order.storeId as any;
     const storeCoordinates: [number, number] = [
-      store.address.location.coordinates[1],
       store.address.location.coordinates[0],
+      store.address.location.coordinates[1],
     ];
+    console.log('STORE coordinates', storeCoordinates);
 
     const availableRiders = await RiderLocationService.getAvailableNearbyRiders(storeCoordinates);
-    // TODO: check if rider need complete order data
-    const orderData = await OrderStoreService.getCompleteOrderData(orderId);
-
-    const baseOfferPayload: Omit<RiderOfferPayload, 'riderId'> = {
-      order: orderData.order,
-      orderItems: orderData.orderItems,
-      customer: orderData.customer,
-      storeInfo: {
-        name: store.name,
-        location: {
-          latitude: storeCoordinates[1],
-          longitude: storeCoordinates[0],
-        },
-      },
-      timeout: 30000,
-      timestamp: new Date(),
-    };
+    
+    // Get optimized order data for rider offer
+    const orderData = await this.createRiderOfferPayload(orderId, store);
 
     const riderIds = availableRiders.map((rider) => rider.riderId.toString());
 
     const assignedRiderId = await WebSocketService.offerToRidersSequentially(riderIds, {
-      ...baseOfferPayload,
+      ...orderData,
       riderId: '',
     });
 
@@ -94,6 +85,80 @@ export class RiderAssignmentOrchestrator {
     } else {
       throw new AppError('No riders accepted the assignment', 404);
     }
+  }
+
+  /**
+   * Create optimized payload for rider offers - only essential data
+   */
+  static async createRiderOfferPayload(orderId: string, store: any): Promise<Omit<RiderOfferPayload, 'riderId'>> {
+    // Get order with minimal data
+    const order = await OrderModel.findById(orderId).lean() as any;
+    if (!order) {
+      throw new AppError('Order not found', 404);
+    }
+
+    // Get order items with minimal product data for riders
+    const orderItems = await OrderItemModel.find({ orderId })
+      .populate({
+        path: 'variantId',
+        select: 'size color',
+        populate: {
+          path: 'productId',
+          select: 'title category',
+        },
+      })
+      .lean();
+
+    // Get customer delivery address only
+    const customer = await UserService.getUserById(order.userId.toString());
+    if (!customer) {
+      throw new AppError('Customer not found', 404);
+    }
+
+    return {
+      order: {
+        _id: order._id.toString(),
+        total: order.total,
+        status: order.status,
+        shipping: {
+          address: {
+            formatted: order.shipping.address.formatted,
+            coordinates: order.shipping.address.coordinates,
+          },
+          cost: order.shipping.cost,
+          tryOnEnabled: order.shipping.tryOnEnabled,
+        },
+      },
+      orderItems: orderItems.map((item: any) => ({
+        _id: item._id.toString(),
+        quantity: item.quantity,
+        product: {
+          title: item.variantId.productId.title,
+          category: item.variantId.productId.category,
+        },
+        variant: {
+          size: item.variantId.size,
+          color: item.variantId.color,
+        },
+      })),
+      customer: {
+        _id: customer._id.toString(),
+        name: customer.name,
+        surname: customer.surname,
+        address: {
+          formatted: customer.address?.formatted || {},
+        },
+      },
+      storeInfo: {
+        name: store.name,
+        location: {
+          latitude: store.address.location.coordinates[1],
+          longitude: store.address.location.coordinates[0],
+        },
+      },
+      timeout: 30000,
+      timestamp: new Date(),
+    };
   }
 
   static async handleNoRidersAvailable(orderId: string) {
@@ -216,8 +281,9 @@ export class RiderAssignmentOrchestrator {
       });
 
     // 3. Notify store that rider was assigned
+    const storeId = (order?.storeId as any)._id?.toString() || order?.storeId.toString();
     WebSocketService.getIO()
-      .to(`store:${order?.storeId.toString()}`)
+      .to(`store:${storeId}`)
       .emit('order:rider_assigned', {
         type: 'rider_assigned',
         data: {

@@ -50,7 +50,5 @@ export class DeliveryTrackingService {
       status: 'in_transit',
       timestamp: new Date(),
     });
-
-    console.log(`Location updated for rider ${riderId} on order ${orderId}`);
   }
 }

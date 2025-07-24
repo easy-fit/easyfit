@@ -14,15 +14,16 @@ export class OrderItemService {
   }
 
   static async getCompleteOrderData(orderId: string) {
-    const orderItems = await OrderItemModel.find({ orderId }).populate({
-      path: 'variantId',
-      populate: {
-        path: 'productId',
+    const orderItems = await OrderItemModel.find({ orderId })
+      .populate({
+        path: 'variantId',
+        select: 'size color images price',
         populate: {
-          path: 'storeId',
+          path: 'productId',
+          select: '_id title description category slug',
         },
-      },
-    });
+      })
+      .lean();
 
     if (orderItems.length === 0) {
       throw new AppError('No items found for this order', 404);
