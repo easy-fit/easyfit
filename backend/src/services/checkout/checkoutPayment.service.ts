@@ -28,7 +28,6 @@ export class CheckoutPaymentService {
         session.cartItems,
         user,
       );
-
       const paymentType = paymentData.selectedPaymentMethod === 'credit_card' ? 'hold' : 'capture';
 
       if (mercadoPagoResponse.status === 'approved' || mercadoPagoResponse.status === 'authorized') {
@@ -71,5 +70,4 @@ export class CheckoutPaymentService {
       throw new AppError(`Payment processing failed: ${error.message}`, error.statusCode || 500);
     }
   }
-
 }
