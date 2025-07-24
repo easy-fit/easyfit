@@ -4,6 +4,7 @@ import { AppError } from '../utils/appError';
 import { ProductModel } from '../models/product.model';
 import { StoreModel } from '../models/store.model';
 import { VariantModel } from '../models/variant.model';
+import { CheckoutSessionModel } from '../models/checkout.model';
 import { OrderModel } from '../models/order.model';
 import { RiderAssignmentModel } from '../models/riderAssignment.model';
 
@@ -95,6 +96,12 @@ export const verifyVariantOwnership = createOwnershipVerifier({
 // Order ownership verification (customers can only access their own orders)
 export const verifyOrderOwnership = createOwnershipVerifier({
   resourceModel: OrderModel,
+  resourceIdParam: 'id',
+  ownerPath: 'userId',
+});
+
+export const verifyCheckoutOwnership = createOwnershipVerifier({
+  resourceModel: CheckoutSessionModel,
   resourceIdParam: 'id',
   ownerPath: 'userId',
 });
