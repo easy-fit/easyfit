@@ -31,6 +31,9 @@ export const ShippingSchema = new Schema({
     formatted: {
       street: { type: String, required: true },
       streetNumber: { type: String, required: true },
+      apartment: { type: String }, // Optional: Apartment/Unit number
+      floor: { type: String },     // Optional: Floor number  
+      building: { type: String },  // Optional: Building name/number
       city: { type: String, required: true },
       province: { type: String, required: true },
       postalCode: { type: String, required: true },
