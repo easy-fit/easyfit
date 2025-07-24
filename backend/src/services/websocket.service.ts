@@ -49,6 +49,12 @@ export class WebSocketService {
     await orchestrator.getTryPeriodHandler().emitTryPeriodUpdate(payload);
   }
 
+  // Rider cancellation methods
+  static emitRiderCancellation(orderId: string, riderId: string, reason?: string): void {
+    const orchestrator = this.getOrchestrator();
+    orchestrator.getRiderCancellationHandler().emitRiderCancellation(orderId, riderId, reason);
+  }
+
   // Utility method to get the IO instance for custom emissions
   static getIO() {
     const orchestrator = this.getOrchestrator();

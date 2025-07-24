@@ -17,19 +17,121 @@ export interface SocketChannels {
   ADMIN_DASHBOARD: string;
 }
 
-// Complete order data for notifications TO STORES
+// Optimized order data for store notifications
 export interface OrderNotificationPayload {
-  order: Order;
-  orderItems: OrderItem[];
-  customer: Pick<User, '_id' | 'name' | 'surname' | 'email' | 'address'>;
+  order: {
+    _id: string;
+    total: number;
+    status: OrderStatus;
+    paymentStatus: string;
+    shipping: {
+      address: {
+        formatted: {
+          street: string;
+          streetNumber: string;
+          city: string;
+          province: string;
+          postalCode: string;
+        };
+      };
+      cost: number;
+      type: string;
+      tryOnEnabled: boolean;
+    };
+    createdAt: Date;
+  };
+  orderItems: {
+    _id: string;
+    quantity: number;
+    unitPrice: number;
+    returnStatus: string;
+    product: {
+      _id: string;
+      title: string;
+      category: string;
+    };
+    variant: {
+      _id: string;
+      size: string;
+      color: string;
+      images: Array<{
+        key: string;
+        altText: string;
+        order: number;
+      }>;
+    };
+  }[];
+  customer: {
+    _id: string;
+    name: string;
+    surname: string;
+    email: string;
+    address: {
+      formatted: {
+        street: string;
+        streetNumber: string;
+        apartment?: string;
+        floor?: string;
+        building?: string;
+        city: string;
+        province: string;
+        postalCode: string;
+      } | {};
+    };
+  };
   timestamp: Date;
 }
 
-// Rider offer with complete context OFFER TO RIDERS
+// Optimized rider offer payload
 export interface RiderOfferPayload {
-  order: Order;
-  orderItems: OrderItem[];
-  customer: Pick<User, '_id' | 'name' | 'surname' | 'address'>;
+  order: {
+    _id: string;
+    total: number;
+    status: OrderStatus;
+    shipping: {
+      address: {
+        formatted: {
+          street: string;
+          streetNumber: string;
+          city: string;
+          province: string;
+          postalCode: string;
+        };
+        coordinates: [number, number];
+      };
+      cost: number;
+      tryOnEnabled: boolean;
+    };
+  };
+  orderItems: {
+    _id: string;
+    quantity: number;
+    product: {
+      title: string;
+      category: string;
+    };
+    variant: {
+      size: string;
+      color: string;
+    };
+  }[];
+  customer: {
+    _id: string;
+    name: string;
+    surname: string;
+    address: {
+      formatted: {
+        street: string;
+        streetNumber: string;
+        apartment?: string;
+        floor?: string;
+        building?: string;
+        city: string;
+        province: string;
+        postalCode: string;
+      } | {};
+    };
+  };
   riderId: string;
   storeInfo: {
     name: string;
@@ -42,9 +144,13 @@ export interface RiderOfferPayload {
   timestamp: Date;
 }
 
-// Order status updates with full context
+// Minimal order status updates
 export interface OrderStatusUpdatePayload {
-  order: Order;
+  order: {
+    _id: string;
+    status: OrderStatus;
+    total: number;
+  };
   previousStatus: OrderStatus;
   newStatus: OrderStatus;
   timestamp: Date;
@@ -78,4 +184,11 @@ export interface StoreOrderResponse {
   accepted: boolean;
   timestamp: Date;
   reason?: string;
+}
+
+export interface RiderCancellationRequest {
+  orderId: string;
+  riderId: string;
+  reason?: string;
+  timestamp: Date;
 }

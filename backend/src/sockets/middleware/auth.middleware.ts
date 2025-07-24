@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { AuthenticatedSocket } from '../../types/websocket.types';
 import { UserModel } from '../../models/user.model';
+import { StoreModel } from '../../models/store.model';
 import { JWT_CONFIG } from '../../config/env';
 
 export const socketAuthMiddleware = async (socket: AuthenticatedSocket, next: (err?: Error) => void) => {
@@ -21,11 +22,16 @@ export const socketAuthMiddleware = async (socket: AuthenticatedSocket, next: (e
     socket.userId = user._id.toString();
     socket.userRole = user.role;
 
-    // For merchants, get their store ID (assuming they have one store for now)
+    // For merchants, get their store ID
     if (user.role === 'merchant') {
-      // TODO: Get store ID from StoreModel where merchantId = user._id
-      // For now, we'll set it when the store connects
-      socket.storeId = undefined; // Will be set by store-specific logic
+      const store = await StoreModel.findOne({ merchantId: user._id }).select('_id').lean();
+      if (store) {
+        socket.storeId = store._id.toString();
+        console.log(`Merchant ${socket.userId} connected with store ${socket.storeId}`);
+      } else {
+        console.warn(`Merchant ${socket.userId} has no associated store`);
+        socket.storeId = undefined;
+      }
     }
 
     if (user.role === 'rider') {
