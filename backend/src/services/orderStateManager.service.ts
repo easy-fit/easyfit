@@ -4,6 +4,7 @@ import { RiderAssignmentService } from './riderAssignment.service';
 import { RiderLocationService } from './riderLocation.service';
 import { WebSocketService } from './websocket.service';
 import { PaymentSettlementService } from './paymentSettlement.service';
+import { VariantService } from './variant/variant.service';
 import { AppError } from '../utils/appError';
 import { OrderStatus } from '../types/order.types';
 
@@ -62,8 +63,6 @@ export class OrderStateManager {
         ...options?.details,
       },
     });
-
-    console.log(`Order ${orderId}: ${previousStatus} → ${newStatus}`);
     return updatedOrder;
   }
 
@@ -82,7 +81,7 @@ export class OrderStateManager {
       case 'delivered':
         if (riderId) {
           await RiderAssignmentService.updateAssignmentStatus(orderId, riderId, 'delivered');
-          await RiderLocationService.setRiderAvailability(riderId, true);
+          // Note: Rider remains unavailable until order is completely finished (purchased/returned)
         }
         break;
 
@@ -121,6 +120,9 @@ export class OrderStateManager {
       await RiderAssignmentService.updateAssignmentStatus(orderId, assignment.riderId.toString(), 'cancelled');
       await RiderLocationService.setRiderAvailability(assignment.riderId.toString(), true);
     }
+
+    // Restore stock for cancelled orders (restore all items)
+    await this.restoreStockForCancelledOrder(orderId);
   }
 
   private static async handleOrderCompletion(orderId: string) {
@@ -161,6 +163,16 @@ export class OrderStateManager {
       }
     } catch (error: any) {
       console.error(`Payment settlement error for order ${orderId}:`, error.message);
+    }
+
+    // Restore stock for returned items
+    await this.restoreStockForReturnedItems(orderId);
+
+    // Release the rider - order is completely finished
+    const assignment = await RiderAssignmentService.getAssignmentByOrderId(orderId);
+    if (assignment && assignment.riderId) {
+      await RiderLocationService.setRiderAvailability(assignment.riderId.toString(), true);
+      console.log(`Rider ${assignment.riderId} released after order ${orderId} completion (${order?.status})`);
     }
 
     await OrderService.updateOrder(orderId, {
@@ -306,5 +318,62 @@ export class OrderStateManager {
 
   static async markReturnsDeliveredToStore(orderId: string) {
     return this.transitionOrderStatus(orderId, 'store_checking_returns');
+  }
+
+  /**
+   * Restore stock for returned items after try period finalization
+   */
+  private static async restoreStockForReturnedItems(orderId: string): Promise<void> {
+    try {
+      const orderItems = await OrderItemService.getOrderItemsByOrderId(orderId);
+      const returnedItems = orderItems.filter((item) => item.returnStatus === 'returned');
+
+      if (returnedItems.length === 0) {
+        console.log(`No returned items to restore stock for order ${orderId}`);
+        return;
+      }
+
+      const stockRestorations = returnedItems.map(async (item) => {
+        try {
+          await VariantService.increaseStock(item.variantId.toString(), item.quantity);
+          console.log(`Restored ${item.quantity} units of variant ${item.variantId} to stock (returned from order ${orderId})`);
+        } catch (error: any) {
+          console.error(`Failed to restore stock for variant ${item.variantId}:`, error.message);
+        }
+      });
+
+      await Promise.all(stockRestorations);
+      console.log(`Stock restored for ${returnedItems.length} returned items from order ${orderId}`);
+    } catch (error: any) {
+      console.error(`Error restoring stock for returned items in order ${orderId}:`, error.message);
+    }
+  }
+
+  /**
+   * Restore stock for all items when order is cancelled
+   */
+  private static async restoreStockForCancelledOrder(orderId: string): Promise<void> {
+    try {
+      const orderItems = await OrderItemService.getOrderItemsByOrderId(orderId);
+
+      if (orderItems.length === 0) {
+        console.log(`No items to restore stock for cancelled order ${orderId}`);
+        return;
+      }
+
+      const stockRestorations = orderItems.map(async (item) => {
+        try {
+          await VariantService.increaseStock(item.variantId.toString(), item.quantity);
+          console.log(`Restored ${item.quantity} units of variant ${item.variantId} to stock (cancelled order ${orderId})`);
+        } catch (error: any) {
+          console.error(`Failed to restore stock for variant ${item.variantId}:`, error.message);
+        }
+      });
+
+      await Promise.all(stockRestorations);
+      console.log(`Stock restored for all ${orderItems.length} items from cancelled order ${orderId}`);
+    } catch (error: any) {
+      console.error(`Error restoring stock for cancelled order ${orderId}:`, error.message);
+    }
   }
 }
