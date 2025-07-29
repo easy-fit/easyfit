@@ -1,78 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyJWT, type JWTPayload } from '@/lib/auth/jwt';
 
-// Define route patterns
-const publicRoutes = [
-  '/',
-  '/login',
-  '/register',
-  '/register/customer',  
-  '/register/merchant',
-  '/forgot-password',
-  '/reset-password',
-  '/verify-email',
-  '/products',
-  '/stores',
-];
+const publicRoutes = ['/', '/login', '/register', '/register/customer', '/register/merchant'];
 
-const authRoutes = [
-  '/login',
-  '/register',
-  '/register/customer',
-  '/register/merchant',
-  '/forgot-password',
-  '/reset-password',
-];
+const authRoutes = ['/login', '/register', '/register/customer', '/register/merchant'];
 
-const protectedRoutes = [
-  '/dashboard',
-  '/profile',
-  '/orders',
-  '/cart',
-  '/checkout',
-];
+function getUserFromToken(request: NextRequest): JWTPayload | null {
+  const token = request.cookies.get('jwt')?.value;
 
-const merchantRoutes = [
-  '/merchant',
-  '/store-management',
-];
+  if (!token) {
+    return null;
+  }
 
-const adminRoutes = [
-  '/admin',
-];
-
-// Helper function to check if a path matches any pattern in an array
-function matchesPath(pathname: string, patterns: string[]): boolean {
-  return patterns.some(pattern => {
-    if (pattern.endsWith('*')) {
-      return pathname.startsWith(pattern.slice(0, -1));
-    }
-    return pathname === pattern || pathname.startsWith(pattern + '/');
-  });
+  return verifyJWT(token);
 }
 
-// Helper function to get user from JWT cookie
-async function getUserFromToken(request: NextRequest) {
+async function getUserRole(request: NextRequest): Promise<string | null> {
   const token = request.cookies.get('jwt')?.value;
-  
+
   if (!token) {
     return null;
   }
 
   try {
-    // Make a request to verify token and get user info
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me`, {
       headers: {
-        'Cookie': `jwt=${token}`,
+        Cookie: `jwt=${token}`,
       },
       credentials: 'include',
     });
 
     if (response.ok) {
       const data = await response.json();
-      return data.data.user;
+      return data.data.user.role;
     }
   } catch (error) {
-    console.error('Token verification failed:', error);
+    console.error('Failed to get user role:', error);
   }
 
   return null;
@@ -81,54 +44,41 @@ async function getUserFromToken(request: NextRequest) {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Get user information from token
-  const user = await getUserFromToken(request);
+  const user = getUserFromToken(request);
   const isAuthenticated = !!user;
 
-  // Allow all public routes
-  if (matchesPath(pathname, publicRoutes)) {
-    // If user is authenticated and trying to access auth routes, redirect to dashboard
-    if (isAuthenticated && matchesPath(pathname, authRoutes)) {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
+  // Handle static public routes
+  if (publicRoutes.includes(pathname)) {
+    // Redirect authenticated users away from auth pages
+    if (isAuthenticated && authRoutes.includes(pathname)) {
+      // Get user role to determine redirect destination
+      const userRole = await getUserRole(request);
+      const redirectUrl = userRole === 'merchant' ? '/dashboard' : '/';
+      return NextResponse.redirect(new URL(redirectUrl, request.url));
     }
     return NextResponse.next();
   }
 
-  // Check for protected routes
-  if (matchesPath(pathname, protectedRoutes)) {
+  // Handle dashboard route (merchant only)
+  if (pathname === '/dashboard') {
     if (!isAuthenticated) {
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('from', pathname);
       return NextResponse.redirect(loginUrl);
     }
-  }
 
-  // Check for merchant-only routes
-  if (matchesPath(pathname, merchantRoutes)) {
-    if (!isAuthenticated) {
-      const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('from', pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-    
-    if (user.role !== 'merchant' && user.role !== 'admin') {
+    // Get user role for dashboard access check
+    const userRole = await getUserRole(request);
+
+    if (userRole !== 'merchant' && userRole !== 'admin') {
       return NextResponse.redirect(new URL('/unauthorized', request.url));
     }
+
+    return NextResponse.next();
   }
 
-  // Check for admin-only routes
-  if (matchesPath(pathname, adminRoutes)) {
-    if (!isAuthenticated) {
-      const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('from', pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-    
-    if (user.role !== 'admin') {
-      return NextResponse.redirect(new URL('/unauthorized', request.url));
-    }
-  }
-
+  // All other routes are considered dynamic (slug-based) and allowed to pass through
+  // This includes routes like /storeSlug/productSlug, etc.
   return NextResponse.next();
 }
 
@@ -140,7 +90,7 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - public files (public folder)
+     * - public files (assets)
      */
     '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],

@@ -17,6 +17,7 @@ export class WebSocketClient {
 
   constructor() {}
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   connect(_token?: string): void {
     if (this.socket?.connected) {
       return;
