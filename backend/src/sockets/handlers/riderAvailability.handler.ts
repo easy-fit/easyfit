@@ -15,8 +15,10 @@ interface RiderAvailabilityToggle {
 
 interface RiderLocationUpdate {
   riderId: string;
-  latitude: number;
-  longitude: number;
+  location: {
+    latitude: number;
+    longitude: number;
+  };
   timestamp: Date;
 }
 
@@ -108,7 +110,7 @@ export class RiderAvailabilityHandler {
     try {
       const geoPoint: GeoPoint = {
         type: 'Point',
-        coordinates: [update.longitude, update.latitude], // [lng, lat]
+        coordinates: [update.location.longitude, update.location.latitude], // [lng, lat]
       };
 
       await RiderLocationService.updateLocation(update.riderId, geoPoint);
@@ -118,14 +120,16 @@ export class RiderAvailabilityHandler {
         data: {
           riderId: update.riderId,
           location: {
-            latitude: update.latitude,
-            longitude: update.longitude,
+            latitude: update.location.latitude,
+            longitude: update.location.longitude,
           },
           timestamp: new Date(),
         },
       });
 
-      console.log(`Location updated for rider ${update.riderId}: ${update.latitude}, ${update.longitude}`);
+      console.log(
+        `Location updated for rider ${update.riderId}: ${update.location.latitude}, ${update.location.longitude}`,
+      );
     } catch (error: any) {
       socket.emit('error', {
         message: error.message || 'Failed to update location',

@@ -27,12 +27,16 @@ export interface OrderNotificationPayload {
     shipping: {
       address: {
         formatted: {
+          building: any;
+          floor: any;
+          apartment: string;
           street: string;
           streetNumber: string;
           city: string;
           province: string;
           postalCode: string;
         };
+        coordinates: [number, number];
       };
       cost: number;
       type: string;
@@ -67,16 +71,18 @@ export interface OrderNotificationPayload {
     surname: string;
     email: string;
     address: {
-      formatted: {
-        street: string;
-        streetNumber: string;
-        apartment?: string;
-        floor?: string;
-        building?: string;
-        city: string;
-        province: string;
-        postalCode: string;
-      } | {};
+      formatted:
+        | {
+            street: string;
+            streetNumber: string;
+            apartment?: string;
+            floor?: string;
+            building?: string;
+            city: string;
+            province: string;
+            postalCode: string;
+          }
+        | {};
     };
   };
   timestamp: Date;
@@ -86,39 +92,24 @@ export interface OrderNotificationPayload {
 export interface RiderOfferPayload {
   order: {
     _id: string;
-    total: number;
-    status: OrderStatus;
     shipping: {
+      type: string;
       address: {
         formatted: {
           street: string;
           streetNumber: string;
-          city: string;
-          province: string;
-          postalCode: string;
+          apartment?: string;
+          floor?: string;
+          building?: string;
         };
-        coordinates: [number, number];
       };
+      distance: number; // Distance in kilometers
       cost: number;
       tryOnEnabled: boolean;
     };
   };
-  orderItems: {
-    _id: string;
-    quantity: number;
-    product: {
-      title: string;
-      category: string;
-    };
-    variant: {
-      size: string;
-      color: string;
-    };
-  }[];
-  customer: {
-    _id: string;
+  storeInfo: {
     name: string;
-    surname: string;
     address: {
       formatted: {
         street: string;
@@ -126,20 +117,10 @@ export interface RiderOfferPayload {
         apartment?: string;
         floor?: string;
         building?: string;
-        city: string;
-        province: string;
-        postalCode: string;
-      } | {};
+      };
     };
   };
   riderId: string;
-  storeInfo: {
-    name: string;
-    location: {
-      latitude: number;
-      longitude: number;
-    };
-  };
   timeout: number;
   timestamp: Date;
 }

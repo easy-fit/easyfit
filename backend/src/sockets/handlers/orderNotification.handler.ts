@@ -75,9 +75,6 @@ export class OrderNotificationHandler {
     console.log(`Order ${payload.order._id} status updated: ${payload.previousStatus} -> ${payload.newStatus}`);
   }
 
-  /**
-   * Handle customer joining an order channel
-   */
   public async handleCustomerJoinOrder(socket: AuthenticatedSocket, data: { orderId: string }): Promise<void> {
     try {
       const { orderId } = data;
@@ -102,10 +99,10 @@ export class OrderNotificationHandler {
 
       // Join the order channel
       socket.join(this.channels.ORDER(orderId));
-      
+
       // Confirm successful join
       socket.emit('customer:joined:order', { orderId, success: true });
-      
+
       console.log(`Customer ${socket.userId} joined order channel: ${orderId}`);
     } catch (error: any) {
       console.error('Error joining customer to order channel:', error);
@@ -113,9 +110,6 @@ export class OrderNotificationHandler {
     }
   }
 
-  /**
-   * Handle customer leaving an order channel
-   */
   public async handleCustomerLeaveOrder(socket: AuthenticatedSocket, data: { orderId: string }): Promise<void> {
     try {
       const { orderId } = data;
@@ -128,10 +122,10 @@ export class OrderNotificationHandler {
 
       // Leave the order channel
       socket.leave(this.channels.ORDER(orderId));
-      
+
       // Confirm successful leave
       socket.emit('customer:left:order', { orderId, success: true });
-      
+
       console.log(`Customer ${socket.userId} left order channel: ${orderId}`);
     } catch (error: any) {
       console.error('Error removing customer from order channel:', error);

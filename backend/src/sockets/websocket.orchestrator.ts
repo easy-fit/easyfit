@@ -143,6 +143,11 @@ export class WebSocketOrchestrator {
       this.riderCancellationHandler.handleRiderCancellation(socket, data);
     });
 
+    // Rider return confirmation events
+    socket.on('rider:confirm_return_pickup', (data) => {
+      this.returnFlowHandler.handleReturnPickupConfirmation(socket, data);
+    });
+
     // Customer order channel management
     socket.on('customer:join:order', (data) => {
       this.orderNotificationHandler.handleCustomerJoinOrder(socket, data);
