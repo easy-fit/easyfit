@@ -6,13 +6,13 @@ import { UpdateVariantDTO, CreateVariantDTO, VariantImage } from '../types/varia
 export class VariantController {
   static getVariants = catchAsync(async (_req: Request, res: Response) => {
     const variants = await VariantService.getVariants();
-    res.status(200).json({ total: variants.length, variants });
+    res.status(200).json({ total: variants.length, data: variants });
   });
 
   static getVariantById = catchAsync(async (req: Request, res: Response) => {
     const variantId = req.params.id;
     const variant = await VariantService.getVariantById(variantId);
-    res.status(200).json({ variant });
+    res.status(200).json({ data: variant });
   });
 
   static createVariant = catchAsync(async (req: Request, res: Response) => {
@@ -26,7 +26,7 @@ export class VariantController {
     const variantId = req.params.id;
     const data: UpdateVariantDTO = req.body;
     const variant = await VariantService.updateVariant(variantId, data);
-    res.status(200).json({ variant });
+    res.status(200).json({ data: variant });
   });
 
   static deleteVariant = catchAsync(async (req: Request, res: Response) => {

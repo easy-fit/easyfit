@@ -14,11 +14,9 @@ export const productRoutes = Router();
 
 productRoutes.route('/').get(ProductController.getProducts);
 
+productRoutes.route('/id/:id').get(ProductController.getProductById);
 productRoutes.route('/:storeSlug/products').get(ProductController.getProductsByStore);
-
-productRoutes.route('/:storeSlug/product/:slug').get(ProductController.getProductBySlug);
-
-productRoutes.route('/:id').get(ProductController.getProductById);
+productRoutes.route('/:storeSlug/:slug').get(ProductController.getProductBySlug);
 
 // ==== RUTAS PROTEGIDAS PARA PRODUCTOS ====
 
@@ -33,7 +31,7 @@ productRoutes
   );
 
 productRoutes
-  .route('/:id')
+  .route('/id/:id')
   .patch(
     protect,
     restrictTo('admin', 'merchant'),

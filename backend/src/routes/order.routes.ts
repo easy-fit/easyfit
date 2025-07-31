@@ -20,5 +20,5 @@ orderRoutes
   .post(restrictTo('rider'), verifyRiderOrderOwnership, OrderController.verifyDeliveryCode);
 
 orderRoutes
-  .route('/:id/try-period/save-decisions')
+  .route('/try-period/:id/save-decisions')
   .patch(restrictTo('customer'), verifyOrderOwnership, OrderController.saveDecisionsAndFinalize);

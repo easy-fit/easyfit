@@ -46,27 +46,27 @@ export class StoreController {
   static getStoreById = catchAsync(async (req: Request, res: Response) => {
     const storeId = req.params.id;
     const store = await StoreService.getStoreById(storeId);
-    res.status(200).json({ store });
+    res.status(200).json({ data: store });
   });
 
   static getStoreBySlug = catchAsync(async (req: Request, res: Response) => {
     const storeId = req.params.slug;
     const store = await StoreService.getStoreBySlug(storeId);
-    res.status(200).json({ store });
+    res.status(200).json({ data: store });
   });
 
   static createStore = catchAsync(async (req: Request, res: Response) => {
     const data: CreateStoreDTO = req.body;
     const userId = req.user._id;
     const store = await StoreService.createStore(data, userId);
-    res.status(201).json({ store });
+    res.status(201).json({ data: store });
   });
 
   static updateStore = catchAsync(async (req: Request, res: Response) => {
     const storeId = req.params.id;
     const data: UpdateStoreDTO = req.body;
     const store = await StoreService.updateStore(storeId, data);
-    res.status(200).json({ store });
+    res.status(200).json({ data: store });
   });
 
   static deleteStore = catchAsync(async (req: Request, res: Response) => {

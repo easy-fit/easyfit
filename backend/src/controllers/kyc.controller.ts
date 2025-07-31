@@ -7,14 +7,14 @@ export class KYCController {
     const { _id, role } = req.user;
 
     const applicant = await KYCService.createApplicant(_id, role);
-    res.status(201).json({ status: 'success', data: applicant });
+    res.status(201).json({ status: 'success', data: { applicant_id: applicant } });
   });
 
   static generateWebSDKLink = catchAsync(async (req: Request, res: Response) => {
     const userId = req.user._id;
 
     const sdkLink = await KYCService.generateWebSDKLink(userId);
-    res.status(200).json({ status: 'success', data: sdkLink });
+    res.status(200).json({ status: 'success', data: { session_link: sdkLink } });
   });
 
   static handleWebhook = catchAsync(async (req: Request, res: Response) => {

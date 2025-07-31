@@ -38,19 +38,19 @@ export class ProductController {
   static getProductsByStore = catchAsync(async (req: Request, res: Response) => {
     const storeSlug = req.params.storeSlug;
     const products = await ProductService.getProductsByStore(storeSlug);
-    res.status(200).json({ total: products.length, products });
+    res.status(200).json({ total: products.length, data: products });
   });
 
   static getProductById = catchAsync(async (req: Request, res: Response) => {
     const productId = req.params.id;
     const product = await ProductService.getProductById(productId);
-    res.status(200).json({ product });
+    res.status(200).json({ data: product });
   });
 
   static getProductBySlug = catchAsync(async (req: Request, res: Response) => {
     const { storeSlug, slug } = req.params;
     const product = await ProductService.getProductBySlug(storeSlug, slug);
-    res.status(200).json({ product });
+    res.status(200).json({ data: product });
   });
 
   static createProduct = catchAsync(async (req: Request, res: Response) => {
