@@ -175,12 +175,12 @@ export class OrderService {
       };
     }
 
-    const updatedOrder = await OrderStateManager.markAsDelivered(orderId, riderId);
+    await OrderStateManager.markAsDelivered(orderId, riderId);
 
-    await OrderModel.findByIdAndUpdate(orderId, {
+    const updatedOrder = await OrderModel.findByIdAndUpdate(orderId, {
       'deliveryVerification.verifiedAt': new Date(),
       'deliveryVerification.status': 'verified',
-    });
+    }).select('-deliveryVerification');
 
     if (order.shipping.tryOnEnabled) {
       await TryPeriodManager.startTryPeriod(orderId);

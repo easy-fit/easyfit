@@ -7,7 +7,7 @@ export class UserController {
   static getMe = catchAsync(async (req: Request, res: Response) => {
     const userId = req.user._id;
     const user = await UserService.getUserById(userId);
-    res.status(200).json({ user });
+    res.status(200).json({ data: { user } });
   });
 
   static getUsers = catchAsync(async (req: Request, res: Response) => {
