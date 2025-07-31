@@ -8,7 +8,6 @@ export interface CheckoutCartItem {
   quantity: number;
   price: number;
   unit_price: number;
-  metadata: {};
 }
 
 export interface CheckoutSession {

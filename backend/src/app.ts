@@ -4,8 +4,16 @@ import { AppError } from './utils/appError';
 import { globalErrorHandler } from './controllers/error.controller';
 import apiRoutes from './routes';
 import webhooks from './routes/webhooks/index';
+import cors from 'cors';
 
 export const app: Application = express();
+
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true, // Allow cookies to be sent
+  }),
+);
 
 app.use('/webhooks', webhooks);
 
