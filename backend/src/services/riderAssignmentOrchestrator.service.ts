@@ -1,14 +1,13 @@
 import { OrderService } from './order.service';
 import { OrderModel } from '../models/order.model';
-import { OrderItemModel } from '../models/orderItem.model';
 import { RiderAssignmentModel } from '../models/riderAssignment.model';
 import { RiderLocationService } from './riderLocation.service';
 import { OrderStoreService } from './orderStore.service';
-import { UserService } from './user.service';
 import { WebSocketService } from './websocket.service';
 import { ErrorHandlingService } from './errorHandling.service';
 import { AppError } from '../utils/appError';
 import { RiderOfferPayload } from '../types/websocket.types';
+import { calculateCityDistance } from '../utils/distance';
 
 export class RiderAssignmentOrchestrator {
   static async assignRiderToOrder(orderId: string): Promise<string | null> {
@@ -53,7 +52,6 @@ export class RiderAssignmentOrchestrator {
   }
 
   static async executeRiderAssignment(orderId: string): Promise<string | null> {
-    // Get order and store data efficiently
     const order = await OrderService.getOrderById(orderId);
 
     if (order?.status !== 'order_accepted') {
@@ -65,10 +63,9 @@ export class RiderAssignmentOrchestrator {
       store.address.location.coordinates[0],
       store.address.location.coordinates[1],
     ];
-    console.log('STORE coordinates', storeCoordinates);
 
     const availableRiders = await RiderLocationService.getAvailableNearbyRiders(storeCoordinates);
-    
+
     // Get optimized order data for rider offer
     const orderData = await this.createRiderOfferPayload(orderId, store);
 
@@ -87,73 +84,38 @@ export class RiderAssignmentOrchestrator {
     }
   }
 
-  /**
-   * Create optimized payload for rider offers - only essential data
-   */
   static async createRiderOfferPayload(orderId: string, store: any): Promise<Omit<RiderOfferPayload, 'riderId'>> {
-    // Get order with minimal data
-    const order = await OrderModel.findById(orderId).lean() as any;
+    const order = (await OrderModel.findById(orderId).lean()) as any;
     if (!order) {
       throw new AppError('Order not found', 404);
-    }
-
-    // Get order items with minimal product data for riders
-    const orderItems = await OrderItemModel.find({ orderId })
-      .populate({
-        path: 'variantId',
-        select: 'size color',
-        populate: {
-          path: 'productId',
-          select: 'title category',
-        },
-      })
-      .lean();
-
-    // Get customer delivery address only
-    const customer = await UserService.getUserById(order.userId.toString());
-    if (!customer) {
-      throw new AppError('Customer not found', 404);
     }
 
     return {
       order: {
         _id: order._id.toString(),
-        total: order.total,
-        status: order.status,
         shipping: {
+          type: order.shipping.type,
           address: {
-            formatted: order.shipping.address.formatted,
-            coordinates: order.shipping.address.coordinates,
+            formatted: {
+              street: order.shipping.address.formatted.street,
+              streetNumber: order.shipping.address.formatted.streetNumber,
+              apartment: order.shipping.address.formatted.apartment || '',
+              floor: order.shipping.address.formatted.floor || '',
+              building: order.shipping.address.formatted.building || '',
+            },
           },
           cost: order.shipping.cost,
+          distance: order.shipping.distanceKm,
           tryOnEnabled: order.shipping.tryOnEnabled,
-        },
-      },
-      orderItems: orderItems.map((item: any) => ({
-        _id: item._id.toString(),
-        quantity: item.quantity,
-        product: {
-          title: item.variantId.productId.title,
-          category: item.variantId.productId.category,
-        },
-        variant: {
-          size: item.variantId.size,
-          color: item.variantId.color,
-        },
-      })),
-      customer: {
-        _id: customer._id.toString(),
-        name: customer.name,
-        surname: customer.surname,
-        address: {
-          formatted: customer.address?.formatted || {},
         },
       },
       storeInfo: {
         name: store.name,
-        location: {
-          latitude: store.address.location.coordinates[1],
-          longitude: store.address.location.coordinates[0],
+        address: {
+          formatted: {
+            street: store.address.formatted.street,
+            streetNumber: store.address.formatted.streetNumber,
+          },
         },
       },
       timeout: 30000,
@@ -242,6 +204,7 @@ export class RiderAssignmentOrchestrator {
     await RiderLocationService.setRiderAvailability(riderId, false);
 
     const orderData = await OrderStoreService.getCompleteOrderData(orderId);
+    console.log(orderData.order.shipping);
     const order = await OrderService.getOrderById(orderId);
     const store = order?.storeId as any;
     const storeCoordinates: [number, number] = [
@@ -260,21 +223,49 @@ export class RiderAssignmentOrchestrator {
         riderId,
       },
     });
-
     // 2. Send confirmation to the accepting rider
     WebSocketService.getIO()
       .to(`rider:${riderId}`)
       .emit('order:assignment_confirmed', {
         type: 'assignment_confirmed',
         data: {
-          orderId,
-          message: 'Order assigned successfully! Head to the store.',
+          order: {
+            orderId,
+            status: orderData?.order.status,
+          },
+          customer: {
+            name: orderData.customer.name,
+            surname: orderData.customer.surname,
+          },
           storeInfo: {
             name: store.name,
-            location: {
-              latitude: storeCoordinates[1],
-              longitude: storeCoordinates[0],
+            address: {
+              formatted: {
+                street: store.address.formatted.street,
+                streetNumber: store.address.formatted.streetNumber,
+              },
+              coordinates: {
+                latitude: storeCoordinates[1],
+                longitude: storeCoordinates[0],
+              },
             },
+          },
+          shipping: {
+            address: {
+              formatted: {
+                street: orderData?.order.shipping.address.formatted.street,
+                streetNumber: orderData?.order.shipping.address.formatted.streetNumber,
+                apartment: orderData?.order.shipping.address.formatted.apartment || '',
+                floor: orderData?.order.shipping.address.formatted.floor || '',
+                building: orderData?.order.shipping.address.formatted.building || '',
+              },
+              coordinates: {
+                latitude: orderData.order.shipping.address.coordinates[1],
+                longitude: orderData?.order.shipping.address.coordinates[0],
+              },
+            },
+            cost: order?.shipping.cost,
+            type: order?.shipping.type,
           },
           timestamp: new Date(),
         },
