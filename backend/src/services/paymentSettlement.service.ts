@@ -55,9 +55,6 @@ export class PaymentSettlementService {
     }
   }
 
-  /**
-   * Execute the actual settlement logic
-   */
   private static async executeSettlement(data: PaymentSettlementData): Promise<SettlementResult> {
     const { orderId, finalStatus } = data;
 

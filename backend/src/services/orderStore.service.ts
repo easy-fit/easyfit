@@ -7,7 +7,7 @@ import { OrderNotificationPayload } from '../types/websocket.types';
 export class OrderStoreService {
   static async getCompleteOrderData(orderId: string): Promise<OrderNotificationPayload> {
     // Get order without population for performance
-    const order = await OrderModel.findById(orderId).lean() as any;
+    const order = (await OrderModel.findById(orderId).lean()) as any;
     if (!order) {
       throw new AppError('Order not found', 404);
     }
@@ -30,6 +30,7 @@ export class OrderStoreService {
         shipping: {
           address: {
             formatted: order.shipping.address.formatted,
+            coordinates: order.shipping.address.coordinates,
           },
           cost: order.shipping.cost,
           type: order.shipping.type,
