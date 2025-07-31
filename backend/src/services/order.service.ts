@@ -184,6 +184,8 @@ export class OrderService {
 
     if (order.shipping.tryOnEnabled) {
       await TryPeriodManager.startTryPeriod(orderId);
+    } else {
+      await OrderStateManager.markAsPurchased(orderId, 'Simple shipping - no try period');
     }
 
     return {

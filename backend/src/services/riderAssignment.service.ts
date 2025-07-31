@@ -49,6 +49,9 @@ export class RiderAssignmentService {
       case 'picked_up':
         updateData.pickedUpAt = new Date();
         break;
+      case 'in_transit':
+        // in_transit doesn't need a specific timestamp, it uses the general updatedAt
+        break;
       case 'delivered':
         updateData.deliveredAt = new Date();
         break;

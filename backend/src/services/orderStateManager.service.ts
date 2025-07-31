@@ -74,7 +74,7 @@ export class OrderStateManager {
     switch (newStatus) {
       case 'in_transit':
         if (riderId) {
-          await RiderAssignmentService.updateAssignmentStatus(orderId, riderId, 'picked_up');
+          await RiderAssignmentService.updateAssignmentStatus(orderId, riderId, 'in_transit');
         }
         break;
 
@@ -127,6 +127,7 @@ export class OrderStateManager {
 
   private static async handleOrderCompletion(orderId: string) {
     const order = await OrderService.getOrderById(orderId);
+    const store = order?.storeId as any;
 
     try {
       let settlementData: any = {
@@ -172,6 +173,27 @@ export class OrderStateManager {
     const assignment = await RiderAssignmentService.getAssignmentByOrderId(orderId);
     if (assignment && assignment.riderId) {
       await RiderLocationService.setRiderAvailability(assignment.riderId.toString(), true);
+
+      // Notify rider that the order is completed
+      WebSocketService.getIO()
+        .to(`rider:${assignment.riderId}`)
+        .emit('order:completed', {
+          type: 'order_completed',
+          data: {
+            order: {
+              id: orderId,
+              status: order?.status,
+              shipping: {
+                type: order?.shipping.type,
+                total: order?.shipping.cost,
+              },
+              store: store.name,
+            },
+            message: 'Delivery completed successfully! You are now available for new orders.',
+            timestamp: new Date(),
+          },
+        });
+
       console.log(`Rider ${assignment.riderId} released after order ${orderId} completion (${order?.status})`);
     }
 
@@ -320,9 +342,6 @@ export class OrderStateManager {
     return this.transitionOrderStatus(orderId, 'store_checking_returns');
   }
 
-  /**
-   * Restore stock for returned items after try period finalization
-   */
   private static async restoreStockForReturnedItems(orderId: string): Promise<void> {
     try {
       const orderItems = await OrderItemService.getOrderItemsByOrderId(orderId);
@@ -336,7 +355,9 @@ export class OrderStateManager {
       const stockRestorations = returnedItems.map(async (item) => {
         try {
           await VariantService.increaseStock(item.variantId.toString(), item.quantity);
-          console.log(`Restored ${item.quantity} units of variant ${item.variantId} to stock (returned from order ${orderId})`);
+          console.log(
+            `Restored ${item.quantity} units of variant ${item.variantId} to stock (returned from order ${orderId})`,
+          );
         } catch (error: any) {
           console.error(`Failed to restore stock for variant ${item.variantId}:`, error.message);
         }
@@ -349,9 +370,6 @@ export class OrderStateManager {
     }
   }
 
-  /**
-   * Restore stock for all items when order is cancelled
-   */
   private static async restoreStockForCancelledOrder(orderId: string): Promise<void> {
     try {
       const orderItems = await OrderItemService.getOrderItemsByOrderId(orderId);
@@ -364,7 +382,9 @@ export class OrderStateManager {
       const stockRestorations = orderItems.map(async (item) => {
         try {
           await VariantService.increaseStock(item.variantId.toString(), item.quantity);
-          console.log(`Restored ${item.quantity} units of variant ${item.variantId} to stock (cancelled order ${orderId})`);
+          console.log(
+            `Restored ${item.quantity} units of variant ${item.variantId} to stock (cancelled order ${orderId})`,
+          );
         } catch (error: any) {
           console.error(`Failed to restore stock for variant ${item.variantId}:`, error.message);
         }
