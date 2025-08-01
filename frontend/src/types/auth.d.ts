@@ -48,32 +48,6 @@ export interface RegisterMerchantDTO {
   };
 }
 
-export interface RegisterRiderDTO {
-  name: string;
-  surname: string;
-  email: string;
-  password: string;
-  additionalInfo?: {
-    dni?: string;
-    dniType?: 'DNI' | 'CI' | 'LC' | 'LE';
-    birthDate?: Date;
-    phone?: {
-      areaCode?: string;
-      number?: string;
-    };
-  };
-  riderInfo: {
-    cuit?: string;
-    vehicleType: 'bike' | 'motorcycle' | 'car';
-    licensePlate?: string;
-    photoUrl?: string;
-    score?: {
-      upvotes: number;
-      downvotes: number;
-    };
-  };
-}
-
 export interface RegisterResponse {
   status: string;
   token: string;

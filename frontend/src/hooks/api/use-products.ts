@@ -84,3 +84,5 @@ export const useDeleteImageFromProduct = (productId: string, variantId: string) 
     mutationFn: (key: string) => api.products.deleteImageFromProduct(productId, variantId, key),
   });
 };
+
+export type { ProductFilterOptions };

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // WebSocket event types for frontend
 
 // ============ Client to Server Events ============
@@ -11,7 +12,7 @@ export interface CustomerLeaveOrder {
   orderId: string;
 }
 
-// Merchant Events  
+// Merchant Events
 export interface StoreOrderResponse {
   orderId: string;
   storeId: string;
@@ -190,7 +191,7 @@ export interface InfoEvent {
 // ============ Event Type Unions ============
 
 // Events that customers care about
-export type CustomerEvent = 
+export type CustomerEvent =
   | OrderStatusUpdateEvent
   | DeliveryTrackingEvent
   | TryPeriodUpdateEvent
@@ -201,7 +202,7 @@ export type CustomerEvent =
   | InfoEvent;
 
 // Events that merchants care about
-export type MerchantEvent = 
+export type MerchantEvent =
   | OrderNewEvent
   | OrderResponseConfirmedEvent
   | OrderRiderAssignedEvent
@@ -211,12 +212,7 @@ export type MerchantEvent =
   | InfoEvent;
 
 // Events that admins care about
-export type AdminEvent = 
-  | OrderAssignmentIssueEvent
-  | SystemErrorEvent
-  | RiderAvailabilityEvent
-  | ErrorEvent
-  | InfoEvent;
+export type AdminEvent = OrderAssignmentIssueEvent | SystemErrorEvent | RiderAvailabilityEvent | ErrorEvent | InfoEvent;
 
 // All possible events
 export type WebSocketEvent = CustomerEvent | MerchantEvent | AdminEvent;
@@ -227,7 +223,7 @@ export const CUSTOMER_EVENTS = {
   // Outgoing
   JOIN_ORDER: 'customer:join:order',
   LEAVE_ORDER: 'customer:leave:order',
-  
+
   // Incoming
   ORDER_STATUS_UPDATE: 'order:status_update',
   DELIVERY_TRACKING: 'delivery:tracking_update',
@@ -241,7 +237,7 @@ export const MERCHANT_EVENTS = {
   // Outgoing
   ORDER_RESPONSE: 'store:order:response',
   RETURN_INSPECTION: 'return:inspection:complete',
-  
+
   // Incoming
   ORDER_NEW: 'order:new',
   ORDER_RESPONSE_CONFIRMED: 'order:response_confirmed',

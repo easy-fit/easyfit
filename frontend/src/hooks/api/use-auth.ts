@@ -15,7 +15,7 @@ export const useLogin = () => {
       await login(credentials);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user'] });
+      queryClient.invalidateQueries();
     },
     onError: (error: Error) => {
       console.error('Login failed:', error);
