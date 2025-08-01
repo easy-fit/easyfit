@@ -5,17 +5,18 @@ import type React from 'react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Eye, EyeOff, Mail, Lock, User, Phone, Store, ChevronDown, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, Phone, ChevronDown, Building, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useRegisterCustomer } from '@/hooks/api/use-auth';
+import { useRegisterMerchant } from '@/hooks/api/use-auth';
 import { toast } from 'sonner';
 
-export default function RegisterPage() {
+export default function RegisterStorePage() {
   const [formData, setFormData] = useState({
+    // Personal data
     name: '',
     surname: '',
     email: '',
@@ -26,14 +27,17 @@ export default function RegisterPage() {
     birthDate: '',
     phone: '',
     areaCode: '',
+    // Store data
+    storeCount: '1',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showAdditionalFields, setShowAdditionalFields] = useState(false);
+  const [showStoreFields, setShowStoreFields] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
-  const registerMutation = useRegisterCustomer();
+  const registerMutation = useRegisterMerchant();
 
   // Check if basic fields are completed to show additional fields
   useEffect(() => {
@@ -56,6 +60,20 @@ export default function RegisterPage() {
     showAdditionalFields,
   ]);
 
+  // Check if additional fields are completed to show store fields
+  useEffect(() => {
+    const additionalFieldsCompleted =
+      showAdditionalFields &&
+      formData.dni.trim() !== '' &&
+      formData.birthDate !== '' &&
+      formData.areaCode.trim() !== '' &&
+      formData.phone.trim() !== '';
+
+    if (additionalFieldsCompleted && !showStoreFields) {
+      setShowStoreFields(true);
+    }
+  }, [formData.dni, formData.birthDate, formData.areaCode, formData.phone, showAdditionalFields, showStoreFields]);
+
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
@@ -68,7 +86,7 @@ export default function RegisterPage() {
       return;
     }
 
-    // Validate required additional fields
+    // Validate required fields
     if (!formData.dni.trim()) {
       toast.error('El número de documento es obligatorio');
       return;
@@ -101,10 +119,13 @@ export default function RegisterPage() {
             number: formData.phone,
           },
         },
+        merchantInfo: {
+          storeCount: Number.parseInt(formData.storeCount),
+        },
       };
 
       await registerMutation.mutateAsync(registerData);
-      toast.success('¡Cuenta creada exitosamente!');
+      toast.success('¡Cuenta de tienda creada exitosamente!');
       router.push('/verify-email');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
@@ -129,15 +150,15 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-[#20313A] font-helvetica">Únete a EasyFit</h1>
-          <p className="text-gray-600 font-satoshi">Creá tu cuenta y empezá a probar ropa en casa</p>
+          <h1 className="text-2xl font-bold text-[#20313A] font-helvetica">Registrá tu Tienda</h1>
+          <p className="text-gray-600 font-satoshi">Empezá a vender en EasyFit y llegá a más clientes</p>
         </div>
 
         {/* Registration Form */}
         <Card className="border-gray-200 shadow-lg">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-xl text-[#20313A] font-satoshi">Crear Cuenta</CardTitle>
-            <CardDescription className="text-gray-600">Completá tus datos para registrarte</CardDescription>
+            <CardTitle className="text-xl text-[#20313A] font-satoshi">Crear Cuenta de Tienda</CardTitle>
+            <CardDescription className="text-gray-600">Completá tus datos para registrar tu tienda</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -264,7 +285,7 @@ export default function RegisterPage() {
                 <div className="pt-4 border-t border-gray-100 space-y-4 animate-in slide-in-from-top-2 duration-300">
                   <div className="flex items-center gap-2 text-[#20313A]">
                     <ChevronDown className="h-4 w-4" />
-                    <p className="text-sm font-medium">Datos adicionales</p>
+                    <p className="text-sm font-medium">Datos personales</p>
                   </div>
 
                   {/* DNI */}
@@ -332,13 +353,53 @@ export default function RegisterPage() {
                 </div>
               )}
 
+              {/* Store Fields - Show when additional fields are completed */}
+              {showStoreFields && (
+                <div className="pt-4 border-t border-gray-100 space-y-4 animate-in slide-in-from-top-2 duration-300">
+                  <div className="flex items-center gap-2 text-[#20313A]">
+                    <Building className="h-4 w-4" />
+                    <p className="text-sm font-medium">Información de tu tienda</p>
+                  </div>
+
+                  {/* Store Count */}
+                  <div className="space-y-2">
+                    <Label htmlFor="storeCount" className="text-[#20313A] font-medium text-sm">
+                      ¿Cuántas tiendas tenés?
+                    </Label>
+                    <Select
+                      value={formData.storeCount}
+                      onValueChange={(value) => handleInputChange('storeCount', value)}
+                    >
+                      <SelectTrigger className="border-gray-200">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">1 tienda</SelectItem>
+                        <SelectItem value="2">2 tiendas</SelectItem>
+                        <SelectItem value="3">3 tiendas</SelectItem>
+                        <SelectItem value="4">4 tiendas</SelectItem>
+                        <SelectItem value="5">5 o más tiendas</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Info about next steps */}
+                  <div className="bg-[#DBF7DC] p-3 rounded-lg">
+                    <p className="text-xs text-[#20313A]">
+                      <strong>Próximos pasos:</strong> Después del registro, vas a poder agregar la información completa
+                      de tus tiendas y productos.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Submit Button */}
               <Button
                 type="submit"
                 className="w-full bg-[#9EE493] hover:bg-[#8BD480] text-[#20313A] font-semibold py-2.5 mt-6"
-                disabled={isLoading || !showAdditionalFields}
+                disabled={isLoading || !showStoreFields}
               >
-                {isLoading ? 'Creando cuenta...' : 'Crear Cuenta'}
+                {isLoading ? 'Creando cuenta...' : 'Crear Cuenta de Tienda'}
               </Button>
             </form>
 
@@ -354,19 +415,19 @@ export default function RegisterPage() {
           </CardContent>
         </Card>
 
-        {/* Merchant Option */}
+        {/* Customer Option */}
         <div className="mt-6">
           <Card className="border-gray-200 bg-white/50">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="bg-[#DBF7DC] p-2 rounded-full">
-                  <Store className="h-5 w-5 text-[#20313A]" />
+                  <User className="h-5 w-5 text-[#20313A]" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-[#20313A] text-sm">¿Tenés una tienda?</h3>
-                  <p className="text-xs text-gray-600">Registrate como vendedor y vendé en EasyFit</p>
+                  <h3 className="font-semibold text-[#20313A] text-sm">¿Solo querés comprar?</h3>
+                  <p className="text-xs text-gray-600">Registrate como cliente para probar ropa en casa</p>
                 </div>
-                <Link href="/register/stores">
+                <Link href="/register">
                   <Button
                     variant="outline"
                     size="sm"
