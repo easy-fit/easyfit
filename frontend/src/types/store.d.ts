@@ -78,6 +78,8 @@ export interface Store {
   slug: string;
   createdAt: string;
   updatedAt: string;
+  approximateDeliveryTime?: number | null; // minutes
+  approximateShippingCost?: number | null; // cents
 }
 
 export interface CreateStoreDTO {

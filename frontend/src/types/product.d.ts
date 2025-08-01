@@ -1,5 +1,6 @@
 import { Variant } from './variant';
 import { SignedUrl } from './global';
+import { Store } from './store';
 
 export type ProductStatus = 'published' | 'archived' | 'deleted';
 export type ProductCategory = 'clothing' | 'accessories' | 'footwear' | 'fragrance';
@@ -32,6 +33,12 @@ export interface Product {
   slug: string;
   createdAt: string;
   updatedAt: string;
+  // Enhanced fields from aggregation
+  variants?: Variant[];
+  store?: Store;
+  minPrice?: number;
+  defaultImage?: string;
+  availableColors?: string[];
 }
 
 export interface CreateProductDTO {
