@@ -49,7 +49,7 @@ export function StoreCard({ store }: StoreCardProps) {
   };
 
   return (
-    <Link href={`/stores/${store.slug}`}>
+    <Link href={`${store.slug}`}>
       <Card className="group hover:shadow-lg transition-shadow duration-200 cursor-pointer overflow-hidden py-0">
         <CardContent className="p-0">
           {/* Store Image - Made shorter */}
