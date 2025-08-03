@@ -6,6 +6,7 @@ import {
   UpdateProductDTO,
   ProductFilterOptions,
   ProductCommonResponse,
+  ProductsByStoreResponse,
 } from '@/types/product';
 
 export const useProducts = (filters?: ProductFilterOptions) => {
@@ -32,7 +33,7 @@ export const useProductBySlug = (storeSlug: string, slug: string) => {
 };
 
 export const useProductsByStore = (storeSlug: string) => {
-  return useQuery<ProductCommonResponse>({
+  return useQuery<ProductsByStoreResponse>({
     queryKey: ['products', 'byStore', storeSlug],
     queryFn: () => api.products.getProductsByStore(storeSlug),
     enabled: !!storeSlug,

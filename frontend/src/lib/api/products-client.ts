@@ -6,6 +6,7 @@ import {
   ProductFilterOptions,
   CreateProductResponse,
   ProductCommonResponse,
+  ProductsByStoreResponse,
 } from '@/types/product';
 import { imageUploadBody } from '@/types/global';
 import { AddImageToVariant } from '@/types/variant';
@@ -25,8 +26,8 @@ export class ProductsClient extends BaseApiClient {
     return this.fetchApi<ProductCommonResponse>(`/products/${storeSlug}/${slug}`);
   }
 
-  public async getProductsByStore(storeSlug: string): Promise<ProductCommonResponse> {
-    return this.fetchApi<ProductCommonResponse>(`/products/store/${storeSlug}`);
+  public async getProductsByStore(storeSlug: string): Promise<ProductsByStoreResponse> {
+    return this.fetchApi<ProductsByStoreResponse>(`/products/${storeSlug}/products`);
   }
 
   public async createProduct(product: CreateProductDTO): Promise<ProductCommonResponse> {

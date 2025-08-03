@@ -80,3 +80,8 @@ export interface ProductCommonResponse {
   total?: number;
   data: Product;
 }
+
+export interface ProductsByStoreResponse {
+  total: number;
+  data: Product[];
+}
