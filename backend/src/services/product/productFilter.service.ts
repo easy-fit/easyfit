@@ -121,10 +121,74 @@ export class ProductFilterService {
   static async getProductsByStore(storeSlug: string) {
     const storeId = await this.getStoreIdBySlug(storeSlug);
 
-    const products = await ProductModel.find({
-      storeId: storeId,
-      status: 'published',
-    });
+    const products = await ProductModel.aggregate([
+      {
+        $match: {
+          storeId: storeId,
+          status: 'published',
+        },
+      },
+      {
+        $lookup: {
+          from: 'variants',
+          localField: '_id',
+          foreignField: 'productId',
+          as: 'variants',
+        },
+      },
+      {
+        $lookup: {
+          from: 'stores',
+          localField: 'storeId',
+          foreignField: '_id',
+          as: 'store',
+          pipeline: [
+            {
+              $project: {
+                _id: 1,
+                name: 1,
+                slug: 1,
+              },
+            },
+          ],
+        },
+      },
+      {
+        $unwind: {
+          path: '$store',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $addFields: {
+          minPrice: { $min: '$variants.price' },
+          defaultImage: {
+            $let: {
+              vars: {
+                defaultVariant: {
+                  $arrayElemAt: [
+                    { $filter: { input: '$variants', cond: { $eq: ['$$this.isDefault', true] } } },
+                    0,
+                  ],
+                },
+              },
+              in: {
+                $ifNull: [
+                  { $arrayElemAt: ['$$defaultVariant.images.key', 0] },
+                  { $arrayElemAt: [{ $arrayElemAt: ['$variants.images.key', 0] }, 0] },
+                ],
+              },
+            },
+          },
+          availableColors: {
+            $setUnion: ['$variants.color', []],
+          },
+        },
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+    ]);
 
     return products;
   }
