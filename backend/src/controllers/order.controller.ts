@@ -1,16 +1,19 @@
 import { Request, Response } from 'express';
 import { OrderService } from '../services/order.service';
 import { catchAsync } from '../utils/catchAsync';
-import { CreateOrderDTO, UpdateOrderDTO } from '../types/order.types';
-import { OrderStateManager } from '../services/orderStateManager.service';
+import { UpdateOrderDTO } from '../types/order.types';
 import { TryPeriodManager } from '../services/tryPeriodManager.service';
-import { DeliveryTrackingService } from '../services/deliveryTracking.service';
-import { PaymentSettlementService } from '../services/paymentSettlement.service';
 import { ItemDecision } from '../types/tryPeriod.types';
 
 export class OrderController {
   static getOrders = catchAsync(async (_req: Request, res: Response) => {
     const orders = await OrderService.getOrders();
+    res.status(200).json({ total: orders.length, data: orders });
+  });
+
+  static getMyOrders = catchAsync(async (req: Request, res: Response) => {
+    const userId = req.user._id;
+    const orders = await OrderService.getMyOrders(userId);
     res.status(200).json({ total: orders.length, data: orders });
   });
 

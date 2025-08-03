@@ -8,6 +8,7 @@ export const orderRoutes = Router();
 orderRoutes.use(protect);
 
 orderRoutes.route('/').get(restrictTo('admin'), OrderController.getOrders);
+orderRoutes.route('/my-orders').get(restrictTo('customer'), OrderController.getMyOrders);
 
 orderRoutes
   .route('/:id')

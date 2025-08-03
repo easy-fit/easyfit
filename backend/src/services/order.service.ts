@@ -15,6 +15,16 @@ export class OrderService {
     return OrderModel.find();
   }
 
+  static async getMyOrders(userId: string) {
+    return OrderModel.find({ userId })
+      .populate({
+        path: 'storeId',
+        select: 'name customization.logoUrl',
+      })
+      .select('-deliveryVerification -isStolen -isActive -externalPaymentId')
+      .sort({ createdAt: -1 });
+  }
+
   static async getOrderById(orderId: string) {
     const order = await OrderModel.findById(orderId).populate('storeId');
     this.ensureOrderExists(order);
