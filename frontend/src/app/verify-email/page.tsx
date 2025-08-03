@@ -9,7 +9,7 @@ import { ArrowLeft, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useVerifyEmail, useResendVerificationCode } from '@/hooks/api/use-auth';
-import { toast } from 'sonner';
+import { useEasyFitToast } from '@/hooks/use-toast';
 
 export default function VerifyEmailPage() {
   const [code, setCode] = useState(['', '', '', '', '', '']);
@@ -20,6 +20,7 @@ export default function VerifyEmailPage() {
   const router = useRouter();
   const verifyEmailMutation = useVerifyEmail();
   const resendCodeMutation = useResendVerificationCode();
+  const toast = useEasyFitToast();
 
   // Auto-verify when all 6 digits are entered
   useEffect(() => {
@@ -34,7 +35,7 @@ export default function VerifyEmailPage() {
 
     try {
       await verifyEmailMutation.mutateAsync(verificationCode);
-      toast.success('¡Email verificado exitosamente!');
+      toast.emailVerified();
       router.push('/');
     } catch (error: any) {
       toast.error(error?.message || 'Código de verificación inválido');
@@ -72,7 +73,9 @@ export default function VerifyEmailPage() {
 
     try {
       await resendCodeMutation.mutateAsync();
-      toast.success('Código reenviado exitosamente');
+      toast.success('Código reenviado exitosamente', {
+        description: 'Revisa tu bandeja de entrada'
+      });
       setCode(['', '', '', '', '', '']); // Clear current code
       inputRefs.current[0]?.focus();
     } catch (error: any) {

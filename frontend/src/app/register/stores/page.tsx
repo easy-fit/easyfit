@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useRegisterMerchant } from '@/hooks/api/use-auth';
-import { toast } from 'sonner';
+import { useEasyFitToast } from '@/hooks/use-toast';
 
 export default function RegisterStorePage() {
   const [formData, setFormData] = useState({
@@ -38,6 +38,7 @@ export default function RegisterStorePage() {
 
   const router = useRouter();
   const registerMutation = useRegisterMerchant();
+  const toast = useEasyFitToast();
 
   // Check if basic fields are completed to show additional fields
   useEffect(() => {
@@ -88,17 +89,17 @@ export default function RegisterStorePage() {
 
     // Validate required fields
     if (!formData.dni.trim()) {
-      toast.error('El número de documento es obligatorio');
+      toast.validationError('número de documento');
       return;
     }
 
     if (!formData.birthDate) {
-      toast.error('La fecha de nacimiento es obligatoria');
+      toast.validationError('fecha de nacimiento');
       return;
     }
 
     if (!formData.areaCode.trim() || !formData.phone.trim()) {
-      toast.error('El teléfono es obligatorio');
+      toast.validationError('teléfono');
       return;
     }
 
@@ -125,7 +126,9 @@ export default function RegisterStorePage() {
       };
 
       await registerMutation.mutateAsync(registerData);
-      toast.success('¡Cuenta de tienda creada exitosamente!');
+      toast.success('¡Cuenta de tienda creada exitosamente!', {
+        description: 'Revisa tu email para verificar tu cuenta'
+      });
       router.push('/verify-email');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {

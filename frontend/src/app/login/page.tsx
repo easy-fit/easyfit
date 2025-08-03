@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useLogin } from '@/hooks/api/use-auth';
-import { toast } from 'sonner';
+import { useEasyFitToast } from '@/hooks/use-toast';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -22,6 +22,7 @@ export default function LoginPage() {
 
   const router = useRouter();
   const loginMutation = useLogin();
+  const toast = useEasyFitToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,8 +30,8 @@ export default function LoginPage() {
 
     try {
       await loginMutation.mutateAsync({ email, password });
-      toast.success('¡Bienvenido a EasyFit!');
-      router.push('/'); // Redirect to home or dashboard based on role
+      toast.loginSuccess();
+      router.push('/');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       toast.error(error?.message || 'Error al iniciar sesión');
