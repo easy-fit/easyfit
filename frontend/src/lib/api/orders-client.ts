@@ -1,11 +1,15 @@
 import { BaseApiClient } from './base-client';
-import { Order, UpdateOrderDTO, OrderCommonResponse } from '@/types/order';
+import { Order, UpdateOrderDTO, OrderCommonResponse, GetMyOrdersResponse } from '@/types/order';
 import { ItemDecision } from '@/types/tryPeriod';
 import { MessageResponse } from '@/types/global';
 
 export class OrdersClient extends BaseApiClient {
   public async getOrders(): Promise<OrderCommonResponse> {
     return this.fetchApi<OrderCommonResponse>('/orders');
+  }
+
+  public async getMyOrders(): Promise<GetMyOrdersResponse> {
+    return this.fetchApi<GetMyOrdersResponse>('/orders/my-orders');
   }
 
   public async getOrder(id: string): Promise<OrderCommonResponse> {

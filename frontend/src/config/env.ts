@@ -2,4 +2,6 @@ export const ENV = {
   API_URL: process.env.NEXT_PUBLIC_API_URL!,
   SOCKET_URL: process.env.NEXT_PUBLIC_SOCKET_URL!,
   JWT_SECRET: process.env.JWT_SECRET!,
+  GOOGLE_MAPS_API_KEY: process.env.GOOGLE_MAPS_API_KEY!,
+  GOOGLE_MAPS_SECRET_KEY: process.env.GOOGLE_MAPS_SECRET_KEY!,
 };

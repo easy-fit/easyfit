@@ -32,6 +32,7 @@ export const useLogout = () => {
       await logout();
     },
     onSuccess: () => {
+      queryClient.invalidateQueries();
       queryClient.clear();
     },
     onError: (error: Error) => {

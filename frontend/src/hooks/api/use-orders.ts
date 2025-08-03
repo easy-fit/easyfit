@@ -1,12 +1,19 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
-import { UpdateOrderDTO, OrderCommonResponse } from '@/types/order';
+import { UpdateOrderDTO, OrderCommonResponse, GetMyOrdersResponse } from '@/types/order';
 import { ItemDecision } from '@/types/tryPeriod';
 
 export const useOrders = (filters?: Record<string, unknown>) => {
   return useQuery<OrderCommonResponse>({
     queryKey: ['orders', filters],
     queryFn: () => api.orders.getOrders(),
+  });
+};
+
+export const useMyOrders = () => {
+  return useQuery<GetMyOrdersResponse>({
+    queryKey: ['orders', 'my-orders'],
+    queryFn: () => api.orders.getMyOrders(),
   });
 };
 

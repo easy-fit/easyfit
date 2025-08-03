@@ -85,3 +85,48 @@ export interface OrderCommonResponse {
   total?: number;
   data: Order[];
 }
+
+import type { Order } from './order';
+
+export interface GetMyOrdersResponse {
+  total: number;
+  data: Array<{
+    _id: string;
+    userId: string;
+    storeId: {
+      _id: string;
+      name: string;
+      customization: {
+        logoUrl: string;
+      };
+    };
+    total: number;
+    shipping: {
+      address: {
+        formatted: {
+          street: string;
+          streetNumber: string;
+          city: string;
+          province: string;
+          postalCode: string;
+          building?: string;
+          floor?: string;
+          apartment?: string;
+        };
+        coordinates: [number, number];
+      };
+      cost: number;
+      subsidizedBy: string;
+      type: string;
+      tryOnEnabled: boolean;
+      distanceKm: number;
+      durationMinutes: number;
+      _id: string;
+    };
+    status: string;
+    paymentStatus: string;
+    createdAt: string;
+    updatedAt: string;
+    __v: number;
+  }>;
+}
