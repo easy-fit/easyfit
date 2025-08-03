@@ -70,9 +70,9 @@ export function useUpdateMe() {
 export function useUpdateMyAddress() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (address: Address) => api.users.updateMyAddress(address),
+    mutationFn: (address: Address) => api.users.updateMyAddress({ address: address }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['me'] });
+      queryClient.invalidateQueries();
     },
   });
 }

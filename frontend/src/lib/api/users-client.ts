@@ -40,7 +40,7 @@ export class UsersClient extends BaseApiClient {
     });
   }
 
-  public async updateMyAddress(address: Address): Promise<User> {
+  public async updateMyAddress(address: { address: Address }): Promise<User> {
     return this.fetchApi<User>('/users/me/address', {
       method: 'PATCH',
       body: JSON.stringify(address),
