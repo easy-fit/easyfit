@@ -20,6 +20,8 @@ export interface UseWebSocketReturn {
   // Merchant methods
   respondToOrder: (response: StoreOrderResponse) => void;
   completeReturnInspection: (inspection: StoreInspectionResult) => void;
+  joinStoreChannel: (storeId: string) => void;
+  leaveStoreChannel: (storeId: string) => void;
 
   // Connection methods
   connect: () => void;
@@ -62,6 +64,14 @@ export function useWebSocket(): UseWebSocketReturn {
     webSocketClient.completeReturnInspection(inspection);
   }, []);
 
+  const joinStoreChannel = useCallback((storeId: string) => {
+    webSocketClient.joinStoreChannel(storeId);
+  }, []);
+
+  const leaveStoreChannel = useCallback((storeId: string) => {
+    webSocketClient.leaveStoreChannel(storeId);
+  }, []);
+
   return {
     // Connection status
     isConnected,
@@ -79,6 +89,8 @@ export function useWebSocket(): UseWebSocketReturn {
     // Merchant methods
     respondToOrder,
     completeReturnInspection,
+    joinStoreChannel,
+    leaveStoreChannel,
 
     // Connection methods
     connect,
@@ -118,7 +130,7 @@ export function useOrderTracking(orderId: string) {
 
 // Convenience hook for merchant store events
 export function useStoreEvents() {
-  const { on, off, respondToOrder, completeReturnInspection } = useWebSocket();
+  const { on, off, respondToOrder, completeReturnInspection, joinStoreChannel, leaveStoreChannel } = useWebSocket();
 
   // Helper to subscribe to store events
   const onStoreEvent = useCallback(
@@ -135,6 +147,8 @@ export function useStoreEvents() {
     onStoreEvent,
     respondToOrder,
     completeReturnInspection,
+    joinStoreChannel,
+    leaveStoreChannel,
   };
 }
 

@@ -37,11 +37,15 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
   // Monitor connection status changes
   useEffect(() => {
     const checkStatus = () => {
-      setConnectionStatus(webSocketClient.getConnectionStatus());
+      const currentStatus = webSocketClient.getConnectionStatus();
+      setConnectionStatus(currentStatus);
     };
 
-    // Check status every second when not connected
-    const interval = setInterval(checkStatus, 1000);
+    // Initial check
+    checkStatus();
+
+    // Check status more frequently to catch connection changes quickly
+    const interval = setInterval(checkStatus, 250);
 
     // Cleanup interval
     return () => clearInterval(interval);

@@ -5,6 +5,8 @@ import type {
   CustomerLeaveOrder,
   StoreOrderResponse,
   StoreInspectionResult,
+  MerchantJoinStore,
+  MerchantLeaveStore,
 } from '@/types/websockets';
 
 export type WebSocketConnectionStatus = 'connected' | 'disconnected' | 'connecting' | 'error';
@@ -34,6 +36,7 @@ export class WebSocketClient {
     this.socket.on('connect', () => {
       console.log('WebSocket connected');
       this.connectionStatus = 'connected';
+      this.reRegisterListeners();
     });
 
     this.socket.on('disconnect', (reason) => {
@@ -44,10 +47,6 @@ export class WebSocketClient {
     this.socket.on('connect_error', (error) => {
       console.error('WebSocket connection error:', error);
       this.connectionStatus = 'error';
-    });
-
-    this.socket.on('connect', () => {
-      this.reRegisterListeners();
     });
   }
 
@@ -81,7 +80,7 @@ export class WebSocketClient {
     this.listeners.get(event)!.add(wrappedCallback);
     this.callbackMap.get(event)!.set(typedCallback, wrappedCallback);
 
-    if (this.socket) {
+    if (this.socket?.connected) {
       this.socket.on(event, wrappedCallback);
     }
   }
@@ -130,9 +129,22 @@ export class WebSocketClient {
     this.emit('return:inspection:complete', inspection);
   }
 
+  // Store-specific channel management for merchants with multiple stores
+  joinStoreChannel(storeId: string): void {
+    if (this.socket?.connected) {
+      this.emit('merchant:join:store', { storeId } as MerchantJoinStore);
+    }
+  }
+
+  leaveStoreChannel(storeId: string): void {
+    if (this.socket?.connected) {
+      this.emit('merchant:leave:store', { storeId } as MerchantLeaveStore);
+    }
+  }
+
   // Re-register all listeners after reconnection
   private reRegisterListeners(): void {
-    if (!this.socket) return;
+    if (!this.socket?.connected) return;
 
     this.listeners.forEach((callbacks, event) => {
       callbacks.forEach((callback) => {
