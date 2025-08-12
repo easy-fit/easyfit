@@ -60,16 +60,39 @@ npm run lint       # Run ESLint
 
 ### Frontend Structure
 
-**Framework**: Next.js 15 with React 19
-**Styling**: Tailwind CSS with Radix UI components
+**Framework**: Next.js 15 with React 19 (App Router)
+**Styling**: Tailwind CSS v4 with Radix UI components
 **State Management**: Zustand for global state, React Query for server state
 **Type Safety**: Full TypeScript integration with shared type definitions
 
-**Key Features:**
-- Real-time WebSocket integration with Socket.IO client
-- API client layer with type-safe hooks (`src/hooks/api/`)
-- Reusable UI components built on Radix UI primitives
+**Key Architecture Patterns:**
+- **Provider Pattern**: Centralized providers for auth, WebSocket, and React Query (`src/providers/`)
+- **Hook-based API Layer**: Custom hooks wrapping API clients for type-safe data fetching (`src/hooks/api/`)
+- **Component Architecture**: Radix UI primitives with custom compositions in `src/components/ui/`
+- **Route Protection**: Next.js middleware for authentication and role-based access control
+
+**Authentication & Authorization:**
+- HTTP-only cookie-based authentication with automatic token refresh
+- Role-based access control (customer, merchant, rider, admin)
+- Protected routes with automatic redirect handling in `middleware.ts`
+- Context-based auth state management with `AuthProvider`
+
+**Real-time Features:**
+- WebSocket client singleton with automatic reconnection (`src/lib/websocket/websocket-client.ts`)
+- Role-based channel subscriptions and event handling
+- Type-safe WebSocket event definitions in `src/types/websockets.d.ts`
+
+**API Integration:**
+- Base API client with automatic token refresh and error handling (`src/lib/api/base-client.ts`)
+- Service-specific clients (auth, products, orders, cart, etc.)
+- React Query hooks for caching and synchronization
+- Environment-based configuration in `src/config/env.ts`
+
+**UI Components:**
+- Custom component library built on Radix UI primitives
+- Consistent theming with Tailwind CSS classes
 - Form handling with React Hook Form and Zod validation
+- Toast notifications with Sonner integration
 
 ## Environment Configuration
 
@@ -79,6 +102,11 @@ npm run lint       # Run ESLint
 - External APIs: `SENDGRID_API_KEY`, `MP_ACCESS_TOKEN` (MercadoPago)
 - Storage: R2 (Cloudflare) configuration for file uploads
 - KYC: Sumsub integration for identity verification
+
+**Frontend Environment Variables:**
+- API: `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_SOCKET_URL`
+- Maps: `GOOGLE_MAPS_API_KEY`, `GOOGLE_MAPS_SECRET_KEY`
+- Auth: `JWT_SECRET` (for middleware validation)
 
 **Configuration Files:**
 - Backend: `src/config/env.ts` - Centralized environment variable management
@@ -117,16 +145,25 @@ npm run lint       # Run ESLint
 ## Development Notes
 
 **Code Patterns:**
-- Async/await with custom `catchAsync` wrapper for error handling
+- Async/await with custom `catchAsync` wrapper for error handling (backend)
 - Service layer separation for testable business logic  
 - Type-safe API clients with shared TypeScript definitions
 - Comprehensive error handling with structured error responses
+- React Query for server state management with automatic caching and revalidation
+- Custom hooks pattern for reusable logic and API integration
+- Component composition with Radix UI for accessible, customizable components
 
 **WebSocket Implementation:**
 - Channel-based messaging system with automatic role-based subscriptions
 - Event handlers organized by functional area (delivery, orders, returns)
 - Authentication middleware for all WebSocket connections
 - Fallback strategies and error recovery for critical operations
+
+**Frontend Routing & Middleware:**
+- Next.js App Router with nested layouts and route groups
+- Role-based route protection in `middleware.ts` with automatic redirects
+- Dynamic routes for store/product pages (`[storeSlug]/[productSlug]`)
+- API routes for server-side integration (places autocomplete, geocoding)
 
 **Database Patterns:**
 - Mongoose schemas with TypeScript integration
