@@ -100,7 +100,11 @@ export class OrderService {
     }
 
     const newStatus = accepted ? 'order_accepted' : 'order_canceled';
-    const updatedOrder = await OrderModel.findByIdAndUpdate(orderId, { status: newStatus }, { new: true });
+    const updateData = accepted 
+      ? { status: newStatus }
+      : { status: newStatus, isActive: false };
+    
+    const updatedOrder = await OrderModel.findByIdAndUpdate(orderId, updateData, { new: true });
 
     this.ensureOrderExists(updatedOrder);
 
