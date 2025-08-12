@@ -63,7 +63,7 @@ export class StoreService {
 
     if (data.address) {
       const storeCoordinates = {
-        latitude: data.address.location.coordinates[1],   // coordinates stored as [lng, lat] in MongoDB
+        latitude: data.address.location.coordinates[1], // coordinates stored as [lng, lat] in MongoDB
         longitude: data.address.location.coordinates[0],
       };
 
@@ -255,7 +255,9 @@ export class StoreService {
       // Build match query
       const matchQuery: any = { storeId: storeObjectId };
       if (status) {
-        matchQuery.status = status;
+        // Handle comma-separated status values
+        const statusArray = status.includes(',') ? status.split(',').map((s) => s.trim()) : [status];
+        matchQuery.status = statusArray.length > 1 ? { $in: statusArray } : status;
       }
 
       // Build sort query
@@ -321,7 +323,7 @@ export class StoreService {
 
           return {
             id: order._id.toString(),
-            number: `#${order._id.toString().slice(-6).toUpperCase()}`,
+            number: `#${order._id.toString().slice(-4).toUpperCase()}`,
             customer: userId && userId.name ? `${userId.name} ${userId.surname}` : 'Cliente',
             items: formattedItems,
             total: `$${order.total.toLocaleString('es-AR')}`,
