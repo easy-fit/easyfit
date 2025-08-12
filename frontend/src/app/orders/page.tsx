@@ -23,6 +23,7 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import Image from 'next/image';
+import { AuthGuard } from '@/components/auth/auth-guard';
 
 const statusConfig = {
   order_placed: {
@@ -153,19 +154,13 @@ const paymentStatusConfig = {
 };
 
 export default function OrdersPage() {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const [statusFilter, setStatusFilter] = useState<string>('todos');
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
 
-  // API call
-  const { data: ordersData, isLoading: ordersLoading, error } = useMyOrders();
-
-  // Redirect if not authenticated
-  if (!authLoading && !user) {
-    router.push('/login');
-    return null;
-  }
+  // API call - only fetch orders if user is authenticated
+  const { data: ordersData, isLoading: ordersLoading, error } = useMyOrders(isAuthenticated);
 
   const isLoading = authLoading || ordersLoading;
 
@@ -225,8 +220,9 @@ export default function OrdersPage() {
   const availableStatuses = [...new Set(orders.map((order) => order.status))];
 
   return (
-    <div className="min-h-screen bg-[#F7F7F7]">
-      <Header />
+    <AuthGuard>
+      <div className="min-h-screen bg-[#F7F7F7]">
+        <Header />
 
       <main className="container mx-auto px-4 py-8">
         {/* Back Button */}
@@ -437,5 +433,6 @@ export default function OrdersPage() {
         </Card>
       </main>
     </div>
+    </AuthGuard>
   );
 }

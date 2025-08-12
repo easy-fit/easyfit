@@ -3,7 +3,7 @@
 import type React from 'react';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Eye, EyeOff, Mail, Lock, ArrowLeft } from 'lucide-react';
@@ -21,20 +21,42 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
+  const searchParams = useSearchParams();
   const loginMutation = useLogin();
   const toast = useEasyFitToast();
+
+  const redirectTo = searchParams.get('redirect');
+
+  const getRoleBasedRedirect = (userRole: string) => {
+    switch (userRole) {
+      case 'merchant':
+        return '/dashboard';
+      case 'admin':
+        return '/';
+      default:
+        return '/';
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      await loginMutation.mutateAsync({ email, password });
+      const loggedInUser = await loginMutation.mutateAsync({ email, password });
       toast.loginSuccess();
-      router.push('/');
+
+      if (redirectTo) {
+        router.push(redirectTo);
+      } else {
+        const defaultRedirect = getRoleBasedRedirect(loggedInUser.role);
+        router.push(defaultRedirect);
+      }
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      toast.error(error?.message || 'Error al iniciar sesión');
+      const errorMessage = error?.response?.data?.message || error?.message || 'Error al iniciar sesión';
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

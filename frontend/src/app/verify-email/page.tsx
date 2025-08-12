@@ -38,7 +38,8 @@ export default function VerifyEmailPage() {
       toast.emailVerified();
       router.push('/');
     } catch (error: any) {
-      toast.error(error?.message || 'Código de verificación inválido');
+      const errorMessage = error?.response?.data?.message || error?.message || 'Código de verificación inválido';
+      toast.error(errorMessage);
       // Clear the code on error
       setCode(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
@@ -79,7 +80,8 @@ export default function VerifyEmailPage() {
       setCode(['', '', '', '', '', '']); // Clear current code
       inputRefs.current[0]?.focus();
     } catch (error: any) {
-      toast.error(error?.message || 'Error al reenviar el código');
+      const errorMessage = error?.response?.data?.message || error?.message || 'Error al reenviar el código';
+      toast.error(errorMessage);
     } finally {
       setIsResending(false);
     }

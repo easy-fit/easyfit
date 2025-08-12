@@ -132,7 +132,8 @@ export default function RegisterStorePage() {
       router.push('/verify-email');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      toast.error(error?.message || 'Error al crear la cuenta');
+      const errorMessage = error?.response?.data?.message || error?.message || 'Error al crear la cuenta';
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

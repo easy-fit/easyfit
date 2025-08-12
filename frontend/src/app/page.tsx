@@ -209,7 +209,14 @@ export default function HomePage() {
             {viewMode === 'stores' && storesData?.data?.stores && (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {storesData.data.stores.map((store) => (
-                  <StoreCard key={store._id} store={store} />
+                  <StoreCard
+                    key={store._id}
+                    store={{
+                      ...store,
+                      approximateDeliveryTime: store.approximateDeliveryTime ?? 25,
+                      approximateShippingCost: store.approximateShippingCost ?? 1600,
+                    }}
+                  />
                 ))}
               </div>
             )}

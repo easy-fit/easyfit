@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 import { useState } from 'react';
@@ -28,6 +29,7 @@ import {
   Heart,
 } from 'lucide-react';
 import { useEasyFitToast } from '@/hooks/use-toast';
+import { AuthGuard } from '@/components/auth/auth-guard';
 
 export default function ProfilePage() {
   const { user, isLoading } = useAuth();
@@ -41,11 +43,6 @@ export default function ProfilePage() {
     areaCode: user?.additionalInfo?.phone?.areaCode || '',
   });
 
-  // Redirect if not authenticated
-  if (!isLoading && !user) {
-    router.push('/login');
-    return null;
-  }
 
   if (isLoading) {
     return (
@@ -74,11 +71,12 @@ export default function ProfilePage() {
     try {
       // Here you would call an API to update user data
       toast.success('Perfil actualizado exitosamente', {
-        description: 'Los cambios se guardaron correctamente'
+        description: 'Los cambios se guardaron correctamente',
       });
       setIsEditing(false);
-    } catch (error) {
-      toast.error('Error al actualizar el perfil');
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || 'Error al actualizar el perfil';
+      toast.error(errorMessage);
     }
   };
 
@@ -93,8 +91,9 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F7F7]">
-      <Header />
+    <AuthGuard>
+      <div className="min-h-screen bg-[#F7F7F7]">
+        <Header />
 
       <main className="container mx-auto px-4 py-8">
         {/* Page Header */}
@@ -329,5 +328,6 @@ export default function ProfilePage() {
         </div>
       </main>
     </div>
+    </AuthGuard>
   );
 }
