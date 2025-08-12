@@ -41,3 +41,7 @@ yarn-error.log*
 next-env.d.ts
 
 index.html
+/.claude
+CLAUDE.MD
+
+FRONTEND_CODEBASE_MAP.md
