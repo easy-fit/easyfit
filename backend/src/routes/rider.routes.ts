@@ -1,15 +1,23 @@
 import { Router } from 'express';
 import { protect } from '../middlewares/auth';
-import { getWeeklySummary, getRecentActivity, getDashboardStats } from '../controllers/rider.controller';
+import {
+  getWeeklySummary,
+  getRecentActivity,
+  getDashboardStats,
+  getAvailabilityStatus,
+  getActiveAssignments,
+} from '../controllers/rider.controller';
 
-const router = Router();
+export const riderRoutes = Router();
 
 // All rider routes require authentication
-router.use(protect);
+riderRoutes.use(protect);
 
 // Dashboard routes
-router.get('/dashboard/weekly-summary', getWeeklySummary);
-router.get('/dashboard/recent-activity', getRecentActivity);
-router.get('/dashboard/stats', getDashboardStats);
+riderRoutes.get('/dashboard/weekly-summary', getWeeklySummary);
+riderRoutes.get('/dashboard/recent-activity', getRecentActivity);
+riderRoutes.get('/dashboard/stats', getDashboardStats);
 
-export { router as riderRoutes };
+// Availability and assignments routes
+riderRoutes.get('/availability', getAvailabilityStatus);
+riderRoutes.get('/assignments/active', getActiveAssignments);

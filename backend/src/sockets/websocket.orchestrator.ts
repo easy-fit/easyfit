@@ -72,7 +72,14 @@ export class WebSocketOrchestrator {
 
     switch (socket.userRole) {
       case 'merchant':
-        if (socket.storeId) {
+        if (socket.storeIds && socket.storeIds.length > 0) {
+          // Join all store channels for multi-store merchants
+          socket.storeIds.forEach(storeId => {
+            socket.join(this.CHANNELS.STORE(storeId));
+          });
+          console.log(`Merchant ${socket.userId} joined ${socket.storeIds.length} store channels: ${socket.storeIds.join(', ')}`);
+        } else if (socket.storeId) {
+          // Fallback for backward compatibility
           socket.join(this.CHANNELS.STORE(socket.storeId));
           console.log(`Merchant ${socket.userId} joined store channel: ${socket.storeId}`);
         }
@@ -156,6 +163,15 @@ export class WebSocketOrchestrator {
     socket.on('customer:leave:order', (data) => {
       this.orderNotificationHandler.handleCustomerLeaveOrder(socket, data);
     });
+
+    // Merchant store channel management for multi-store support
+    socket.on('merchant:join:store', (data) => {
+      this.handleMerchantJoinStore(socket, data);
+    });
+
+    socket.on('merchant:leave:store', (data) => {
+      this.handleMerchantLeaveStore(socket, data);
+    });
   }
 
   // Public methods for emitting events from services
@@ -189,5 +205,39 @@ export class WebSocketOrchestrator {
 
   public getIO(): SocketIOServer {
     return this.io;
+  }
+
+  // Merchant store channel management for multi-store support
+  private async handleMerchantJoinStore(socket: AuthenticatedSocket, data: { storeId: string }): Promise<void> {
+    if (socket.userRole !== 'merchant') {
+      socket.emit('error', { message: 'Only merchants can join store channels' });
+      return;
+    }
+
+    // Validate merchant owns this store
+    const merchantOwnsStore = socket.storeIds?.includes(data.storeId) || socket.storeId === data.storeId;
+    if (!merchantOwnsStore) {
+      socket.emit('error', { message: 'Unauthorized: You do not own this store' });
+      return;
+    }
+
+    // Join the specific store channel
+    socket.join(this.CHANNELS.STORE(data.storeId));
+    socket.emit('merchant:joined:store', { storeId: data.storeId, success: true });
+    
+    console.log(`Merchant ${socket.userId} joined store channel: ${data.storeId}`);
+  }
+
+  private async handleMerchantLeaveStore(socket: AuthenticatedSocket, data: { storeId: string }): Promise<void> {
+    if (socket.userRole !== 'merchant') {
+      socket.emit('error', { message: 'Only merchants can leave store channels' });
+      return;
+    }
+
+    // Leave the specific store channel
+    socket.leave(this.CHANNELS.STORE(data.storeId));
+    socket.emit('merchant:left:store', { storeId: data.storeId, success: true });
+    
+    console.log(`Merchant ${socket.userId} left store channel: ${data.storeId}`);
   }
 }

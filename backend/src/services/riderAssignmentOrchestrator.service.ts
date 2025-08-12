@@ -7,7 +7,6 @@ import { WebSocketService } from './websocket.service';
 import { ErrorHandlingService } from './errorHandling.service';
 import { AppError } from '../utils/appError';
 import { RiderOfferPayload } from '../types/websocket.types';
-import { calculateCityDistance } from '../utils/distance';
 
 export class RiderAssignmentOrchestrator {
   static async assignRiderToOrder(orderId: string): Promise<string | null> {

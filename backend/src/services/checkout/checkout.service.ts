@@ -91,6 +91,10 @@ export class CheckoutService {
       shipping.cost,
     );
 
+    // Store the preferenceId in the checkout session
+    checkoutSession.preferenceId = preferenceId;
+    await checkoutSession.save();
+
     return { checkoutSession, preferenceId };
   }
 

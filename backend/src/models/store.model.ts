@@ -1,5 +1,5 @@
 import { Schema, model } from 'mongoose';
-import { Store, StoreType } from '../types/store.types';
+import { Store } from '../types/store.types';
 import { getNextSequenceValue } from '../utils/counter';
 import { AddressSchema } from '../schemas/common/address.schema';
 import { PickupHoursEntrySchema, ShippingOptionSchema, StoreCustomizationSchema } from '../schemas/store/store.schemas';
@@ -19,7 +19,7 @@ const StoreSchema = new Schema<Store>(
     status: {
       type: String,
       enum: ['active', 'inactive', 'disabled'],
-      default: 'active',
+      default: 'inactive',
     },
     ratingCount: { type: Number, default: 0 },
     ratingSum: { type: Number, default: 0 },

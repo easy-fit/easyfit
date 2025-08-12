@@ -7,6 +7,7 @@ import { PaymentService } from '../payment/payment.service';
 import { OrderService } from '../order.service';
 import { MercadoPagoService } from '../payment/mercadoPago.service';
 import { CheckoutService } from './checkout.service';
+import { StoreService } from '../store/store.service';
 
 export class CheckoutPaymentService {
   static async createMercadoPagoPayment(sessionId: string, paymentData: PaymentProcessingRequest, user: User) {
@@ -16,6 +17,10 @@ export class CheckoutPaymentService {
     }
 
     await OrderService.ensureNoActiveOrder(session.userId.toString());
+    const storeStatus = await StoreService.getStoreStatus(session.storeId.toString());
+    if (storeStatus !== 'active') {
+      throw new AppError('Store is not active', 400);
+    }
     try {
       const isStockAvailable = await VariantService.checkStockAvailableForItems(session.cartItems);
       if (!isStockAvailable) {

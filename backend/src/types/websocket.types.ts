@@ -1,12 +1,12 @@
 import { Socket } from 'socket.io';
-import { UserRole, User } from './user.types';
-import { Order, OrderStatus } from './order.types';
-import { OrderItem } from './orderItem.types';
+import { UserRole } from './user.types';
+import { OrderStatus } from './order.types';
 
 export interface AuthenticatedSocket extends Socket {
   userId?: string;
   userRole?: UserRole;
-  storeId?: string;
+  storeId?: string; // Keep for backward compatibility with single-store cases
+  storeIds?: string[]; // Array of store IDs for merchants with multiple stores
   riderId?: string;
 }
 

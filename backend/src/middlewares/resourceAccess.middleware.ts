@@ -26,6 +26,10 @@ export const createOwnershipVerifier = (config: OwnershipConfig) => {
       const resourceId = req.params[config.resourceIdParam];
       const userId = req.user._id;
 
+      if (!resourceId) {
+        return next(new AppError(`${config.resourceIdParam} parameter is required`, 400));
+      }
+
       if (!mongoose.Types.ObjectId.isValid(resourceId)) {
         return next(new AppError(`Invalid ${config.resourceIdParam} format`, 400));
       }

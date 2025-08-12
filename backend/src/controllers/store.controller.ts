@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { StoreService } from '../services/store/store.service';
+import { MerchantService } from '../services/merchant/merchant.service';
 import { catchAsync } from '../utils/catchAsync';
 import { CreateStoreDTO, UpdateStoreDTO, StoreFilterOptions } from '../types/store.types';
 
@@ -80,13 +81,6 @@ export class StoreController {
     const assetType = req.params.assetType as 'logo' | 'banner';
     const { key, contentType } = req.body;
 
-    if (!['logo', 'banner'].includes(assetType)) {
-      return res.status(400).json({
-        status: 'error',
-        message: 'Invalid asset type. Must be "logo" or "banner"',
-      });
-    }
-
     const result = await StoreService.uploadStoreAsset(storeId, assetType, {
       key,
       contentType: contentType || 'image/jpeg',
@@ -102,18 +96,62 @@ export class StoreController {
     const storeId = req.params.id;
     const assetType = req.params.assetType as 'logo' | 'banner';
 
-    if (!['logo', 'banner'].includes(assetType)) {
-      return res.status(400).json({
-        status: 'error',
-        message: 'Invalid asset type. Must be "logo" or "banner"',
-      });
-    }
-
     const store = await StoreService.deleteStoreAsset(storeId, assetType);
 
     res.status(200).json({
       status: 'success',
       data: { store },
+    });
+  });
+
+  static getMerchantDashboard = catchAsync(async (req: Request, res: Response) => {
+    const { user } = req;
+
+    const dashboardData = await MerchantService.getDashboardData(user._id);
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        dashboard: dashboardData,
+      },
+    });
+  });
+
+  static setStoreStatus = catchAsync(async (req: Request, res: Response) => {
+    const storeId = req.params.id;
+    const { status } = req.body;
+
+    const store = await StoreService.setStoreStatus(storeId, status);
+    res.status(200).json({ data: store });
+  });
+
+  static getStoreOrderAnalytics = catchAsync(async (req: Request, res: Response) => {
+    const storeId = req.params.id;
+    const analytics = await StoreService.getStoreOrderAnalytics(storeId);
+    
+    res.status(200).json({
+      status: 'success',
+      data: analytics
+    });
+  });
+
+  static getStoreOrders = catchAsync(async (req: Request, res: Response) => {
+    const storeId = req.params.id;
+    const { status, limit, page, sortBy, sortOrder } = req.query;
+    
+    const filters = {
+      status: status as string,
+      limit: limit ? Number(limit) : undefined,
+      page: page ? Number(page) : undefined,
+      sortBy: sortBy as string,
+      sortOrder: sortOrder as 'asc' | 'desc'
+    };
+
+    const result = await StoreService.getStoreOrders(storeId, filters);
+    
+    res.status(200).json({
+      status: 'success',
+      data: result
     });
   });
 }

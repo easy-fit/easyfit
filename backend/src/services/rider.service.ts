@@ -1,46 +1,46 @@
 import { Types } from 'mongoose';
 import { RiderAssignmentModel } from '../models/riderAssignment.model';
-import { OrderModel } from '../models/order.model';
+import { RiderLocationModel } from '../models/riderLocation.model';
 import { UserModel } from '../models/user.model';
-import { StoreModel } from '../models/store.model';
 import { WeeklySummaryDTO, RecentActivityDTO, RecentActivityItemDTO } from '../types/rider.types';
+import { AppError } from '../utils/appError';
 
 export class RiderService {
   static async getWeeklySummary(riderId: string): Promise<WeeklySummaryDTO> {
     const riderObjectId = new Types.ObjectId(riderId);
-    
+
     // Calculate date range for the past 7 days
     const today = new Date();
     const weekAgo = new Date(today);
     weekAgo.setDate(today.getDate() - 7);
-    
+
     // Aggregate pipeline to get weekly stats
     const weeklyStats = await RiderAssignmentModel.aggregate([
       {
         $match: {
           riderId: riderObjectId,
           status: 'delivered',
-          deliveredAt: { $gte: weekAgo, $lte: today }
-        }
+          deliveredAt: { $gte: weekAgo, $lte: today },
+        },
       },
       {
         $lookup: {
           from: 'orders',
           localField: 'orderId',
           foreignField: '_id',
-          as: 'order'
-        }
+          as: 'order',
+        },
       },
       {
-        $unwind: '$order'
+        $unwind: '$order',
       },
       {
         $group: {
           _id: null,
           ordersCompleted: { $sum: 1 },
-          weeklyEarnings: { $sum: '$order.shipping.cost' }
-        }
-      }
+          weeklyEarnings: { $sum: '$order.shipping.cost' },
+        },
+      },
     ]);
 
     // Get rider rating from user info
@@ -50,7 +50,7 @@ export class RiderService {
       const { upvotes = 0, downvotes = 0 } = rider.riderInfo.score;
       const totalVotes = upvotes + downvotes;
       if (totalVotes > 0) {
-        rating = parseFloat((upvotes / totalVotes * 5).toFixed(1)); // Convert to 5-star scale
+        rating = parseFloat(((upvotes / totalVotes) * 5).toFixed(1)); // Convert to 5-star scale
       }
     }
 
@@ -63,7 +63,7 @@ export class RiderService {
       ordersCompleted: stats.ordersCompleted,
       weeklyEarnings: stats.weeklyEarnings,
       rating,
-      activeTimeToday
+      activeTimeToday,
     };
   }
 
@@ -75,36 +75,36 @@ export class RiderService {
         $match: {
           riderId: riderObjectId,
           status: 'delivered',
-          deliveredAt: { $exists: true }
-        }
+          deliveredAt: { $exists: true },
+        },
       },
       {
-        $sort: { deliveredAt: -1 }
+        $sort: { deliveredAt: -1 },
       },
       {
-        $limit: limit
+        $limit: limit,
       },
       {
         $lookup: {
           from: 'orders',
           localField: 'orderId',
           foreignField: '_id',
-          as: 'order'
-        }
+          as: 'order',
+        },
       },
       {
-        $unwind: '$order'
+        $unwind: '$order',
       },
       {
         $lookup: {
           from: 'stores',
           localField: 'order.storeId',
           foreignField: '_id',
-          as: 'store'
-        }
+          as: 'store',
+        },
       },
       {
-        $unwind: '$store'
+        $unwind: '$store',
       },
       {
         $project: {
@@ -112,18 +112,18 @@ export class RiderService {
           orderNumber: { $toString: '$order._id' }, // Use ObjectId as order number for now
           location: '$store.address.city',
           deliveredAt: '$deliveredAt',
-          earnings: '$order.shipping.cost'
-        }
-      }
+          earnings: '$order.shipping.cost',
+        },
+      },
     ]);
 
-    const activities: RecentActivityItemDTO[] = recentActivities.map(activity => ({
+    const activities: RecentActivityItemDTO[] = recentActivities.map((activity) => ({
       orderId: activity.orderId.toString(),
       orderNumber: `#${activity.orderNumber.slice(-4)}`, // Last 4 chars as order number
       location: activity.location || 'Ubicación no disponible',
       deliveredAt: activity.deliveredAt,
       earnings: activity.earnings,
-      timeSinceDelivery: this.formatTimeSince(activity.deliveredAt)
+      timeSinceDelivery: this.formatTimeSince(activity.deliveredAt),
     }));
 
     return { activities };
@@ -131,7 +131,7 @@ export class RiderService {
 
   private static async estimateActiveTimeToday(riderId: string): Promise<number> {
     const riderObjectId = new Types.ObjectId(riderId);
-    
+
     // Get today's date range
     const today = new Date();
     const startOfDay = new Date(today);
@@ -142,8 +142,10 @@ export class RiderService {
     // Get today's deliveries to estimate active time
     const todayDeliveries = await RiderAssignmentModel.find({
       riderId: riderObjectId,
-      deliveredAt: { $gte: startOfDay, $lte: endOfDay }
-    }).sort({ deliveredAt: 1 }).select('assignedAt pickedUpAt deliveredAt');
+      deliveredAt: { $gte: startOfDay, $lte: endOfDay },
+    })
+      .sort({ deliveredAt: 1 })
+      .select('assignedAt pickedUpAt deliveredAt');
 
     if (todayDeliveries.length === 0) {
       // No deliveries today, return a default minimum active time if rider has any activity
@@ -157,7 +159,7 @@ export class RiderService {
     if (firstActivity && lastActivity) {
       const activeMilliseconds = lastActivity.getTime() - firstActivity.getTime();
       const activeMinutes = Math.floor(activeMilliseconds / (1000 * 60));
-      
+
       // Add 60 minutes buffer time for preparation and between deliveries
       return Math.max(activeMinutes + 60, 120); // Minimum 2 hours if active
     }
@@ -181,6 +183,77 @@ export class RiderService {
       return `Hace ${diffInMinutes} minuto${diffInMinutes > 1 ? 's' : ''}`;
     } else {
       return 'Hace un momento';
+    }
+  }
+
+  static async getAvailabilityStatus(riderId: string) {
+    try {
+      const riderLocation = await RiderLocationModel.findOne({ riderId }).lean();
+
+      if (!riderLocation) {
+        return {
+          riderId,
+          isAvailable: false,
+          location: null,
+          lastUpdated: null,
+        };
+      }
+
+      return {
+        riderId,
+        isAvailable: riderLocation.isAvailable,
+        location: riderLocation.location,
+        lastUpdated: riderLocation.updatedAt,
+      };
+    } catch (error: any) {
+      throw new AppError('Error retrieving rider availability status', 500);
+    }
+  }
+
+  static async getActiveAssignments(riderId: string) {
+    try {
+      const riderLocation = await RiderLocationModel.findOne({ riderId }).lean();
+
+      const lastAssignment = await RiderAssignmentModel.findOne({
+        riderId,
+      })
+        .populate({
+          path: 'orderId',
+          select: 'status shipping',
+        })
+        .sort({ createdAt: -1 })
+        .lean()
+        .select('-__v -riderId');
+
+      let inService = false;
+      let activeAssignment = null;
+
+      if (lastAssignment && lastAssignment.orderId) {
+        const order = lastAssignment.orderId as any;
+        // Check if the order is still in progress (not in final states)
+        const isOrderActive = ![
+          'purchased',
+          'returned_ok',
+          'returned_partial',
+          'returned_damaged',
+          'cancelled',
+        ].includes(order.status);
+
+        if (isOrderActive) {
+          inService = true;
+          activeAssignment = lastAssignment;
+        }
+      }
+
+      return {
+        riderId,
+        isAvailable: riderLocation?.isAvailable || false,
+        inService,
+        activeAssignment,
+        currentStatus: activeAssignment?.status || null,
+      };
+    } catch (error: any) {
+      throw new AppError('Error retrieving active assignments', 500);
     }
   }
 }

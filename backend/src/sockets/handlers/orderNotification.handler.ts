@@ -39,6 +39,15 @@ export class OrderNotificationHandler {
       return;
     }
 
+    // Validate merchant owns the store they're responding for
+    const merchantOwnsStore = socket.storeIds?.includes(response.storeId) || socket.storeId === response.storeId;
+    if (!merchantOwnsStore) {
+      socket.emit('error', {
+        message: 'Unauthorized: You do not own this store',
+      });
+      return;
+    }
+
     try {
       await OrderService.handleStoreResponse(response.orderId, response.storeId, response.accepted, response.reason);
 

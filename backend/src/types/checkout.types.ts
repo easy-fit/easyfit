@@ -18,6 +18,7 @@ export interface CheckoutSession {
   shipping: ShippingInfo;
   total: number;
   status: CheckoutStatus;
+  preferenceId?: string;
 }
 
 export interface CreateCheckoutSessionDTO {

@@ -115,13 +115,20 @@ export class ReturnFlowHandler {
       return;
     }
 
+    // Validate merchant owns the store they're inspecting for
+    const merchantOwnsStore = socket.storeIds?.includes(data.storeId) || socket.storeId === data.storeId;
+    if (!merchantOwnsStore) {
+      socket.emit('error', { message: 'Unauthorized: You do not own this store' });
+      return;
+    }
+
     try {
       const order = await OrderService.getOrderById(data.orderId);
 
-      // if (!order || order.storeId.toString() !== data.storeId.toString()) {
-      //   socket.emit('error', { message: 'Unauthorized: Can only inspect returns for your store' });
-      //   return;
-      // }
+      if (!order || order.storeId.toString() !== data.storeId.toString()) {
+        socket.emit('error', { message: 'Unauthorized: Can only inspect returns for your store' });
+        return;
+      }
 
       // Update order to final return status
       await OrderStateManager.markAsReturned(data.orderId, data.returnStatus);

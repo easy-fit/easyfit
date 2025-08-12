@@ -2,7 +2,6 @@ import { Server as SocketIOServer } from 'socket.io';
 import { AuthenticatedSocket, SocketChannels, RiderCancellationRequest } from '../../types/websocket.types';
 import { RiderAssignmentOrchestrator } from '../../services/riderAssignmentOrchestrator.service';
 import { OrderService } from '../../services/order.service';
-import { OrderStoreService } from '../../services/orderStore.service';
 
 export class RiderCancellationHandler {
   constructor(private io: SocketIOServer, private channels: SocketChannels) {}
@@ -11,7 +10,10 @@ export class RiderCancellationHandler {
    * Handle rider cancellation of accepted order
    * This allows riders to cancel if they accepted by mistake or have problems
    */
-  public async handleRiderCancellation(socket: AuthenticatedSocket, cancellation: RiderCancellationRequest): Promise<void> {
+  public async handleRiderCancellation(
+    socket: AuthenticatedSocket,
+    cancellation: RiderCancellationRequest,
+  ): Promise<void> {
     if (socket.userRole !== 'rider') {
       socket.emit('error', {
         message: 'Unauthorized: Only riders can cancel orders',
@@ -48,7 +50,7 @@ export class RiderCancellationHandler {
       await RiderAssignmentOrchestrator.handleRiderCancellation(
         cancellation.orderId,
         cancellation.riderId,
-        cancellation.reason
+        cancellation.reason,
       );
 
       // Confirm cancellation to rider
@@ -65,7 +67,7 @@ export class RiderCancellationHandler {
 
       // Get store information for notifications
       const storeId = (order.storeId as any)._id?.toString() || order.storeId.toString();
-      
+
       // Notify store about rider cancellation
       this.io.to(this.channels.STORE(storeId)).emit('rider:order_cancelled', {
         type: 'rider_order_cancelled',
@@ -101,7 +103,11 @@ export class RiderCancellationHandler {
         },
       });
 
-      console.log(`Rider ${cancellation.riderId} cancelled order ${cancellation.orderId}. Reason: ${cancellation.reason || 'Not specified'}`);
+      console.log(
+        `Rider ${cancellation.riderId} cancelled order ${cancellation.orderId}. Reason: ${
+          cancellation.reason || 'Not specified'
+        }`,
+      );
     } catch (error: any) {
       socket.emit('error', {
         message: error.message || 'Failed to cancel order',

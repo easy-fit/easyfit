@@ -5,7 +5,7 @@ import { AppError } from '../utils/appError';
 
 export const getWeeklySummary = catchAsync(async (req: Request, res: Response) => {
   const riderId = req.user?._id;
-  
+
   if (!riderId) {
     throw new AppError('Usuario no autenticado', 401);
   }
@@ -18,14 +18,14 @@ export const getWeeklySummary = catchAsync(async (req: Request, res: Response) =
 
   res.status(200).json({
     status: 'success',
-    data: { weeklySummary }
+    data: { weeklySummary },
   });
 });
 
 export const getRecentActivity = catchAsync(async (req: Request, res: Response) => {
   const riderId = req.user?._id;
   const limit = parseInt(req.query.limit as string) || 10;
-  
+
   if (!riderId) {
     throw new AppError('Usuario no autenticado', 401);
   }
@@ -42,13 +42,13 @@ export const getRecentActivity = catchAsync(async (req: Request, res: Response) 
 
   res.status(200).json({
     status: 'success',
-    data: { recentActivity }
+    data: { recentActivity },
   });
 });
 
 export const getDashboardStats = catchAsync(async (req: Request, res: Response) => {
   const riderId = req.user?._id;
-  
+
   if (!riderId) {
     throw new AppError('Usuario no autenticado', 401);
   }
@@ -59,14 +59,36 @@ export const getDashboardStats = catchAsync(async (req: Request, res: Response) 
 
   const [weeklySummary, recentActivity] = await Promise.all([
     RiderService.getWeeklySummary(riderId),
-    RiderService.getRecentActivity(riderId, 10)
+    RiderService.getRecentActivity(riderId, 10),
   ]);
 
   res.status(200).json({
     status: 'success',
     data: {
       weeklySummary,
-      recentActivity
-    }
+      recentActivity,
+    },
+  });
+});
+
+export const getAvailabilityStatus = catchAsync(async (req: Request, res: Response) => {
+  const riderId = req.user?._id;
+
+  const availabilityStatus = await RiderService.getAvailabilityStatus(riderId);
+
+  res.status(200).json({
+    status: 'success',
+    data: availabilityStatus,
+  });
+});
+
+export const getActiveAssignments = catchAsync(async (req: Request, res: Response) => {
+  const riderId = req.user?._id;
+
+  const activeAssignments = await RiderService.getActiveAssignments(riderId);
+
+  res.status(200).json({
+    status: 'success',
+    data: activeAssignments,
   });
 });

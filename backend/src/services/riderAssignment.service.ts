@@ -57,7 +57,7 @@ export class RiderAssignmentService {
         break;
     }
 
-    const assignment = await RiderAssignmentModel.findOneAndUpdate({ orderId, riderId }, updateData, { new: true });
+    const assignment = await RiderAssignmentModel.findOneAndUpdate({ orderId, riderId }, updateData);
 
     return assignment;
   }

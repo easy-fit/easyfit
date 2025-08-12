@@ -15,6 +15,7 @@ const CheckoutSessionSchema = new Schema<CheckoutSession>(
       enum: ['active', 'completed', 'cancelled'],
       default: 'active',
     },
+    preferenceId: { type: String, required: false },
   },
   { timestamps: true },
 );

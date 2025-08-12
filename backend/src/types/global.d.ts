@@ -11,6 +11,6 @@ export interface Address {
   };
   location: {
     type: 'Point';
-    coordinates: [number, number];
+    coordinates: [number, number]; // [longitude, latitude] - MongoDB GeoJSON standard
   };
 }
