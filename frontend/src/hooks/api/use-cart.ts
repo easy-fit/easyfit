@@ -2,11 +2,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import { GetCartItemsResponse, CreateCartItemDTO, UpdateCartItemDTO } from '@/types/cart';
 
-export const useCartItems = () => {
+export const useCartItems = (enabled: boolean = true) => {
   return useQuery<GetCartItemsResponse>({
     queryKey: ['cart'],
     queryFn: () => api.cart.getCartItems(),
     staleTime: 60000,
+    enabled, // Only run query if enabled (user is authenticated)
   });
 };
 

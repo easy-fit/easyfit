@@ -230,13 +230,13 @@ export const useEasyFitToast = () => {
     validationError: (field: string) =>
       toast.warning(`El campo "${field}" es requerido`, {
         description: 'Por favor completá todos los campos obligatorios',
-        duration: 2000,
+        duration: 1500,
       }),
 
     addressSaved: () =>
       toast.success('Dirección guardada', {
         description: 'Tu dirección se actualizó correctamente',
-        duration: 2000,
+        duration: 1500,
       }),
 
     emailVerified: () =>

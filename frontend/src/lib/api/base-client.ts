@@ -81,6 +81,11 @@ export class BaseApiClient {
         throw error;
       }
 
+      // Handle responses with no content (204)
+      if (response.status === 204 || response.headers.get('content-length') === '0') {
+        return undefined as T;
+      }
+      
       return response.json();
     } catch (error) {
       if (error instanceof Error) {

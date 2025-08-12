@@ -10,10 +10,11 @@ export const useOrders = (filters?: Record<string, unknown>) => {
   });
 };
 
-export const useMyOrders = () => {
+export const useMyOrders = (enabled: boolean = true) => {
   return useQuery<GetMyOrdersResponse>({
     queryKey: ['orders', 'my-orders'],
     queryFn: () => api.orders.getMyOrders(),
+    enabled, // Only run query if enabled (user is authenticated)
   });
 };
 

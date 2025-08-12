@@ -23,8 +23,8 @@ export function convertGeocodeToAddress(geocodeResult: GeocodeResult): Address {
     location: {
       type: 'Point',
       coordinates: [
-        geocodeResult.geometry.location.lat, // latitude first según tu ejemplo
-        geocodeResult.geometry.location.lng, // longitude second
+        geocodeResult.geometry.location.lng, // longitude first (MongoDB GeoJSON standard)
+        geocodeResult.geometry.location.lat, // latitude second
       ],
     },
   };
@@ -61,7 +61,7 @@ export function createBasicAddress(addressString: string, coordinates?: [number,
     },
     location: {
       type: 'Point',
-      coordinates: coordinates || [-38.7183, -62.2708], // Coordenadas corregidas [lat, lng]
+      coordinates: coordinates || [-62.2708, -38.7183], // Default coordinates [lng, lat] (MongoDB standard)
     },
   };
 }
