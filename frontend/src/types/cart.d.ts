@@ -8,7 +8,7 @@ export interface CartProductInfo {
 export interface CartVariantInfo extends Omit<Variant, 'productId' | 'images'> {
   _id: string;
   productId: CartProductInfo;
-  images: (VariantImage & { _id: string })[];
+  images: VariantImage[];
   price: number;
 }
 

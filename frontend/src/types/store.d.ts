@@ -130,3 +130,76 @@ export interface StoreAssetUploadResponse {
 export interface StoreCommonResponse {
   data: Store;
 }
+
+export interface getDashboardResponse {
+  status: string;
+  data: {
+    dashboard: {
+      summary: {
+        totalStores: number;
+        activeStores: number;
+        inactiveStores: number;
+        totalProducts: number;
+        totalOrders: number;
+        completedOrders: number;
+        weeklyRevenue: number;
+        weeklyRevenueChange: number;
+        weeklyProductGrowth: number;
+      };
+      stores: Store<Partial>[];
+    };
+  };
+}
+
+// Store order analytics response
+export interface StoreOrderAnalytics {
+  pending: number;
+  accepted: number;
+  rejected: number;
+  totalToday: number;
+  avgResponseTime: string;
+}
+
+export interface StoreOrderAnalyticsResponse {
+  status: 'success';
+  data: StoreOrderAnalytics;
+}
+
+// Store orders response (matches backend implementation)
+export interface StoreOrderItem {
+  id: string;
+  name: string;        // product name from backend 
+  variant?: string;    // combined color/size string like "Blue / M"
+  quantity: number;    // quantity from backend
+  price: string;       // formatted price like "$1,500"
+  sku: string;
+}
+
+export interface StoreOrder {
+  id: string;
+  number: string;
+  customer: string;
+  items: StoreOrderItem[];
+  total: string;
+  status: string;
+  placedAt: string;
+  createdAt: string;
+}
+
+export interface StoreOrdersPagination {
+  current: number;
+  total: number;
+  count: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
+export interface StoreOrdersData {
+  orders: StoreOrder[];
+  pagination: StoreOrdersPagination;
+}
+
+export interface StoreOrdersResponse {
+  status: 'success';
+  data: StoreOrdersData;
+}

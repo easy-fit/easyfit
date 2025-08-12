@@ -9,7 +9,7 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (credentials: LoginCredentials) => Promise<void>;
+  login: (credentials: LoginCredentials) => Promise<User>;
   logout: () => Promise<void>;
   registerCustomer: (data: RegisterCustomerDTO) => Promise<void>;
   registerMerchant: (data: RegisterMerchantDTO) => Promise<void>;
@@ -37,12 +37,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const initializeAuth = async () => {
     try {
       setIsLoading(true);
-      // Try to get current user - this will use existing cookies
+
       const response = await api.users.getMe();
       setUser(response.data.user);
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
-      // User is not authenticated or token is invalid
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -53,6 +52,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       const response = await api.auth.login(credentials);
       setUser(response.data.user);
+      return response.data.user;
     } catch (error) {
       throw error; // Re-throw to handle in the calling component
     }

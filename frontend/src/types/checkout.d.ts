@@ -1,11 +1,11 @@
-import { Order } from './order';
+import { Order, ShippingType, ShippingInfo } from './order';
 
 export type CheckoutStatus = 'active' | 'completed' | 'cancelled';
 
 export interface CheckoutCartItem {
   variantId: string;
   quantity: number;
-  price: number;
+  title: string;
   unit_price: number;
 }
 
@@ -18,12 +18,13 @@ export interface CheckoutSession {
   shipping: ShippingInfo;
   total: number;
   status: CheckoutStatus;
+  preferenceId?: string;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface CreateCheckoutSessionDTO {
-  shipping: ShippingInfo;
+  shippingType: ShippingType;
 }
 
 export interface UpdateCheckoutSessionDTO {
@@ -32,12 +33,12 @@ export interface UpdateCheckoutSessionDTO {
 
 export interface CreateCheckoutSessionResponse {
   status: string;
-  data: { CheckoutSession: CheckoutSession; preferenceId: string };
+  data: { checkoutSession: CheckoutSession; preferenceId: string };
 }
 
 export interface CheckoutCommonResponse {
   status: string;
-  data: { CheckoutSession: CheckoutSession };
+  data: { checkoutSession: CheckoutSession };
 }
 
 export interface processPaymentResponse {
