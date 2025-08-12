@@ -52,7 +52,7 @@ export class OrderStoreService {
           _id: item.variantId._id.toString(),
           size: item.variantId.size,
           color: item.variantId.color,
-          images: item.variantId.images ? item.variantId.images.slice(0, 2) : [], // Only first 2 images
+          sku: item.variantId.sku,
         },
       })),
       customer: {

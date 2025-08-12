@@ -58,11 +58,7 @@ export interface OrderNotificationPayload {
       _id: string;
       size: string;
       color: string;
-      images: Array<{
-        key: string;
-        altText: string;
-        order: number;
-      }>;
+      sku: string;
     };
   }[];
   customer: {
