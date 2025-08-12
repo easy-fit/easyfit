@@ -1,3 +1,5 @@
+import type { Address } from './address';
+
 export type OrderStatus =
   | 'order_placed'
   | 'order_accepted'
@@ -32,6 +34,7 @@ export interface ShippingInfo {
   cost: number;
   subsidizedBy?: ShippingSubsidy;
   type: ShippingType;
+  address: Address;
   tryOnEnabled: boolean;
   distanceKm?: number;
   durationMinutes?: number;

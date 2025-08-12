@@ -31,15 +31,83 @@ export interface StoreInspectionResult {
   }>;
 }
 
+// Merchant Store Channel Management
+export interface MerchantJoinStore {
+  storeId: string;
+}
+
+export interface MerchantLeaveStore {
+  storeId: string;
+}
+
 // ============ Server to Client Events ============
 
 // Order Events
 export interface OrderNewEvent {
   type: 'order_placed';
   data: {
-    order: any; // Using any for now, can be typed later
-    orderItems: any[];
-    customer: any;
+    order: {
+      _id: string;
+      total: number;
+      status: OrderStatus;
+      paymentStatus: string;
+      shipping: {
+        address: {
+          formatted: {
+            building: any;
+            floor: any;
+            apartment: string;
+            street: string;
+            streetNumber: string;
+            city: string;
+            province: string;
+            postalCode: string;
+          };
+          coordinates: [number, number];
+        };
+        cost: number;
+        type: string;
+        tryOnEnabled: boolean;
+      };
+      createdAt: Date;
+    };
+    orderItems: {
+      _id: string;
+      quantity: number;
+      unitPrice: number;
+      returnStatus: string;
+      product: {
+        _id: string;
+        title: string;
+        category: string;
+      };
+      variant: {
+        _id: string;
+        size: string;
+        color: string;
+        sku: string;
+      };
+    }[];
+    customer: {
+      _id: string;
+      name: string;
+      surname: string;
+      email: string;
+      address: {
+        formatted:
+          | {
+              street: string;
+              streetNumber: string;
+              apartment?: string;
+              floor?: string;
+              building?: string;
+              city: string;
+              province: string;
+              postalCode: string;
+            }
+          | object;
+      };
+    };
     timestamp: Date;
   };
 }
