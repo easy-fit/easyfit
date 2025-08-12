@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import type React from 'react';
@@ -21,6 +22,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEasyFitToast } from '@/hooks/use-toast';
+import { MobileSidebar } from '@/components/layout/mobile-sidebar';
 
 interface HeaderProps {
   onSearch?: (query: string) => void;
@@ -36,6 +38,7 @@ export function Header({ onSearch, searchQuery = '' }: HeaderProps) {
   const { user, isAuthenticated, isLoading } = useAuth();
   const logoutMutation = useLogout();
   const toast = useEasyFitToast();
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   useEffect(() => {
     setLocalSearchQuery(searchQuery);
@@ -92,8 +95,9 @@ export function Header({ onSearch, searchQuery = '' }: HeaderProps) {
       await logoutMutation.mutateAsync();
       toast.logoutSuccess();
       router.push('/');
-    } catch (error) {
-      toast.error('Error al cerrar sesión');
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || 'Error al cerrar sesión';
+      toast.error(errorMessage);
     }
   };
 
@@ -127,7 +131,12 @@ export function Header({ onSearch, searchQuery = '' }: HeaderProps) {
           <div className="flex items-center justify-between h-16 relative">
             {/* Left side - Menu + Logo */}
             <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" className="md:hidden hover:bg-[#DBF7DC]">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsMobileSidebarOpen(true)}
+                className="md:hidden hover:bg-[#DBF7DC]"
+              >
                 <Menu className="h-5 w-5" />
               </Button>
               <Link href="/" className="flex items-center gap-2">
@@ -185,7 +194,7 @@ export function Header({ onSearch, searchQuery = '' }: HeaderProps) {
               {isAuthenticated && user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="relative hover:bg-[#DBF7DC]">
+                    <Button variant="ghost" size="icon" className="relative hover:bg-[#DBF7DC] hidden md:flex">
                       <User className="h-5 w-5" />
                     </Button>
                   </DropdownMenuTrigger>
@@ -222,7 +231,7 @@ export function Header({ onSearch, searchQuery = '' }: HeaderProps) {
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 hidden md:flex">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -241,7 +250,7 @@ export function Header({ onSearch, searchQuery = '' }: HeaderProps) {
                 </div>
               )}
 
-              <Button variant="ghost" size="icon" className="hover:bg-[#DBF7DC]">
+              <Button onClick={() => router.push('/cart')} variant="ghost" size="icon" className="hover:bg-[#DBF7DC]">
                 <ShoppingCart className="h-5 w-5" />
               </Button>
             </div>
@@ -269,27 +278,17 @@ export function Header({ onSearch, searchQuery = '' }: HeaderProps) {
                 </Button>
               )}
             </form>
-
-            {/* Mobile Location Button */}
-            {isAuthenticated ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsLocationModalOpen(true)}
-                className="w-full justify-start hover:bg-[#DBF7DC] text-[#20313A]"
-              >
-                <MapPin className="h-4 w-4 mr-2" />
-                <span className="truncate">{currentLocation}</span>
-              </Button>
-            ) : (
-              <div className="w-full flex items-center justify-start px-3 py-2 text-gray-500">
-                <MapPin className="h-4 w-4 mr-2" />
-                <span className="truncate">Bahía Blanca, Centro</span>
-              </div>
-            )}
           </div>
         </div>
       </header>
+      {/* Mobile Sidebar */}
+      <MobileSidebar
+        isOpen={isMobileSidebarOpen}
+        onClose={() => setIsMobileSidebarOpen(false)}
+        currentLocation={currentLocation}
+        onLocationSelect={handleLocationSelect}
+        userAddress={user?.address}
+      />
 
       {/* Location Modal */}
       {isAuthenticated && (

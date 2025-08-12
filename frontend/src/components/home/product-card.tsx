@@ -24,7 +24,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const imageUrl = `/${currentImage.key}`;
 
   return (
-    <Link href={`/products/${product.slug}`}>
+    <Link href={`/${product.store?.slug}/${product.slug}`}>
       <div className="group cursor-pointer bg-white rounded-lg border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200">
         {/* Product Image Container */}
         <div

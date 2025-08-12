@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import type React from 'react';
@@ -128,9 +129,10 @@ export function LocationModal({ isOpen, onClose, onLocationSelect, currentLocati
       onClose();
 
       toast.addressSaved();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating address:', error);
-      toast.error('Error al actualizar la dirección');
+      const errorMessage = error?.response?.data?.message || error?.message || 'Error al actualizar la dirección';
+      toast.error(errorMessage);
     }
   };
 
@@ -215,9 +217,10 @@ export function LocationModal({ isOpen, onClose, onLocationSelect, currentLocati
       onClose();
 
       toast.addressSaved();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating address:', error);
-      toast.error('Error al actualizar la dirección');
+      const errorMessage = error?.response?.data?.message || error?.message || 'Error al actualizar la dirección';
+      toast.error(errorMessage);
     }
   };
 
