@@ -20,14 +20,6 @@ export class CheckoutShippingService {
         };
       }
 
-      console.log('latitude', storeLocation[1], 'long', storeLocation[0]);
-      console.log(
-        'userAddress latitude',
-        userAddress.location.coordinates[1],
-        'long',
-        userAddress.location.coordinates[0],
-      );
-
       const distanceResult = await calculateCityDistance(
         {
           latitude: storeLocation[1],

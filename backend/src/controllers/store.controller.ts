@@ -128,30 +128,30 @@ export class StoreController {
   static getStoreOrderAnalytics = catchAsync(async (req: Request, res: Response) => {
     const storeId = req.params.id;
     const analytics = await StoreService.getStoreOrderAnalytics(storeId);
-    
+
     res.status(200).json({
       status: 'success',
-      data: analytics
+      data: analytics,
     });
   });
 
   static getStoreOrders = catchAsync(async (req: Request, res: Response) => {
     const storeId = req.params.id;
     const { status, limit, page, sortBy, sortOrder } = req.query;
-    
+
     const filters = {
       status: status as string,
       limit: limit ? Number(limit) : undefined,
       page: page ? Number(page) : undefined,
       sortBy: sortBy as string,
-      sortOrder: sortOrder as 'asc' | 'desc'
+      sortOrder: sortOrder as 'asc' | 'desc',
     };
 
     const result = await StoreService.getStoreOrders(storeId, filters);
-    
+
     res.status(200).json({
       status: 'success',
-      data: result
+      data: result,
     });
   });
 }
