@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Product } from '@/types/product';
+import { buildImageUrl } from '@/lib/utils/image-url';
 
 interface ProductCardProps {
   product: Product;
@@ -21,7 +22,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
   // Usar imagen principal por defecto, imagen hover si existe y está en hover
   const currentImage = isHovered && hoverImage ? hoverImage : primaryImage;
-  const imageUrl = `/${currentImage.key}`;
+  const imageUrl = buildImageUrl(currentImage?.key);
 
   return (
     <Link href={`/${product.store?.slug}/${product.slug}`}>
@@ -33,7 +34,7 @@ export function ProductCard({ product }: ProductCardProps) {
           onMouseLeave={() => setIsHovered(false)}
         >
           <Image
-            src={imageUrl || '/placeholder.svg'}
+            src={imageUrl}
             alt={currentImage?.altText || product.title}
             fill
             className="object-cover object-center group-hover:scale-102 transition-all duration-300"

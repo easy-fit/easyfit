@@ -8,6 +8,7 @@ import {
   ProductCommonResponse,
   ProductsByStoreResponse,
 } from '@/types/product';
+import { CreateVariantDTO, createVariantResponse } from '@/types/variant';
 import { imageUploadBody } from '@/types/global';
 import { AddImageToVariant } from '@/types/variant';
 import { buildQueryString } from '@/lib/utils';
@@ -30,8 +31,8 @@ export class ProductsClient extends BaseApiClient {
     return this.fetchApi<ProductsByStoreResponse>(`/products/${storeSlug}/products`);
   }
 
-  public async createProduct(product: CreateProductDTO): Promise<ProductCommonResponse> {
-    return this.fetchApi<ProductCommonResponse>('/products', {
+  public async createProduct(product: CreateProductDTO): Promise<CreateProductResponse> {
+    return this.fetchApi<CreateProductResponse>('/products', {
       method: 'POST',
       body: JSON.stringify(product),
     });
@@ -48,10 +49,24 @@ export class ProductsClient extends BaseApiClient {
     return this.fetchApi<void>(`/products/id/${id}`, { method: 'DELETE' });
   }
 
+  public async createVariant(id: string, variant: CreateVariantDTO): Promise<createVariantResponse> {
+    return this.fetchApi<createVariantResponse>(`/products/${id}/variants`, {
+      method: 'POST',
+      body: JSON.stringify(variant),
+    });
+  }
+
+  public async updateVariant(id: string, variantId: string, variant: CreateVariantDTO): Promise<createVariantResponse> {
+    return this.fetchApi<createVariantResponse>(`/products/${id}/variants/${variantId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(variant),
+    });
+  }
+
   public async addImageToProduct(
     productId: string,
     variantId: string,
-    data: imageUploadBody,
+    data: { key: string; contentType: string; altText?: string },
   ): Promise<AddImageToVariant> {
     return this.fetchApi<AddImageToVariant>(`/products/${productId}/variants/${variantId}/images`, {
       method: 'POST',

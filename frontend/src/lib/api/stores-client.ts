@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { BaseApiClient } from './base-client';
 import {
   CreateStoreDTO,
@@ -9,6 +10,7 @@ import {
   StoreOrderAnalyticsResponse,
   StoreOrdersResponse,
 } from '@/types/store';
+import { StoreAnalyticsApiResponse, DateRangeFilter, OrderTypeFilter } from '@/types/analytics';
 import { buildQueryString } from '@/lib/utils';
 
 export class StoresClient extends BaseApiClient {
@@ -84,24 +86,79 @@ export class StoresClient extends BaseApiClient {
     return this.fetchApi<StoreOrderAnalyticsResponse>(`/stores/id/${storeId}/analytics/orders`);
   }
 
-  public async getStoreOrders(storeId: string, params?: {
-    status?: string;
-    limit?: number;
-    page?: number;
-    sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
-  }): Promise<StoreOrdersResponse> {
+  public async getStoreOrders(
+    storeId: string,
+    params?: {
+      status?: string;
+      limit?: number;
+      page?: number;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+      since?: string;
+    },
+  ): Promise<StoreOrdersResponse> {
     const searchParams = new URLSearchParams();
-    
+
     if (params?.status) searchParams.set('status', params.status);
     if (params?.limit) searchParams.set('limit', params.limit.toString());
     if (params?.page) searchParams.set('page', params.page.toString());
     if (params?.sortBy) searchParams.set('sortBy', params.sortBy);
     if (params?.sortOrder) searchParams.set('sortOrder', params.sortOrder);
+    if (params?.since) searchParams.set('since', params.since);
 
     const query = searchParams.toString();
     const url = `/stores/id/${storeId}/orders${query ? `?${query}` : ''}`;
-    
+
     return this.fetchApi<StoreOrdersResponse>(url);
+  }
+
+  public async getStoreDetailedAnalytics(
+    storeId: string,
+    params?: {
+      dateRange?: DateRangeFilter;
+      orderType?: OrderTypeFilter;
+    },
+  ): Promise<StoreAnalyticsApiResponse> {
+    const searchParams = new URLSearchParams();
+
+    if (params?.dateRange) searchParams.set('dateRange', params.dateRange);
+    if (params?.orderType) searchParams.set('orderType', params.orderType);
+
+    const query = searchParams.toString();
+    const url = `/stores/id/${storeId}/analytics/detailed${query ? `?${query}` : ''}`;
+
+    return this.fetchApi<StoreAnalyticsApiResponse>(url);
+  }
+
+  public async getStoreProductMetrics(storeId: string): Promise<{ status: string; data: any }> {
+    return this.fetchApi<{ status: string; data: any }>(`/stores/id/${storeId}/products/metrics`);
+  }
+
+  public async getStoreProducts(
+    storeId: string,
+    params?: {
+      search?: string;
+      category?: string;
+      status?: string;
+      stockStatus?: string;
+      page?: number;
+      limit?: number;
+      sort?: string;
+    },
+  ): Promise<{ status: string; results: number; pagination: any; data: { products: any[] } }> {
+    const searchParams = new URLSearchParams();
+
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.category) searchParams.set('category', params.category);
+    if (params?.status) searchParams.set('status', params.status);
+    if (params?.stockStatus) searchParams.set('stockStatus', params.stockStatus);
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.limit) searchParams.set('limit', params.limit.toString());
+    if (params?.sort) searchParams.set('sort', params.sort);
+
+    const query = searchParams.toString();
+    const url = `/stores/id/${storeId}/products${query ? `?${query}` : ''}`;
+
+    return this.fetchApi<{ status: string; results: number; pagination: any; data: { products: any[] } }>(url);
   }
 }

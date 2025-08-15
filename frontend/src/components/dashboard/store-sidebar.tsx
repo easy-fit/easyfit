@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Home, LayoutDashboard, Boxes, Settings } from 'lucide-react';
+import { Home, BarChart3, Boxes, Settings } from 'lucide-react';
 
 import {
   Sidebar,
@@ -26,15 +26,15 @@ type NavItem = {
 };
 
 const baseItems: NavItem[] = [
-  { title: 'Home', icon: Home, key: 'home', url: '#' }, // stays here
-  { title: 'Dashboard', icon: LayoutDashboard, key: 'analytics', url: '#' },
-  { title: 'Stock', icon: Boxes, key: 'stock', url: '#' },
-  { title: 'Configuración', icon: Settings, key: 'settings', url: '#' },
+  { title: 'Inicio', icon: Home, key: 'home', url: '/' }, // stays here
+  { title: 'Estadísticas', icon: BarChart3, key: 'analytics', url: '/analytics' },
+  { title: 'Productos', icon: Boxes, key: 'stock', url: '/products' },
+  { title: 'Configuración', icon: Settings, key: 'settings', url: '/settings' },
 ];
 
 export function StoreSidebar({
-  storeName = 'Mi Tienda',
-  logoUrl = '/placeholder.svg?height=48&width=48',
+  storeName,
+  logoUrl,
   active = 'home',
   baseHref = '',
 }: {
@@ -53,13 +53,7 @@ export function StoreSidebar({
       <SidebarHeader>
         <div className="flex items-center gap-3 px-2 py-2 group-data-[collapsible=icon]:justify-center">
           <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md ring-1 ring-gray-200 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8">
-            <Image
-              src={logoUrl || '/placeholder.svg?height=48&width=48&query=store%20logo'}
-              alt={storeName}
-              fill
-              sizes="40px"
-              className="object-cover"
-            />
+            <Image src={logoUrl!} alt={storeName!} fill sizes="40px" className="object-cover" />
           </div>
           <div className="min-w-0 group-data-[collapsible=icon]:hidden">
             <div className="truncate font-semibold text-sm">{storeName}</div>

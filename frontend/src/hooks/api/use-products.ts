@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import {
@@ -8,6 +9,7 @@ import {
   ProductCommonResponse,
   ProductsByStoreResponse,
 } from '@/types/product';
+import { CreateVariantDTO } from '@/types/variant';
 
 export const useProducts = (filters?: ProductFilterOptions) => {
   return useQuery<GetProductsResponse>({
@@ -45,7 +47,7 @@ export const useCreateProduct = () => {
   return useMutation({
     mutationFn: (product: CreateProductDTO) => api.products.createProduct(product),
     onSuccess: (newProduct) => {
-      queryClient.setQueryData(['products', newProduct.data._id], newProduct);
+      queryClient.setQueryData(['products', newProduct.data.product._id], newProduct);
       queryClient.invalidateQueries({ queryKey: ['products'] });
     },
   });
@@ -75,7 +77,7 @@ export const useDeleteProduct = (id: string) => {
 
 export const useAddImageToProduct = (productId: string, variantId: string) => {
   return useMutation({
-    mutationFn: (data: { key: string; contentType: string; key_img: string }) =>
+    mutationFn: (data: { key: string; contentType: string; altText?: string }) =>
       api.products.addImageToProduct(productId, variantId, data),
   });
 };
@@ -83,6 +85,33 @@ export const useAddImageToProduct = (productId: string, variantId: string) => {
 export const useDeleteImageFromProduct = (productId: string, variantId: string) => {
   return useMutation({
     mutationFn: (key: string) => api.products.deleteImageFromProduct(productId, variantId, key),
+  });
+};
+
+export const useCreateVariant = (productId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (variant: CreateVariantDTO) => api.products.createVariant(productId, variant),
+    onSuccess: (newVariant) => {
+      queryClient.invalidateQueries({ queryKey: ['products', productId] });
+      queryClient.setQueryData(['products', productId, 'variants'], (oldVariants: any) => [
+        ...(oldVariants || []),
+        newVariant.data.variant,
+      ]);
+    },
+  });
+};
+
+export const useUpdateVariant = (productId: string, variantId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (variant: CreateVariantDTO) => api.products.updateVariant(productId, variantId, variant),
+    onSuccess: (updatedVariant) => {
+      queryClient.invalidateQueries({ queryKey: ['products', productId] });
+      queryClient.setQueryData(['products', productId, 'variants'], (oldVariants: any) =>
+        oldVariants.map((v: any) => (v._id === updatedVariant.data.variant._id ? updatedVariant.data.variant : v)),
+      );
+    },
   });
 };
 

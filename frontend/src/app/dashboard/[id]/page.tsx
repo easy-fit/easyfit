@@ -2,25 +2,25 @@
 'use client';
 
 import * as React from 'react';
-import { useParams } from 'next/navigation';
-import { Package, Clock4, CheckCircle2, XCircle, ChevronRight, Loader2, PauseCircle } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
+import { Package, Clock4, CheckCircle2, XCircle, ChevronRight, Loader2, PauseCircle, ChevronLeft } from 'lucide-react';
 
-import { AuthGuard } from '@/components/auth/auth-guard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { StoreSidebar } from '@/components/dashboard/store-sidebar';
-import { useStore, useStoreOrderAnalytics, useStoreOrders, useSetStoreStatus } from '@/hooks/api/use-stores';
+import { useStoreOrderAnalytics, useStoreOrders, useSetStoreStatus, usePendingOrders } from '@/hooks/api/use-stores';
 import { OrderCard, type Order } from '@/components/dashboard/order-card';
 import { useStoreEvents, useWebSocket } from '@/hooks/use-websocket';
 import type { OrderNewEvent } from '@/types/websockets';
 import type { OrderStatus } from '@/types/order';
+import { useCurrentStore } from '@/contexts/store-context';
 
 export default function StoreDashboardPage() {
   const { id } = useParams() as { id: string };
-  const { data } = useStore(id);
+  const { storeName, logoUrl, isActive } = useCurrentStore();
   const { data: analyticsData, isLoading: analyticsLoading } = useStoreOrderAnalytics(id);
   const {
     data: activeOrdersData,
@@ -43,13 +43,7 @@ export default function StoreDashboardPage() {
   const { on, off } = useWebSocket();
   const setStoreStatusMutation = useSetStoreStatus();
 
-  const store = data?.data;
-  const storeName = store?.name ?? 'Mi Tienda';
-  const logoUrl = store?.customization?.logoUrl ?? '/placeholder.svg?height=48&width=48';
-
-  // Use real store status from API
-  const storeStatus = store?.status || 'inactive';
-  const acceptingOrders = storeStatus === 'active';
+  const acceptingOrders = isActive;
 
   const handleStatusToggle = async (newAcceptingStatus: boolean) => {
     const newStatus = newAcceptingStatus ? 'active' : 'inactive';
@@ -70,6 +64,22 @@ export default function StoreDashboardPage() {
   // Separate state for pending and active orders
   const [pendingOrders, setPendingOrders] = React.useState<Order[]>([]);
   const [activeOrders, setActiveOrders] = React.useState<Order[]>([]);
+  const [lastFetchTime, setLastFetchTime] = React.useState<Date>();
+
+  // Fetch pending orders from API to handle page reloads
+  const { data: pendingOrdersData } = usePendingOrders(id);
+
+  // Initialize pending orders from API on page load
+  React.useEffect(() => {
+    if (pendingOrdersData?.data?.orders) {
+      const apiPendingOrders: Order[] = pendingOrdersData.data.orders.map((order) => ({
+        ...order,
+        status: order.status as OrderStatus,
+      }));
+      setPendingOrders(apiPendingOrders);
+      setLastFetchTime(new Date());
+    }
+  }, [pendingOrdersData]);
 
   // Update active orders when API data changes
   React.useEffect(() => {
@@ -85,7 +95,7 @@ export default function StoreDashboardPage() {
   React.useEffect(() => {
     const interval = setInterval(() => {
       refetchActiveOrders();
-    }, 100000); // Refresh every 100 seconds
+    }, 60000);
     return () => clearInterval(interval);
   }, [refetchActiveOrders]);
 
@@ -137,7 +147,7 @@ export default function StoreDashboardPage() {
     return () => leaveStoreChannel(id);
   }, [id, isConnected, joinStoreChannel, leaveStoreChannel]);
 
-  // WebSocket event listener for new orders
+  // WebSocket event listener for new orders with deduplication
   React.useEffect(() => {
     if (!isConnected) {
       connect();
@@ -173,9 +183,14 @@ export default function StoreDashboardPage() {
       };
 
       setPendingOrders((prev) => {
-        if (prev.find((o) => o.id === formattedOrder.id)) {
+        // Deduplication: Skip if order already exists (prevents duplicates)
+        const existingOrder = prev.find((o) => o.id === formattedOrder.id);
+        if (existingOrder) {
+          // Order already exists, don't add duplicate
           return prev;
         }
+
+        // Add new order to the beginning of the list
         return [formattedOrder, ...prev];
       });
     };
@@ -184,183 +199,192 @@ export default function StoreDashboardPage() {
     return () => off('order:new', handleOrderNew);
   }, [isConnected, connect, on, off]);
 
+  const router = useRouter();
+
   return (
-    <AuthGuard>
-      <div className="min-h-screen bg-gray-50">
-        <SidebarProvider>
-          <StoreSidebar storeName={storeName} logoUrl={logoUrl} active="home" baseHref={`/dashboard/${id}`} />
-          <SidebarInset>
-            {/* Header with prominent intake control */}
-            <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-white px-4">
-              <SidebarTrigger className="-ml-1" />
-              <Separator orientation="vertical" className="mx-1 h-4" />
-              <div className="flex items-center justify-between w-full">
-                <div className="flex items-center gap-3">
-                  <h1 className="text-base md:text-lg font-semibold text-[#20313A]">{storeName}</h1>
-                  <Badge variant="secondary" className="hidden md:inline-flex">
-                    Home
-                  </Badge>
-                </div>
+    <div className="min-h-screen bg-gray-50">
+      <SidebarProvider>
+        <StoreSidebar storeName={storeName!} logoUrl={logoUrl} active="home" baseHref={`/dashboard/${id}`} />
+        <SidebarInset>
+          {/* Header with prominent intake control */}
+          <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-white px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mx-1 h-4" />
 
-                {/* Colorful segmented control for order intake */}
-                <div className="flex items-center gap-3">
-                  <span className="hidden md:inline text-sm text-gray-700">Recepción de pedidos:</span>
-                  <div className="inline-flex overflow-hidden rounded-full border bg-white shadow-sm">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      aria-pressed={!acceptingOrders}
-                      onClick={() => handleStatusToggle(false)}
-                      disabled={setStoreStatusMutation.isPending}
-                      className={`rounded-none font-medium transition-colors ${
-                        !acceptingOrders ? 'bg-orange-100 text-orange-800 hover:bg-orange-100' : 'hover:bg-gray-50'
-                      }`}
-                    >
-                      <PauseCircle className="h-4 w-4 mr-1.5" />
-                      Pausado
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      aria-pressed={acceptingOrders}
-                      onClick={() => handleStatusToggle(true)}
-                      disabled={setStoreStatusMutation.isPending}
-                      className={`rounded-none border-l font-medium transition-colors ${
-                        acceptingOrders ? 'bg-[#9EE493] text-[#20313A] hover:bg-[#8BD480]' : 'hover:bg-gray-50'
-                      }`}
-                    >
-                      <CheckCircle2 className="h-4 w-4 mr-1.5" />
-                      Aceptando
-                    </Button>
-                  </div>
+            {/* Add this back button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push('/dashboard')}
+              className="flex items-center gap-2 text-gray-600 hover:text-[#20313A] hover:bg-gray-50"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span className="hidden sm:inline">Volver al Dashboard</span>
+            </Button>
+            <Separator orientation="vertical" className="mx-1 h-4" />
+
+            <div className="flex items-center justify-between w-full">
+              {/* Left side - empty or minimal content */}
+              <div></div>
+
+              {/* Right side - Order intake control */}
+              <div className="flex items-center gap-3">
+                <span className="hidden md:inline text-sm text-gray-700">Recepción de pedidos:</span>
+                <div className="inline-flex overflow-hidden rounded-full border bg-white shadow-sm">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    aria-pressed={!acceptingOrders}
+                    onClick={() => handleStatusToggle(false)}
+                    disabled={setStoreStatusMutation.isPending}
+                    className={`rounded-none font-medium transition-colors ${
+                      !acceptingOrders ? 'bg-orange-100 text-orange-800 hover:bg-orange-100' : 'hover:bg-gray-50'
+                    }`}
+                  >
+                    <PauseCircle className="h-4 w-4 mr-1.5" />
+                    Pausado
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    aria-pressed={acceptingOrders}
+                    onClick={() => handleStatusToggle(true)}
+                    disabled={setStoreStatusMutation.isPending}
+                    className={`rounded-none border-l font-medium transition-colors ${
+                      acceptingOrders ? 'bg-[#9EE493] text-[#20313A] hover:bg-[#8BD480]' : 'hover:bg-gray-50'
+                    }`}
+                  >
+                    <CheckCircle2 className="h-4 w-4 mr-1.5" />
+                    Aceptando
+                  </Button>
                 </div>
               </div>
-            </header>
+            </div>
+          </header>
 
-            <main className="p-4 md:p-6 space-y-6">
-              {/* KPIs */}
-              <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-sm font-medium">Pendientes</CardTitle>
-                    <Clock4 className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{pending}</div>
-                    <p className="text-xs text-muted-foreground">Órdenes esperando aceptación</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-sm font-medium">Aceptadas</CardTitle>
-                    <CheckCircle2 className="h-4 w-4 text-green-600" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{accepted}</div>
-                    <p className="text-xs text-muted-foreground">En preparación</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-sm font-medium">Rechazadas</CardTitle>
-                    <XCircle className="h-4 w-4 text-red-500" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{rejected}</div>
-                    <p className="text-xs text-muted-foreground">Últimas 24h</p>
-                  </CardContent>
-                </Card>
-              </div>
+          <main className="p-4 md:p-6 space-y-6">
+            {/* KPIs */}
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Pendientes</CardTitle>
+                  <Clock4 className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{pending}</div>
+                  <p className="text-xs text-muted-foreground">Órdenes esperando aceptación</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Aceptadas</CardTitle>
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{accepted}</div>
+                  <p className="text-xs text-muted-foreground">En preparación</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Rechazadas</CardTitle>
+                  <XCircle className="h-4 w-4 text-red-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{rejected}</div>
+                  <p className="text-xs text-muted-foreground">Últimas 24h</p>
+                </CardContent>
+              </Card>
+            </div>
 
-              {/* Órdenes pendientes - awaiting response */}
-              <Card className="w-full">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle>Órdenes pendientes</CardTitle>
-                    <CardDescription>
-                      {acceptingOrders
-                        ? 'Nuevas órdenes esperando tu respuesta'
-                        : 'Estás pausado. Activá para recibir pedidos.'}
-                    </CardDescription>
+            {/* Órdenes pendientes - awaiting response */}
+            <Card className="w-full">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Órdenes pendientes</CardTitle>
+                  <CardDescription>
+                    {acceptingOrders
+                      ? 'Nuevas órdenes esperando tu respuesta'
+                      : 'Estás pausado. Activá para recibir pedidos.'}
+                  </CardDescription>
+                </div>
+                <Badge variant="outline" className="text-orange-600">
+                  {pendingOrders.length} pendientes
+                </Badge>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {pendingOrders.length > 0 ? (
+                  pendingOrders.map((order) => (
+                    <OrderCard
+                      key={order.id}
+                      order={order}
+                      acceptingEnabled={acceptingOrders}
+                      onAccept={handleAccept}
+                      onReject={handleReject}
+                    />
+                  ))
+                ) : (
+                  <div className="flex items-center justify-center py-8 text-center">
+                    <div>
+                      <Clock4 className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-gray-500 text-sm">No hay órdenes pendientes</p>
+                      {!acceptingOrders && (
+                        <p className="text-xs text-gray-400 mt-1">Activá para recibir nuevas órdenes</p>
+                      )}
+                    </div>
                   </div>
-                  <Badge variant="outline" className="text-orange-600">
-                    {pendingOrders.length} pendientes
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Órdenes activas - accepted and in progress */}
+            <Card className="w-full">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Órdenes activas</CardTitle>
+                  <CardDescription>Órdenes aceptadas en proceso de entrega</CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-green-600">
+                    {activeOrders.length} activas
                   </Badge>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {pendingOrders.length > 0 ? (
-                    pendingOrders.map((order) => (
-                      <OrderCard
-                        key={order.id}
-                        order={order}
-                        acceptingEnabled={acceptingOrders}
-                        onAccept={handleAccept}
-                        onReject={handleReject}
-                      />
-                    ))
-                  ) : (
-                    <div className="flex items-center justify-center py-8 text-center">
-                      <div>
-                        <Clock4 className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                        <p className="text-gray-500 text-sm">No hay órdenes pendientes</p>
-                        {!acceptingOrders && (
-                          <p className="text-xs text-gray-400 mt-1">Activá para recibir nuevas órdenes</p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Órdenes activas - accepted and in progress */}
-              <Card className="w-full">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle>Órdenes activas</CardTitle>
-                    <CardDescription>Órdenes aceptadas en proceso de entrega</CardDescription>
+                  <Button variant="outline" size="sm" className="hidden md:inline-flex bg-transparent">
+                    Ver todas
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {activeOrdersLoading || analyticsLoading ? (
+                  <div className="flex items-center justify-center py-10">
+                    <Loader2 className="h-5 w-5 animate-spin text-[#9EE493]" />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-green-600">
-                      {activeOrders.length} activas
-                    </Badge>
-                    <Button variant="outline" size="sm" className="hidden md:inline-flex">
-                      Ver todas
-                      <ChevronRight className="h-4 w-4 ml-1" />
-                    </Button>
+                ) : activeOrders.length > 0 ? (
+                  activeOrders.map((order) => (
+                    <OrderCard
+                      key={order.id}
+                      order={order}
+                      acceptingEnabled={false} // No actions needed for active orders
+                      onAccept={undefined}
+                      onReject={undefined}
+                    />
+                  ))
+                ) : (
+                  <div className="flex items-center justify-center py-8 text-center">
+                    <div>
+                      <Package className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-gray-500 text-sm">No hay órdenes activas</p>
+                      <p className="text-xs text-gray-400 mt-1">Las órdenes aceptadas aparecerán aquí</p>
+                    </div>
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {activeOrdersLoading || analyticsLoading ? (
-                    <div className="flex items-center justify-center py-10">
-                      <Loader2 className="h-5 w-5 animate-spin text-[#9EE493]" />
-                    </div>
-                  ) : activeOrders.length > 0 ? (
-                    activeOrders.map((order) => (
-                      <OrderCard
-                        key={order.id}
-                        order={order}
-                        acceptingEnabled={false} // No actions needed for active orders
-                        onAccept={undefined}
-                        onReject={undefined}
-                      />
-                    ))
-                  ) : (
-                    <div className="flex items-center justify-center py-8 text-center">
-                      <div>
-                        <Package className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                        <p className="text-gray-500 text-sm">No hay órdenes activas</p>
-                        <p className="text-xs text-gray-400 mt-1">Las órdenes aceptadas aparecerán aquí</p>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </main>
-          </SidebarInset>
-        </SidebarProvider>
-      </div>
-    </AuthGuard>
+                )}
+              </CardContent>
+            </Card>
+          </main>
+        </SidebarInset>
+      </SidebarProvider>
+    </div>
   );
 }

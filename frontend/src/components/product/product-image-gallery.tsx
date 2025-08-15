@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Package } from 'lucide-react';
 import type { VariantImage } from '@/types/variant';
+import { buildImageUrl } from '@/lib/utils/image-url';
 
 interface ProductImageGalleryProps {
   images: VariantImage[];
@@ -30,7 +31,7 @@ export function ProductImageGallery({ images, productTitle }: ProductImageGaller
       <div className="relative aspect-square bg-white rounded-lg overflow-hidden shadow-sm">
         {currentImage ? (
           <Image
-            src={`/${currentImage.key}`}
+            src={buildImageUrl(currentImage.key)}
             alt={currentImage.altText || 'Product image'}
             fill
             className="object-cover object-center"
@@ -84,7 +85,7 @@ export function ProductImageGallery({ images, productTitle }: ProductImageGaller
               }`}
             >
               <Image
-                src={`/${image.key}`}
+                src={buildImageUrl(image.key)}
                 alt={image.altText || 'Product image'}
                 fill
                 className="object-cover"
