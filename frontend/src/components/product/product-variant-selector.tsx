@@ -39,7 +39,7 @@ export function ProductVariantSelector({
                 onClick={() => onColorChange(color)}
                 disabled={!isAvailable}
                 className={`w-8 h-8 rounded-full border-2 ${
-                  selectedColor === color ? 'border-[#20313A] ring-2 ring-[#9EE493]' : 'border-gray-300'
+                  selectedColor === color ? 'border-[#20313A]' : 'border-gray-300'
                 } ${!isAvailable ? 'opacity-50 cursor-not-allowed' : ''}`}
                 style={{ backgroundColor: color }}
                 title={`Color ${color} ${!isAvailable ? '(No disponible)' : ''}`}
