@@ -22,6 +22,7 @@ export const JWT_CONFIG = {
 export const SENDGRID_CONFIG = {
   API_KEY: process.env.SENDGRID_API_KEY!,
   FROM_EMAIL: process.env.FROM_EMAIL!,
+  TEMPLATE_ID_PASSWORD_RESET: process.env.SENDGRID_TEMPLATE_ID_PASSWORD_RESET || '',
 };
 
 export const SUMSUB_CONFIG = {

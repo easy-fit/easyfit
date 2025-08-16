@@ -4,16 +4,19 @@ import { SENDGRID_CONFIG } from '../config/env';
 interface EmailPayload {
   to: string;
   subject: string;
-  html: string;
+  dynamic_template_data?: Record<string, any>;
+  templateId?: string;
+  content?: [];
 }
 
 export class EmailService {
-  static async sendEmail({ to, subject, html }: EmailPayload) {
+  static async sendEmail({ to, subject, dynamic_template_data, templateId }: EmailPayload) {
     const msg = {
       to,
       from: SENDGRID_CONFIG.FROM_EMAIL,
       subject,
-      html,
+      templateId: SENDGRID_CONFIG.TEMPLATE_ID_PASSWORD_RESET,
+      dynamic_template_data: dynamic_template_data,
     };
 
     await sgMail.send(msg);
@@ -21,17 +24,14 @@ export class EmailService {
 
   static async sendPasswordResetEmail(email: string, token: string) {
     const url = `${process.env.FRONTEND_URL}/reset-password/${token}`;
-    const html = `
-      <p>Hi!</p>
-      <p>You requested a password reset. Click the link below to reset it:</p>
-      <a href="${url}">${url}</a>
-      <p>This link will expire in 10 minutes.</p>
-    `;
 
     return this.sendEmail({
       to: email,
       subject: 'Reset your EasyFit password',
-      html,
+      templateId: SENDGRID_CONFIG.TEMPLATE_ID_PASSWORD_RESET,
+      dynamic_template_data: {
+        url,
+      },
     });
   }
 
@@ -45,7 +45,6 @@ export class EmailService {
     return this.sendEmail({
       to: email,
       subject: 'Verify your EasyFit email',
-      html,
     });
   }
 }
