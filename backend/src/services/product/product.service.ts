@@ -1,3 +1,4 @@
+import { Types } from 'mongoose';
 import { ProductModel } from '../../models/product.model';
 import { AppError } from '../../utils/appError';
 import { CreateProductDTO, UpdateProductDTO, ProductFilterOptions } from '../../types/product.types';
@@ -14,9 +15,23 @@ export class ProductService {
   }
 
   static async getProductById(productId: string) {
-    const product = await ProductModel.findById(productId);
-    this.ensureProductExists(product);
-    return product;
+    const result = await ProductModel.aggregate([
+      { $match: { _id: new Types.ObjectId(productId) } },
+      {
+        $lookup: {
+          from: 'variants',
+          localField: '_id',
+          foreignField: 'productId',
+          as: 'variants'
+        }
+      }
+    ]);
+
+    if (!result || result.length === 0) {
+      throw new AppError('Product not found', 404);
+    }
+
+    return result[0];
   }
 
   static async getProductsByStore(storeSlug: string) {

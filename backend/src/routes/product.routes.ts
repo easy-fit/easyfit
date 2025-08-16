@@ -48,14 +48,7 @@ productRoutes
   );
 
 const variantRouter = Router({ mergeParams: true });
-productRoutes.use(
-  '/:id/variants',
-  protect,
-  restrictTo('admin', 'merchant'),
-  isKYCVerified,
-  verifyProductOwnership,
-  variantRouter,
-);
+productRoutes.use('/:id/variants', protect, restrictTo('admin', 'merchant'), isKYCVerified, variantRouter);
 
 variantRouter.route('/').get(VariantController.getVariants).post(VariantController.createVariant);
 

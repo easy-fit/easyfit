@@ -43,3 +43,27 @@ storeRoutes.get(
   verifyStoreOwnership,
   StoreController.getStoreOrders,
 );
+
+storeRoutes.get(
+  '/id/:id/analytics/detailed',
+  protect,
+  restrictTo('merchant'),
+  verifyStoreOwnership,
+  StoreController.getStoreDetailedAnalytics,
+);
+
+storeRoutes.get(
+  '/id/:id/products/metrics',
+  protect,
+  restrictTo('merchant'),
+  verifyStoreOwnership,
+  StoreController.getStoreProductMetrics,
+);
+
+storeRoutes.get(
+  '/id/:id/products',
+  protect,
+  restrictTo('merchant'),
+  verifyStoreOwnership,
+  StoreController.getStoreProducts,
+);

@@ -37,7 +37,17 @@ export const createOwnershipVerifier = (config: OwnershipConfig) => {
       let query = config.resourceModel.findById(resourceId);
 
       if (config.populatePath) {
-        query = query.populate(config.populatePath);
+        // Handle nested population for variants
+        if (config.populatePath === 'productId' && config.ownerPath === 'productId.storeId.merchantId') {
+          query = query.populate({
+            path: 'productId',
+            populate: {
+              path: 'storeId'
+            }
+          });
+        } else {
+          query = query.populate(config.populatePath);
+        }
       }
 
       const resource = await query;
@@ -94,7 +104,7 @@ export const verifyVariantOwnership = createOwnershipVerifier({
   resourceModel: VariantModel,
   resourceIdParam: 'id',
   ownerPath: 'productId.storeId.merchantId',
-  populatePath: 'productId.storeId',
+  populatePath: 'productId',
 });
 
 // Order ownership verification (customers can only access their own orders)

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { StoreService } from '../services/store/store.service';
 import { MerchantService } from '../services/merchant/merchant.service';
+import { StoreAnalyticsService } from '../services/store/storeAnalytics.service';
 import { catchAsync } from '../utils/catchAsync';
 import { CreateStoreDTO, UpdateStoreDTO, StoreFilterOptions } from '../types/store.types';
 
@@ -137,7 +138,7 @@ export class StoreController {
 
   static getStoreOrders = catchAsync(async (req: Request, res: Response) => {
     const storeId = req.params.id;
-    const { status, limit, page, sortBy, sortOrder } = req.query;
+    const { status, limit, page, sortBy, sortOrder, since } = req.query;
 
     const filters = {
       status: status as string,
@@ -145,6 +146,7 @@ export class StoreController {
       page: page ? Number(page) : undefined,
       sortBy: sortBy as string,
       sortOrder: sortOrder as 'asc' | 'desc',
+      since: since as string,
     };
 
     const result = await StoreService.getStoreOrders(storeId, filters);
@@ -152,6 +154,58 @@ export class StoreController {
     res.status(200).json({
       status: 'success',
       data: result,
+    });
+  });
+
+  static getStoreDetailedAnalytics = catchAsync(async (req: Request, res: Response) => {
+    const storeId = req.params.id;
+    const { dateRange = '7days', orderType = 'all' } = req.query;
+
+    const analytics = await StoreAnalyticsService.getDetailedAnalytics(storeId, {
+      dateRange: dateRange as string,
+      orderType: orderType as string,
+    });
+
+    res.status(200).json({
+      status: 'success',
+      data: analytics,
+    });
+  });
+
+  static getStoreProductMetrics = catchAsync(async (req: Request, res: Response) => {
+    const storeId = req.params.id;
+    
+    const metrics = await StoreService.getStoreProductMetrics(storeId);
+
+    res.status(200).json({
+      status: 'success',
+      data: metrics,
+    });
+  });
+
+  static getStoreProducts = catchAsync(async (req: Request, res: Response) => {
+    const storeId = req.params.id;
+    const { search, category, status, stockStatus, page = 1, limit = 20, sort = '-createdAt' } = req.query;
+
+    const filterOptions = {
+      search: search as string,
+      category: category as string,
+      status: status as string,
+      stockStatus: stockStatus as string,
+      page: Number(page),
+      limit: Number(limit),
+      sort: sort as string,
+    };
+
+    const result = await StoreService.getStoreProducts(storeId, filterOptions);
+
+    res.status(200).json({
+      status: 'success',
+      results: result.products.length,
+      pagination: result.pagination,
+      data: {
+        products: result.products,
+      },
     });
   });
 }
