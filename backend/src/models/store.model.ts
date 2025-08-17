@@ -8,6 +8,7 @@ import { STORE_TAGS_VALUES } from '../types/store.constants';
 const StoreSchema = new Schema<Store>(
   {
     merchantId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    cuit: { type: String },
     name: { type: String, required: true },
     address: { type: AddressSchema, required: true },
     pickupHours: { type: [PickupHoursEntrySchema], required: true },
