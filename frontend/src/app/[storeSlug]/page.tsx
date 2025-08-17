@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { useStoreBySlug } from '@/hooks/api/use-stores';
 import { useProductsByStore } from '@/hooks/api/use-products';
 import { ProductCard } from '@/components/home/product-card';
+import { buildStoreAssetUrl } from '@/lib/utils/image-url';
 import {
   ArrowLeft,
   Star,
@@ -151,7 +152,7 @@ export default function StorePage() {
         {/* Store Banner */}
         <div className="relative h-64 md:h-80 rounded-lg overflow-hidden mb-6">
           <Image
-            src={store.customization?.bannerUrl || '/banner-store.jpg'}
+            src={buildStoreAssetUrl(store.customization?.bannerUrl, '/banner-store.jpg')}
             alt={`Banner de ${store.name}`}
             fill
             className="object-cover"
@@ -162,7 +163,7 @@ export default function StorePage() {
           {/* Store Logo */}
           <div className="absolute bottom-4 left-4 w-20 h-20 rounded-full overflow-hidden bg-white shadow-lg border-4 border-white">
             <Image
-              src={store.customization?.logoUrl || '/logo-stores.jpg'}
+              src={buildStoreAssetUrl(store.customization?.logoUrl, '/logo-stores.jpg')}
               alt={`Logo de ${store.name}`}
               fill
               className="object-cover"

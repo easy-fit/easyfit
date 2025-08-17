@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import Image from 'next/image';
 import Link from 'next/link';
+import { buildStoreAssetUrl } from '@/lib/utils/image-url';
 
 interface StoreCardProps {
   store: {
@@ -50,7 +51,7 @@ export function StoreCard({ store }: StoreCardProps) {
           {/* Store Image - Made shorter */}
           <div className="relative aspect-[5/2.5] overflow-hidden">
             <Image
-              src={store.customization?.bannerUrl || '/placeholder.svg'}
+              src={buildStoreAssetUrl(store.customization?.bannerUrl)}
               alt={store.name}
               fill
               className="object-cover object-center group-hover:scale-105 transition-transform duration-200"
@@ -73,7 +74,7 @@ export function StoreCard({ store }: StoreCardProps) {
             {/* Store Logo - Made bigger */}
             <div className="absolute bottom-1.5 left-1.5 md:bottom-2 md:left-2 w-8 h-8 md:w-12 md:h-12 rounded-full overflow-hidden bg-white shadow-lg border-2 border-white">
               <Image
-                src={store.customization?.logoUrl || '/placeholder.svg'}
+                src={buildStoreAssetUrl(store.customization?.logoUrl)}
                 alt={`${store.name} logo`}
                 fill
                 className="object-cover object-center"

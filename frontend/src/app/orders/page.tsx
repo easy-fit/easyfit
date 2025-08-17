@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { useMyOrders } from '@/hooks/api/use-orders';
 import { Header } from '@/components/layout/header';
+import { buildStoreAssetUrl } from '@/lib/utils/image-url';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -299,7 +300,7 @@ export default function OrdersPage() {
                       <div className="flex items-center gap-4">
                         <div className="flex items-center gap-2">
                           <Image
-                            src={order.storeId.customization?.logoUrl || '/placeholder.svg?height=40&width=40'}
+                            src={buildStoreAssetUrl(order.storeId.customization?.logoUrl)}
                             alt={order.storeId.name}
                             width={40}
                             height={40}

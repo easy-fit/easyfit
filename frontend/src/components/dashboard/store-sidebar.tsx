@@ -4,6 +4,7 @@ import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Home, BarChart3, Boxes, Settings } from 'lucide-react';
+import { buildStoreAssetUrl } from '@/lib/utils/image-url';
 
 import {
   Sidebar,
@@ -53,7 +54,7 @@ export function StoreSidebar({
       <SidebarHeader>
         <div className="flex items-center gap-3 px-2 py-2 group-data-[collapsible=icon]:justify-center">
           <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md ring-1 ring-gray-200 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8">
-            <Image src={logoUrl!} alt={storeName!} fill sizes="40px" className="object-cover" />
+            <Image src={buildStoreAssetUrl(logoUrl)} alt={storeName!} fill sizes="40px" className="object-cover" />
           </div>
           <div className="min-w-0 group-data-[collapsible=icon]:hidden">
             <div className="truncate font-semibold text-sm">{storeName}</div>
