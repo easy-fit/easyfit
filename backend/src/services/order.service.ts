@@ -9,6 +9,9 @@ import { OrderStateManager } from './orderStateManager.service';
 import { TryPeriodManager } from './tryPeriodManager.service';
 import { PaymentService } from './payment/payment.service';
 import { MercadoPagoService } from './payment/mercadoPago.service';
+import { EmailService } from './email.service';
+import { UserModel } from '../models/user.model';
+import { StoreModel } from '../models/store.model';
 
 export class OrderService {
   static async getOrders() {
@@ -73,7 +76,11 @@ export class OrderService {
       console.error('Failed to send store notification:', error);
       // Don't fail the order creation if WebSocket fails
     }
-
+    const store = await StoreModel.findById(storeId);
+    const user = await UserModel.findById(userId);
+    if (user?.email && store) {
+      await EmailService.sendOrderReceipt(user.email, total, store.name);
+    }
     return order;
   }
 
@@ -100,10 +107,8 @@ export class OrderService {
     }
 
     const newStatus = accepted ? 'order_accepted' : 'order_canceled';
-    const updateData = accepted 
-      ? { status: newStatus }
-      : { status: newStatus, isActive: false };
-    
+    const updateData = accepted ? { status: newStatus } : { status: newStatus, isActive: false };
+
     const updatedOrder = await OrderModel.findByIdAndUpdate(orderId, updateData, { new: true });
 
     this.ensureOrderExists(updatedOrder);

@@ -44,4 +44,16 @@ export class EmailService {
       },
     });
   }
+
+  static async sendOrderReceipt(email: string, total: number, storeName: string) {
+    return this.sendEmail({
+      to: email,
+      subject: 'Your EasyFit Order Receipt',
+      templateId: SENDGRID_CONFIG.TEMPLATE_ID_ORDER_RECIPT,
+      dynamic_template_data: {
+        total,
+        storeName,
+      },
+    });
+  }
 }
