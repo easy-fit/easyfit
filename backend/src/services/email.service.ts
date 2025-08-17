@@ -5,8 +5,7 @@ interface EmailPayload {
   to: string;
   subject: string;
   dynamic_template_data?: Record<string, any>;
-  templateId?: string;
-  content?: [];
+  templateId: string;
 }
 
 export class EmailService {
@@ -15,7 +14,7 @@ export class EmailService {
       to,
       from: SENDGRID_CONFIG.FROM_EMAIL,
       subject,
-      templateId: SENDGRID_CONFIG.TEMPLATE_ID_PASSWORD_RESET,
+      templateId: templateId,
       dynamic_template_data: dynamic_template_data,
     };
 
@@ -36,15 +35,13 @@ export class EmailService {
   }
 
   static async sendVerificationCode(email: string, code: string) {
-    const html = `
-      <p>Welcome to EasyFit!</p>
-      <p>Your email verification code is: <strong>${code}</strong></p>
-      <p>This code expires in 10 minutes.</p>
-    `;
-
     return this.sendEmail({
       to: email,
       subject: 'Verify your EasyFit email',
+      templateId: SENDGRID_CONFIG.TEMPLATE_ID_EMAIL_VERIFICATION,
+      dynamic_template_data: {
+        code,
+      },
     });
   }
 }
