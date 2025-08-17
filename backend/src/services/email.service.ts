@@ -45,7 +45,8 @@ export class EmailService {
     });
   }
 
-  static async sendOrderReceipt(email: string, total: number, storeName: string) {
+  static async sendOrderReceipt(email: string, total: number, storeName: string, shippingCost: number) {
+    const subtotal = total - shippingCost;
     return this.sendEmail({
       to: email,
       subject: 'Your EasyFit Order Receipt',
@@ -53,6 +54,8 @@ export class EmailService {
       dynamic_template_data: {
         total,
         storeName,
+        shippingCost,
+        subtotal,
       },
     });
   }

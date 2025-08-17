@@ -79,7 +79,7 @@ export class OrderService {
     const store = await StoreModel.findById(storeId);
     const user = await UserModel.findById(userId);
     if (user?.email && store) {
-      await EmailService.sendOrderReceipt(user.email, total, store.name);
+      await EmailService.sendOrderReceipt(user.email, total, store.name, shipping.cost);
     }
     return order;
   }
