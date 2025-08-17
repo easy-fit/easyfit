@@ -23,8 +23,8 @@ export function convertGeocodeToAddress(geocodeResult: GeocodeResult): Address {
     location: {
       type: 'Point',
       coordinates: [
-        geocodeResult.geometry.location.lng, // longitude first (MongoDB GeoJSON standard)
-        geocodeResult.geometry.location.lat, // latitude second
+        geocodeResult.geometry.location.lat, // latitude first (backend expects lat, lng)
+        geocodeResult.geometry.location.lng, // longitude second
       ],
     },
   };
@@ -45,6 +45,7 @@ export function formatAddressForDisplay(address: Address): string {
  * (para casos donde no tenemos geocoding completo)
  */
 export function createBasicAddress(addressString: string, coordinates?: [number, number]): Address {
+  // coordinates should be [latitude, longitude] format
   // Intentar parsear la dirección básica
   const parts = addressString.split(',').map((part) => part.trim());
 
@@ -61,7 +62,7 @@ export function createBasicAddress(addressString: string, coordinates?: [number,
     },
     location: {
       type: 'Point',
-      coordinates: coordinates || [-62.2708, -38.7183], // Default coordinates [lng, lat] (MongoDB standard)
+      coordinates: coordinates || [-38.7183, -62.2708], // Default coordinates [lat, lng] (backend expects lat, lng)
     },
   };
 }

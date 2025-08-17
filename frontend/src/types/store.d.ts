@@ -120,10 +120,12 @@ export interface GetStoresResponse {
 
 export interface StoreAssetUploadResponse {
   status: string;
-  data: Store;
-  uploadInfo: {
-    key: string;
-    url: string;
+  data: {
+    store: Store;
+    uploadInfo: {
+      key: string;
+      url: string;
+    };
   };
 }
 
@@ -168,10 +170,10 @@ export interface StoreOrderAnalyticsResponse {
 // Store orders response (matches backend implementation)
 export interface StoreOrderItem {
   id: string;
-  name: string;        // product name from backend 
-  variant?: string;    // combined color/size string like "Blue / M"
-  quantity: number;    // quantity from backend
-  price: string;       // formatted price like "$1,500"
+  name: string; // product name from backend
+  variant?: string; // combined color/size string like "Blue / M"
+  quantity: number; // quantity from backend
+  price: string; // formatted price like "$1,500"
   sku: string;
 }
 
