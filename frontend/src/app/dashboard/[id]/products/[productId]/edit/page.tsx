@@ -30,7 +30,7 @@ import { updateProductData, processAllVariants, showResults } from '@/lib/utils/
 export default function EditProductPage({ params }: { params: Promise<{ id: string; productId: string }> }) {
   const router = useRouter();
   const { id, productId } = React.use(params);
-  const { storeName, logoUrl } = useCurrentStore();
+  const { storeName, logoUrl, accessType } = useCurrentStore();
   const toast = useEasyFitToast();
   const [isUpdating, setIsUpdating] = React.useState(false);
 
@@ -105,7 +105,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
   // Loading state
   if (isLoading) {
-    return <LoadingState storeName={storeName} logoUrl={logoUrl} storeId={id} message="Cargando producto..." />;
+    return <LoadingState storeName={storeName} logoUrl={logoUrl} storeId={id} message="Cargando producto..." userRole={accessType} />;
   }
 
   // Error state
@@ -117,6 +117,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         storeId={id}
         message="Error cargando el producto"
         onGoBack={() => router.push(`/dashboard/${id}/products`)}
+        userRole={accessType}
       />
     );
   }
@@ -124,7 +125,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   return (
     <div className="min-h-screen bg-gray-50">
       <SidebarProvider>
-        <StoreSidebar storeName={storeName} logoUrl={logoUrl} active="products" baseHref={`/dashboard/${id}`} />
+        <StoreSidebar storeName={storeName} logoUrl={logoUrl} active="products" baseHref={`/dashboard/${id}`} userRole={accessType} />
         <SidebarInset>
           {/* Header */}
           <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-white px-4">

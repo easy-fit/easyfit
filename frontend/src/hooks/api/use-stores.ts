@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import { CreateStoreDTO, GetStoresResponse, UpdateStoreDTO, StoreCommonResponse, StoreOrderAnalyticsResponse, StoreOrdersResponse } from '@/types/store';
 import { StoreAnalyticsApiResponse, DateRangeFilter, OrderTypeFilter } from '@/types/analytics';
+import { useAuth } from '@/hooks/use-auth';
 
 export const useStores = (filters?: Record<string, unknown>) => {
   return useQuery<GetStoresResponse>({
@@ -84,12 +85,54 @@ export const useDeleteStoreBanner = (storeId: string) => {
   });
 };
 
-export const useGetDashboard = () => {
+export const useGetDashboard = (enabled = true) => {
   return useQuery({
     queryKey: ['stores', 'merchant', 'dashboard'],
     queryFn: () => api.stores.getDashboard(),
     staleTime: 60000,
+    enabled,
   });
+};
+
+export const useGetManagerDashboard = (enabled = true) => {
+  return useQuery({
+    queryKey: ['stores', 'manager', 'dashboard'],
+    queryFn: () => api.stores.getManagerDashboard(),
+    staleTime: 60000,
+    enabled,
+  });
+};
+
+export const useStoreAccess = (storeId: string, enabled = true) => {
+  return useQuery({
+    queryKey: ['stores', storeId, 'access'],
+    queryFn: () => api.stores.getUserStoreAccess(storeId),
+    staleTime: 30000,
+    enabled: !!storeId && enabled,
+    retry: 1,
+  });
+};
+
+// Combined hook that fetches appropriate dashboard based on user role
+export const useRoleBasedDashboard = () => {
+  const { user } = useAuth();
+  
+  // Determine which query to use based on role
+  const isManager = user?.role === 'manager';
+  const isMerchant = user?.role === 'merchant' || user?.role === 'admin';
+
+  const merchantDashboard = useGetDashboard(isMerchant);
+  const managerDashboard = useGetManagerDashboard(isManager);
+
+  return {
+    data: isManager ? managerDashboard.data : isMerchant ? merchantDashboard.data : undefined,
+    isLoading: isManager ? managerDashboard.isLoading : isMerchant ? merchantDashboard.isLoading : false,
+    error: isManager ? managerDashboard.error : isMerchant ? merchantDashboard.error : null,
+    refetch: isManager ? managerDashboard.refetch : isMerchant ? merchantDashboard.refetch : () => {},
+    userRole: user?.role,
+    isManager,
+    isMerchant,
+  };
 };
 
 export const useSetStoreStatus = () => {

@@ -8,13 +8,14 @@ interface PageStateProps {
   logoUrl?: string;
   storeId: string;
   message: string;
+  userRole?: string;
 }
 
-export function LoadingState({ storeName, logoUrl, storeId, message }: PageStateProps) {
+export function LoadingState({ storeName, logoUrl, storeId, message, userRole }: PageStateProps) {
   return (
     <div className="min-h-screen bg-gray-50">
       <SidebarProvider>
-        <StoreSidebar storeName={storeName} logoUrl={logoUrl} active="products" baseHref={`/dashboard/${storeId}`} />
+        <StoreSidebar storeName={storeName} logoUrl={logoUrl} active="products" baseHref={`/dashboard/${storeId}`} userRole={userRole} />
         <SidebarInset>
           <div className="flex items-center justify-center min-h-[60vh]">
             <div className="text-center">
@@ -32,11 +33,11 @@ interface ErrorStateProps extends PageStateProps {
   onGoBack: () => void;
 }
 
-export function ErrorState({ storeName, logoUrl, storeId, message, onGoBack }: ErrorStateProps) {
+export function ErrorState({ storeName, logoUrl, storeId, message, onGoBack, userRole }: ErrorStateProps) {
   return (
     <div className="min-h-screen bg-gray-50">
       <SidebarProvider>
-        <StoreSidebar storeName={storeName} logoUrl={logoUrl} active="products" baseHref={`/dashboard/${storeId}`} />
+        <StoreSidebar storeName={storeName} logoUrl={logoUrl} active="products" baseHref={`/dashboard/${storeId}`} userRole={userRole} />
         <SidebarInset>
           <div className="flex items-center justify-center min-h-[60vh]">
             <div className="text-center">

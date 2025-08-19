@@ -24,7 +24,7 @@ import { AnalyticsPerformanceMetrics } from '@/components/analytics/analytics-pe
 
 export default function StoreAnalyticsPage() {
   const { id } = useParams() as { id: string };
-  const { storeName, logoUrl } = useCurrentStore();
+  const { storeName, logoUrl, accessType } = useCurrentStore();
 
   const [dateRange, setDateRange] = React.useState<DateRangeFilter>('7days');
   const [orderType, setOrderType] = React.useState<OrderTypeFilter>('all');
@@ -47,7 +47,7 @@ export default function StoreAnalyticsPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <SidebarProvider>
-          <StoreSidebar storeName={storeName!} logoUrl={logoUrl} active="analytics" baseHref={`/dashboard/${id}`} />
+          <StoreSidebar storeName={storeName!} logoUrl={logoUrl} active="analytics" baseHref={`/dashboard/${id}`} userRole={accessType} />
           <SidebarInset>
             <div className="flex items-center justify-center min-h-[60vh]">
               <div className="text-center">
@@ -66,7 +66,7 @@ export default function StoreAnalyticsPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <SidebarProvider>
-          <StoreSidebar storeName={storeName!} logoUrl={logoUrl} active="analytics" baseHref={`/dashboard/${id}`} />
+          <StoreSidebar storeName={storeName!} logoUrl={logoUrl} active="analytics" baseHref={`/dashboard/${id}`} userRole={accessType} />
           <SidebarInset>
             <div className="flex items-center justify-center min-h-[60vh]">
               <div className="text-center">
@@ -85,7 +85,7 @@ export default function StoreAnalyticsPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <SidebarProvider>
-          <StoreSidebar storeName={storeName!} logoUrl={logoUrl} active="analytics" baseHref={`/dashboard/${id}`} />
+          <StoreSidebar storeName={storeName!} logoUrl={logoUrl} active="analytics" baseHref={`/dashboard/${id}`} userRole={accessType} />
           <SidebarInset>
             <div className="flex items-center justify-center min-h-[60vh]">
               <div className="text-center">
@@ -102,7 +102,7 @@ export default function StoreAnalyticsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <SidebarProvider>
-        <StoreSidebar storeName={storeName!} logoUrl={logoUrl} active="analytics" baseHref={`/dashboard/${id}`} />
+        <StoreSidebar storeName={storeName!} logoUrl={logoUrl} active="analytics" baseHref={`/dashboard/${id}`} userRole={accessType} />
         <SidebarInset>
           {/* Header */}
           <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-white px-4">

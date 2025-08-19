@@ -70,7 +70,7 @@ export async function middleware(request: NextRequest) {
 
       // Get user role to determine default redirect
       const userRole = await getUserRole(request);
-      const defaultRedirect = userRole === 'merchant' ? '/dashboard' : '/';
+      const defaultRedirect = userRole === 'merchant' || userRole === 'manager' ? '/dashboard' : '/';
       return NextResponse.redirect(new URL(defaultRedirect, request.url));
     }
     return NextResponse.next();
@@ -86,7 +86,7 @@ export async function middleware(request: NextRequest) {
 
     // Get user role for dashboard access check
     const userRole = await getUserRole(request);
-    if (userRole !== 'merchant' && userRole !== 'admin') {
+    if (userRole !== 'merchant' && userRole !== 'admin' && userRole !== 'manager') {
       return NextResponse.redirect(new URL('/unauthorized', request.url));
     }
 

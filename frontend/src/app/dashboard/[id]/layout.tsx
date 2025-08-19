@@ -6,7 +6,7 @@ import { Loader2 } from 'lucide-react';
 
 import { AuthGuard } from '@/components/auth/auth-guard';
 import { StoreNotFound } from '@/components/404/store-not-found';
-import { StoreProvider, useStoreContext } from '@/contexts/store-context';
+import { StoreProvider, useCurrentStore } from '@/contexts/store-context';
 
 interface StoreLayoutProps {
   children: React.ReactNode;
@@ -14,7 +14,7 @@ interface StoreLayoutProps {
 
 // Inner component that consumes the store context
 function StoreLayoutContent({ children }: StoreLayoutProps) {
-  const { store, isLoading, error } = useStoreContext();
+  const { store, isLoading, error, hasAccess, accessType } = useCurrentStore();
 
   // Handle loading state
   if (isLoading) {
@@ -30,6 +30,21 @@ function StoreLayoutContent({ children }: StoreLayoutProps) {
     );
   }
 
+  // Handle access denied
+  if (!hasAccess) {
+    return (
+      <AuthGuard>
+        <div className="min-h-screen bg-gray-50">
+          <StoreNotFound
+            title="Acceso Denegado"
+            description="No tienes permisos para acceder a esta tienda. Solo los propietarios y managers autorizados pueden acceder."
+            showCreateStore={false}
+          />
+        </div>
+      </AuthGuard>
+    );
+  }
+
   // Handle error state (store not found)
   if (error || !store) {
     return (
@@ -37,8 +52,8 @@ function StoreLayoutContent({ children }: StoreLayoutProps) {
         <div className="min-h-screen bg-gray-50">
           <StoreNotFound
             title="Tienda no encontrada"
-            description="La tienda que estás buscando no existe o no tienes permisos para acceder a ella."
-            showCreateStore={true}
+            description="La tienda que estás buscando no existe."
+            showCreateStore={accessType === 'owner'}
           />
         </div>
       </AuthGuard>

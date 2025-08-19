@@ -75,6 +75,24 @@ export class StoresClient extends BaseApiClient {
     return this.fetchApi<getDashboardResponse>(`/stores/merchant/dashboard`);
   }
 
+  public async getManagerDashboard(): Promise<getDashboardResponse> {
+    return this.fetchApi<getDashboardResponse>(`/stores/manager/dashboard`);
+  }
+
+  public async getUserStoreAccess(storeId: string): Promise<{
+    status: string;
+    data: {
+      storeId: string;
+      hasAccess: boolean;
+      accessType: 'owner' | 'manager' | 'none';
+      isOwner: boolean;
+      isManager: boolean;
+      managerAssignment?: any;
+    };
+  }> {
+    return this.fetchApi(`/stores/id/${storeId}/access`);
+  }
+
   public async setStoreStatus(id: string, status: 'active' | 'inactive'): Promise<StoreCommonResponse> {
     return this.fetchApi<StoreCommonResponse>(`/stores/id/${id}/status`, {
       method: 'PATCH',
