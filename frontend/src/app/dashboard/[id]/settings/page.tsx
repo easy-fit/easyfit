@@ -29,7 +29,7 @@ import { Form } from '@/components/ui/form';
 
 export default function StoreSettingsPage() {
   const { id } = useParams() as { id: string };
-  const { store, storeName, logoUrl, isLoading: storeLoading } = useCurrentStore();
+  const { store, storeName, logoUrl, isLoading: storeLoading, canManageStore, accessType } = useCurrentStore();
   const toast = useEasyFitToast();
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
 
@@ -168,7 +168,7 @@ export default function StoreSettingsPage() {
 
   return (
     <SidebarProvider>
-      <StoreSidebar storeName={storeName} logoUrl={logoUrl} active="settings" baseHref={`/dashboard/${id}`} />
+      <StoreSidebar storeName={storeName} logoUrl={logoUrl} active="settings" baseHref={`/dashboard/${id}`} userRole={accessType} />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-white px-4 shadow-sm">
           <SidebarTrigger className="-ml-1" />
@@ -191,23 +191,43 @@ export default function StoreSettingsPage() {
         </header>
 
         <main className="flex-1 space-y-8 p-4 md:p-6 bg-gray-50">
+          {!canManageStore && (
+            <Card className="shadow-sm border-0 bg-blue-50 border-l-4 border-l-blue-500">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-200">
+                    Manager
+                  </Badge>
+                  <div>
+                    <p className="text-blue-800 font-medium mb-1">Acceso limitado a configuración</p>
+                    <p className="text-blue-700 text-sm">
+                      Como manager, puedes gestionar horarios y etiquetas. Solo el propietario puede modificar información básica y diseño.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
-              <StoreBasicInfo form={form} store={store} />
+              {canManageStore && <StoreBasicInfo form={form} store={store} />}
 
-              <StoreAddressSection form={form} store={store} onChangeAddress={() => setIsLocationModalOpen(true)} />
+              {canManageStore && <StoreAddressSection form={form} store={store} onChangeAddress={() => setIsLocationModalOpen(true)} />}
 
               <StoreHoursSection form={form} />
 
               <StoreTagsSection form={form} />
 
-              <StoreCustomizationSection
-                form={form}
-                onLogoUpload={handleLogoUpload}
-                onBannerUpload={handleBannerUpload}
-                isUploadingLogo={uploadLogoMutation.isPending}
-                isUploadingBanner={uploadBannerMutation.isPending}
-              />
+              {canManageStore && (
+                <StoreCustomizationSection
+                  form={form}
+                  onLogoUpload={handleLogoUpload}
+                  onBannerUpload={handleBannerUpload}
+                  isUploadingLogo={uploadLogoMutation.isPending}
+                  isUploadingBanner={uploadBannerMutation.isPending}
+                />
+              )}
 
               {/* Shipping Options - Coming Soon */}
               <Card className="shadow-sm border-0 bg-white opacity-60">

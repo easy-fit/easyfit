@@ -20,7 +20,7 @@ import { useCurrentStore } from '@/contexts/store-context';
 
 export default function StoreDashboardPage() {
   const { id } = useParams() as { id: string };
-  const { storeName, logoUrl, isActive } = useCurrentStore();
+  const { storeName, logoUrl, isActive, canManageStore, canOperateStore, accessType } = useCurrentStore();
   const { data: analyticsData, isLoading: analyticsLoading } = useStoreOrderAnalytics(id);
   const {
     data: activeOrdersData,
@@ -204,7 +204,7 @@ export default function StoreDashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <SidebarProvider>
-        <StoreSidebar storeName={storeName!} logoUrl={logoUrl} active="home" baseHref={`/dashboard/${id}`} />
+        <StoreSidebar storeName={storeName!} logoUrl={logoUrl} active="home" baseHref={`/dashboard/${id}`} userRole={accessType} />
         <SidebarInset>
           {/* Header with prominent intake control */}
           <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-white px-4">
@@ -224,43 +224,59 @@ export default function StoreDashboardPage() {
             <Separator orientation="vertical" className="mx-1 h-4" />
 
             <div className="flex items-center justify-between w-full">
-              {/* Left side - empty or minimal content */}
-              <div></div>
-
-              {/* Right side - Order intake control */}
-              <div className="flex items-center gap-3">
-                <span className="hidden md:inline text-sm text-gray-700">Recepción de pedidos:</span>
-                <div className="inline-flex overflow-hidden rounded-full border bg-white shadow-sm">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    aria-pressed={!acceptingOrders}
-                    onClick={() => handleStatusToggle(false)}
-                    disabled={setStoreStatusMutation.isPending}
-                    className={`rounded-none font-medium transition-colors ${
-                      !acceptingOrders ? 'bg-orange-100 text-orange-800 hover:bg-orange-100' : 'hover:bg-gray-50'
-                    }`}
-                  >
-                    <PauseCircle className="h-4 w-4 mr-1.5" />
-                    Pausado
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    aria-pressed={acceptingOrders}
-                    onClick={() => handleStatusToggle(true)}
-                    disabled={setStoreStatusMutation.isPending}
-                    className={`rounded-none border-l font-medium transition-colors ${
-                      acceptingOrders ? 'bg-[#9EE493] text-[#20313A] hover:bg-[#8BD480]' : 'hover:bg-gray-50'
-                    }`}
-                  >
-                    <CheckCircle2 className="h-4 w-4 mr-1.5" />
-                    Aceptando
-                  </Button>
-                </div>
+              {/* Left side - Role indicator */}
+              <div className="flex items-center gap-2">
+                {accessType === 'manager' && (
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-200">
+                    Manager
+                  </Badge>
+                )}
               </div>
+
+              {/* Right side - Order intake control (owners and managers) */}
+              {canOperateStore ? (
+                <div className="flex items-center gap-3">
+                  <span className="hidden md:inline text-sm text-gray-700">Recepción de pedidos:</span>
+                  <div className="inline-flex overflow-hidden rounded-full border bg-white shadow-sm">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      aria-pressed={!acceptingOrders}
+                      onClick={() => handleStatusToggle(false)}
+                      disabled={setStoreStatusMutation.isPending}
+                      className={`rounded-none font-medium transition-colors ${
+                        !acceptingOrders ? 'bg-orange-100 text-orange-800 hover:bg-orange-100' : 'hover:bg-gray-50'
+                      }`}
+                    >
+                      <PauseCircle className="h-4 w-4 mr-1.5" />
+                      Pausado
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      aria-pressed={acceptingOrders}
+                      onClick={() => handleStatusToggle(true)}
+                      disabled={setStoreStatusMutation.isPending}
+                      className={`rounded-none border-l font-medium transition-colors ${
+                        acceptingOrders ? 'bg-[#9EE493] text-[#20313A] hover:bg-[#8BD480]' : 'hover:bg-gray-50'
+                      }`}
+                    >
+                      <CheckCircle2 className="h-4 w-4 mr-1.5" />
+                      Aceptando
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <span>Estado:</span>
+                  <Badge variant={isActive ? "default" : "secondary"} 
+                         className={isActive ? "bg-green-100 text-green-800 border-green-200" : "bg-orange-100 text-orange-800 border-orange-200"}>
+                    {isActive ? "Aceptando pedidos" : "Pausado"}
+                  </Badge>
+                </div>
+              )}
             </div>
           </header>
 

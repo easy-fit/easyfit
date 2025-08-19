@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 import { useAuth } from '@/hooks/use-auth';
-import { useGetDashboard } from '@/hooks/api/use-stores';
+import { useRoleBasedDashboard } from '@/hooks/api/use-stores';
 import { CreateStoreDialog } from '@/components/dashboard/create-store-dialog';
 
 function Stars({ rating }: { rating: number }) {
@@ -30,19 +30,42 @@ export default function DashboardPage() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const { data, isLoading, isError } = useGetDashboard();
-
-  // Role guard (client-side safety in addition to middleware)
-  useEffect(() => {
-    if (isAuthenticated && user && user.role !== 'merchant' && user.role !== 'admin') {
-      router.replace('/unauthorized');
-    }
-  }, [isAuthenticated, user, router]);
+  const { data, isLoading, error: isError, userRole, isManager, isMerchant } = useRoleBasedDashboard();
 
   // Derive handy objects
   const summary = data?.data.dashboard.summary;
   const stores = data?.data.dashboard.stores ?? [];
+  console.log(stores);
   const merchantName = user ? `${user.name} ${user.surname}` : 'Merchant';
+
+  // Debug log for manager data
+
+  // Helper function to safely render address
+  // const formatAddress = (address: any): string => {
+  //   if (!address) return 'Dirección no disponible';
+
+  //   // Handle string address
+  //   if (typeof address === 'string') return address;
+
+  //   // Handle object address with formatted property
+  //   if (typeof address === 'object' && address.formatted) {
+  //     return address.formatted;
+  //   }
+
+  //   // Handle object address with individual properties
+  //   if (typeof address === 'object' && address.street && address.city) {
+  //     const streetNumber = address.streetNumber ? ` ${address.streetNumber}` : '';
+  //     return `${address.street}${streetNumber}, ${address.city}`.trim();
+  //   }
+
+  //   // Fallback for any other object structure
+  //   if (typeof address === 'object') {
+  //     console.warn('Unexpected address object structure:', address);
+  //     return 'Dirección no disponible';
+  //   }
+
+  //   return 'Dirección no disponible';
+  // };
 
   return (
     <AuthGuard>
@@ -59,7 +82,11 @@ export default function DashboardPage() {
               {merchantName}
               {'! 👋'}
             </h2>
-            <p className="text-gray-600">{'Administra tus tiendas, productos y pedidos desde un solo lugar.'}</p>
+            <p className="text-gray-600">
+              {isManager
+                ? 'Gestiona las tiendas asignadas, productos y pedidos.'
+                : 'Administra tus tiendas, productos y pedidos desde un solo lugar.'}
+            </p>
           </div>
 
           {/* Loading / Error */}
@@ -92,54 +119,68 @@ export default function DashboardPage() {
           {/* Stats Cards */}
           {!isLoading && !isError && summary && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              {/* Stores Card - Show for both merchants and managers */}
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Tiendas Activas</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    {isManager ? 'Tiendas Asignadas' : 'Tiendas Activas'}
+                  </CardTitle>
                   <Store className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{summary.totalStores}</div>
+                  <div className="text-2xl font-bold">{summary.totalStores || 0}</div>
                   <p className="text-xs text-muted-foreground">
-                    {summary.activeStores} activas, {summary.inactiveStores} inactivas
+                    {summary.activeStores || 0} activas, {summary.inactiveStores || 0} inactivas
                   </p>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Productos Totales</CardTitle>
-                  <Package className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{summary.totalProducts}</div>
-                  <p className="text-xs text-green-600">+2 desde la semana pasada</p>
-                </CardContent>
-              </Card>
+              {/* Products Card - Only for merchants */}
+              {!isManager && (
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Productos Totales</CardTitle>
+                    <Package className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{summary.totalProducts || 0}</div>
+                    <p className="text-xs text-green-600">+2 desde la semana pasada</p>
+                  </CardContent>
+                </Card>
+              )}
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Órdenes Totales</CardTitle>
-                  <Package className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{summary.totalOrders}</div>
-                  <p className="text-xs text-green-600">{summary.completedOrders} completadas</p>
-                </CardContent>
-              </Card>
+              {/* Orders Card - Only for merchants */}
+              {!isManager && (
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Órdenes Totales</CardTitle>
+                    <Package className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{summary.totalOrders || 0}</div>
+                    <p className="text-xs text-green-600">{summary.completedOrders || 0} completadas</p>
+                  </CardContent>
+                </Card>
+              )}
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Ingresos de la Semana</CardTitle>
-                  <div className="h-4 w-4 text-muted-foreground">$</div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{summary.weeklyRevenue.toLocaleString('es-AR')}</div>
-                  <p className={`text-xs ${summary.weeklyRevenueChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {summary.weeklyRevenueChange >= 0 ? '+' : ''}
-                    {summary.weeklyRevenueChange}% vs semana anterior
-                  </p>
-                </CardContent>
-              </Card>
+              {/* Revenue Card - Only for merchants */}
+              {!isManager && (
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Ingresos de la Semana</CardTitle>
+                    <div className="h-4 w-4 text-muted-foreground">$</div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {summary.weeklyRevenue ? summary.weeklyRevenue.toLocaleString('es-AR') : '$0'}
+                    </div>
+                    <p className={`text-xs ${(summary.weeklyRevenueChange || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {(summary.weeklyRevenueChange || 0) >= 0 ? '+' : ''}
+                      {summary.weeklyRevenueChange || 0}% vs semana anterior
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           )}
 
@@ -147,39 +188,67 @@ export default function DashboardPage() {
           {!isLoading && !isError && (
             <div className="mb-8">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl font-bold text-gray-900">Mis Tiendas</h3>
+                <h3 className="text-2xl font-bold text-gray-900">{isManager ? 'Tiendas Asignadas' : 'Mis Tiendas'}</h3>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {stores.map((store: any) => (
-                  <Card key={store.id} className="hover:shadow-lg transition-shadow">
+                  <Card key={store.id || store._id} className="hover:shadow-lg transition-shadow">
                     <CardHeader>
                       <CardTitle className="text-lg">{store.name}</CardTitle>
                       <CardDescription className="sr-only">Sin descripción</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <div className="text-center p-3 bg-gray-50 rounded-lg">
-                        <div className="text-2xl font-bold text-[#9EE493]">{store.productCount}</div>
-                        <div className="text-sm text-gray-600">Productos</div>
-                      </div>
+                      {/* Only show metrics for merchants, simplified for managers */}
+                      {!isManager && (
+                        <>
+                          <div className="text-center p-3 bg-gray-50 rounded-lg">
+                            <div className="text-2xl font-bold text-[#9EE493]">{store.productCount || 0}</div>
+                            <div className="text-sm text-gray-600">Productos</div>
+                          </div>
 
-                      <div className="flex items-start gap-2">
-                        <MapPin className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                        <span className="text-sm text-gray-600">{store.address}</span>
-                      </div>
+                          <div className="flex items-start gap-2">
+                            <MapPin className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                            <span className="text-sm text-gray-600">
+                              {typeof store.address === 'string' ? store.address : 'Dirección disponible en tienda'}
+                            </span>
+                          </div>
 
-                      <div className="flex items-center gap-2">
-                        <Stars rating={Number(store.rating ?? 0)} />
-                        <span className="text-sm text-gray-600">
-                          {Number(store.rating ?? 0).toFixed(1)} ({store.reviewCount} reseñas)
-                        </span>
-                      </div>
+                          <div className="flex items-center gap-2">
+                            <Stars rating={Number(store.rating ?? 0)} />
+                            <span className="text-sm text-gray-600">
+                              {Number(store.rating ?? 0).toFixed(1)} ({store.reviewCount || 0} reseñas)
+                            </span>
+                          </div>
+                        </>
+                      )}
+
+                      {/* Simplified manager view */}
+                      {isManager && (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                              store.status === 'active' 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {store.status === 'active' ? 'Activa' : 'Inactiva'}
+                            </div>
+                          </div>
+                          
+                          {store.assignedAt && (
+                            <div className="text-xs text-gray-500">
+                              Asignada el {new Date(store.assignedAt).toLocaleDateString('es-AR')}
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                       <div className="pt-2">
                         <Button
                           size="sm"
                           className="w-full bg-[#9EE493] hover:bg-[#8BD480] text-[#20313A]"
-                          onClick={() => router.push(`/dashboard/${store.id}`)}
+                          onClick={() => router.push(`/dashboard/${store.id || store._id}`)}
                         >
                           Ver Tienda
                         </Button>
@@ -188,21 +257,23 @@ export default function DashboardPage() {
                   </Card>
                 ))}
 
-                {/* Crear Tienda card at the end, minimal: plus icon + button */}
-                <Card className="hover:shadow-lg transition-shadow">
-                  <CardContent className="space-y-4 pt-6">
-                    <div className="flex items-center justify-center p-6 bg-gray-50 rounded-lg">
-                      <Plus className="h-10 w-10 text-[#20313A]" />
-                    </div>
-                    <Button
-                      size="sm"
-                      className="w-full bg-[#9EE493] hover:bg-[#8BD480] text-[#20313A]"
-                      onClick={() => setIsCreateOpen(true)}
-                    >
-                      Crear tienda
-                    </Button>
-                  </CardContent>
-                </Card>
+                {/* Crear Tienda card at the end, only for merchants/owners */}
+                {!isManager && (
+                  <Card className="hover:shadow-lg transition-shadow">
+                    <CardContent className="space-y-4 pt-6">
+                      <div className="flex items-center justify-center p-6 bg-gray-50 rounded-lg">
+                        <Plus className="h-10 w-10 text-[#20313A]" />
+                      </div>
+                      <Button
+                        size="sm"
+                        className="w-full bg-[#9EE493] hover:bg-[#8BD480] text-[#20313A]"
+                        onClick={() => setIsCreateOpen(true)}
+                      >
+                        Crear tienda
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             </div>
           )}

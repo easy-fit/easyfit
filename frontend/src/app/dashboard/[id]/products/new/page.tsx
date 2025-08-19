@@ -23,7 +23,7 @@ import type { ProductFormValues } from '@/components/products/product-form-schem
 export default function NewProductPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { id } = React.use(params);
-  const { storeName, logoUrl } = useCurrentStore();
+  const { storeName, logoUrl, accessType } = useCurrentStore();
   const toast = useEasyFitToast();
   const [isCreating, setIsCreating] = React.useState(false);
   const [uploadingImages, setUploadingImages] = React.useState(false);
@@ -134,7 +134,7 @@ export default function NewProductPage({ params }: { params: Promise<{ id: strin
   return (
     <div className="min-h-screen bg-gray-50">
       <SidebarProvider>
-        <StoreSidebar storeName={storeName} logoUrl={logoUrl} active="products" baseHref={`/dashboard/${id}`} />
+        <StoreSidebar storeName={storeName} logoUrl={logoUrl} active="products" baseHref={`/dashboard/${id}`} userRole={accessType} />
         <SidebarInset>
           {/* Header */}
           <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-white px-4">

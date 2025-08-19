@@ -1,6 +1,6 @@
 import { Address } from './global';
 
-export type UserRole = 'customer' | 'merchant' | 'rider' | 'admin';
+export type UserRole = 'customer' | 'merchant' | 'rider' | 'admin' | 'manager';
 export interface Kyc {
   status: string;
   applicantId: string;
@@ -36,6 +36,12 @@ export interface MerchantInfo {
   kyc: Kyc;
 }
 
+export interface ManagerInfo {
+  assignedStores: string[];
+  assignedBy: string;
+  createdAt: Date;
+}
+
 export interface EmailVerification {
   code?: string;
   expires?: Date;
@@ -64,6 +70,7 @@ export interface User {
   emailVerification: EmailVerification;
   riderInfo?: RiderInfo;
   merchantInfo?: MerchantInfo;
+  managerInfo?: ManagerInfo;
   createdAt: string;
   updatedAt: string;
 }
@@ -77,6 +84,7 @@ export interface CreateUserDTO {
   address?: Address;
   riderInfo?: RiderInfoDTO;
   merchantInfo?: MerchantInfo;
+  managerInfo?: ManagerInfo;
 }
 
 export interface updateUserDTO {
@@ -86,6 +94,7 @@ export interface updateUserDTO {
   address?: Address;
   riderInfo?: RiderInfoDTO;
   merchantInfo?: MerchantInfo;
+  managerInfo?: ManagerInfo;
 }
 
 export interface getUsersResponse {
@@ -101,4 +110,25 @@ export interface Me {
   data: {
     user: User;
   };
+}
+
+export interface CreateManagerDTO {
+  name: string;
+  surname: string;
+  email: string;
+  password: string;
+  additionalInfo?: AdditionalInfo;
+  storeId: string;
+}
+
+export interface StoreManagerAssignment {
+  _id: string;
+  storeId: string;
+  managerId: string;
+  assignedBy: string;
+  assignedAt: Date;
+  isActive: boolean;
+  manager?: User;
+  store?: any;
+  assignedByUser?: User;
 }

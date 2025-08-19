@@ -1,6 +1,6 @@
 import { Address } from './global';
 
-export type UserRole = 'customer' | 'merchant' | 'rider' | 'admin';
+export type UserRole = 'customer' | 'merchant' | 'rider' | 'admin' | 'manager';
 export interface Kyc {
   status: string;
   applicantId: string;
@@ -36,6 +36,12 @@ export interface MerchantInfo {
   kyc: Kyc;
 }
 
+export interface ManagerInfo {
+  assignedStores: string[];
+  assignedBy: string;
+  createdAt: Date;
+}
+
 export interface EmailVerification {
   code?: string;
   expires?: Date;
@@ -69,6 +75,7 @@ export interface User {
   emailVerification: EmailVerification;
   riderInfo?: RiderInfo;
   merchantInfo?: MerchantInfo;
+  managerInfo?: ManagerInfo;
 }
 
 export interface CreateUserDTO {
@@ -80,6 +87,7 @@ export interface CreateUserDTO {
   address?: Address;
   riderInfo?: RiderInfo;
   merchantInfo?: MerchantInfo;
+  managerInfo?: ManagerInfo;
 }
 
 export interface UpdateUserDTO {
@@ -99,6 +107,7 @@ export interface RegisterDTO {
   address?: Address;
   riderInfo?: RiderInfo;
   merchantInfo?: MerchantInfo;
+  managerInfo?: ManagerInfo;
 }
 
 export interface LoginDTO {
@@ -108,4 +117,23 @@ export interface LoginDTO {
 
 export interface RefreshTokenDTO {
   refreshToken: string;
+}
+
+export interface CreateManagerDTO {
+  name: string;
+  surname: string;
+  email: string;
+  password: string;
+  additionalInfo?: AdditionalInfo;
+  storeId: string;
+}
+
+export interface RegisterManagerDTO {
+  name: string;
+  surname: string;
+  email: string;
+  password: string;
+  additionalInfo?: AdditionalInfo;
+  storeIds: string[];
+  assignedBy: string;
 }

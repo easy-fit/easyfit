@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Home, BarChart3, Boxes, Settings } from 'lucide-react';
+import { Home, BarChart3, Boxes, Settings, Users } from 'lucide-react';
 import { buildStoreAssetUrl } from '@/lib/utils/image-url';
 
 import {
@@ -30,6 +30,7 @@ const baseItems: NavItem[] = [
   { title: 'Inicio', icon: Home, key: 'home', url: '/' }, // stays here
   { title: 'Estadísticas', icon: BarChart3, key: 'analytics', url: '/analytics' },
   { title: 'Productos', icon: Boxes, key: 'stock', url: '/products' },
+  { title: 'Equipo', icon: Users, key: 'managers', url: '/managers' },
   { title: 'Configuración', icon: Settings, key: 'settings', url: '/settings' },
 ];
 
@@ -38,16 +39,25 @@ export function StoreSidebar({
   logoUrl,
   active = 'home',
   baseHref = '',
+  userRole,
 }: {
   storeName?: string;
   logoUrl?: string;
   active?: string;
   baseHref?: string; // e.g. `/dashboard/123`, to build future links
+  userRole?: 'owner' | 'manager' | 'none';
 }) {
   const items = React.useMemo(() => {
     // When you’re ready, replace # with `${baseHref}/subroute`
-    return baseItems.map((i) => ({ ...i, url: i.url === '#' ? i.url : `${baseHref}${i.url}` }));
-  }, [baseHref]);
+    let filteredItems = baseItems;
+    
+    // Hide managers page for managers themselves
+    if (userRole === 'manager') {
+      filteredItems = baseItems.filter(item => item.key !== 'managers');
+    }
+    
+    return filteredItems.map((i) => ({ ...i, url: i.url === '#' ? i.url : `${baseHref}${i.url}` }));
+  }, [baseHref, userRole]);
 
   return (
     <Sidebar variant="inset" collapsible="icon">

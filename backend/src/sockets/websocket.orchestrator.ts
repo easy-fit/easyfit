@@ -95,6 +95,20 @@ export class WebSocketOrchestrator {
         console.log(`Admin ${socket.userId} joined admin dashboard`);
         break;
 
+      case 'manager':
+        if (socket.storeIds && socket.storeIds.length > 0) {
+          // Join all assigned store channels
+          socket.storeIds.forEach(storeId => {
+            socket.join(this.CHANNELS.STORE(storeId));
+          });
+          console.log(`Manager ${socket.userId} joined ${socket.storeIds.length} store channels: ${socket.storeIds.join(', ')}`);
+        } else if (socket.storeId) {
+          // Fallback for backward compatibility
+          socket.join(this.CHANNELS.STORE(socket.storeId));
+          console.log(`Manager ${socket.userId} joined store channel: ${socket.storeId}`);
+        }
+        break;
+
       case 'customer':
         // Customers join order-specific channels when they place orders
         console.log(`Customer ${socket.userId} connected`);

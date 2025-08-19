@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { AuthService } from '../services/auth/auth.service';
 import { catchAsync } from '../utils/catchAsync';
 import { AppError } from '../utils/appError';
-import { RegisterDTO } from '../types/user.types';
+import { RegisterDTO, CreateManagerDTO } from '../types/user.types';
 import { createSendToken } from '../middlewares/auth';
 import { accessTokenCookieOptions } from '../utils/jwt';
 
@@ -107,6 +107,19 @@ export class AuthController {
       status: 'success',
       message: 'Verification code sent successfully',
       expiresAt: result.expiresAt,
+    });
+  });
+
+  static createManager = catchAsync(async (req: Request, res: Response) => {
+    const data: CreateManagerDTO = req.body;
+    const createdBy = req.user._id.toString();
+    
+    const manager = await AuthService.createManager(data, createdBy);
+    
+    res.status(201).json({
+      status: 'success',
+      message: 'Manager created successfully',
+      data: { user: manager },
     });
   });
 }

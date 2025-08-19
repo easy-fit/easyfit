@@ -12,6 +12,7 @@ import { checkoutRoutes } from './checkout.routes';
 import { adminRoutes } from './admin.routes';
 import { paymentRoutes } from './payment.routes';
 import { riderRoutes } from './rider.routes';
+import { storeManagerRoutes } from './storeManager.routes';
 
 const router = Router();
 
@@ -27,5 +28,6 @@ router.use('/checkout', checkoutRoutes);
 router.use('/admin', adminRoutes);
 router.use('/payments', paymentRoutes);
 router.use('/riders', riderRoutes);
+router.use('/store-managers', storeManagerRoutes);
 
 export default router;

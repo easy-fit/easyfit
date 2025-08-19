@@ -18,7 +18,7 @@ import { ProductList } from '@/components/products/product-list';
 import { Loader2 } from 'lucide-react';
 
 export default function ProductsPage({ params }: { params: Promise<{ id: string }> }) {
-  const { storeName, logoUrl } = useCurrentStore();
+  const { storeName, logoUrl, accessType } = useCurrentStore();
   const toast = useEasyFitToast();
   const router = useRouter();
   const { id } = React.use(params);
@@ -121,7 +121,7 @@ export default function ProductsPage({ params }: { params: Promise<{ id: string 
     return (
       <div className="min-h-screen bg-gray-50">
         <SidebarProvider>
-          <StoreSidebar storeName={storeName} logoUrl={logoUrl} active="products" baseHref={`/dashboard/${id}`} />
+          <StoreSidebar storeName={storeName} logoUrl={logoUrl} active="products" baseHref={`/dashboard/${id}`} userRole={accessType} />
           <SidebarInset>
             <div className="flex items-center justify-center min-h-[60vh]">
               <div className="text-center">
@@ -140,7 +140,7 @@ export default function ProductsPage({ params }: { params: Promise<{ id: string 
     return (
       <div className="min-h-screen bg-gray-50">
         <SidebarProvider>
-          <StoreSidebar storeName={storeName} logoUrl={logoUrl} active="products" baseHref={`/dashboard/${id}`} />
+          <StoreSidebar storeName={storeName} logoUrl={logoUrl} active="products" baseHref={`/dashboard/${id}`} userRole={accessType} />
           <SidebarInset>
             <div className="flex items-center justify-center min-h-[60vh]">
               <div className="text-center">
@@ -156,7 +156,7 @@ export default function ProductsPage({ params }: { params: Promise<{ id: string 
   return (
     <div className="min-h-screen bg-gray-50">
       <SidebarProvider>
-        <StoreSidebar storeName={storeName} logoUrl={logoUrl} active="products" baseHref={`/dashboard/${id}`} />
+        <StoreSidebar storeName={storeName} logoUrl={logoUrl} active="products" baseHref={`/dashboard/${id}`} userRole={accessType} />
         <SidebarInset>
           {/* Header */}
           <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-white px-4">

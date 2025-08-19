@@ -32,18 +32,18 @@ export class OrderNotificationHandler {
 
   // Handle store response (accept/reject order) - called via WebSocket
   public async handleStoreResponse(socket: AuthenticatedSocket, response: StoreOrderResponse): Promise<void> {
-    if (socket.userRole !== 'merchant') {
+    if (socket.userRole !== 'merchant' && socket.userRole !== 'manager') {
       socket.emit('error', {
-        message: 'Unauthorized: Only merchants can respond to orders',
+        message: 'Unauthorized: Only merchants and managers can respond to orders',
       });
       return;
     }
 
-    // Validate merchant owns the store they're responding for
-    const merchantOwnsStore = socket.storeIds?.includes(response.storeId) || socket.storeId === response.storeId;
-    if (!merchantOwnsStore) {
+    // Validate user has access to the store they're responding for
+    const hasStoreAccess = socket.storeIds?.includes(response.storeId) || socket.storeId === response.storeId;
+    if (!hasStoreAccess) {
       socket.emit('error', {
-        message: 'Unauthorized: You do not own this store',
+        message: 'Unauthorized: You do not have access to this store',
       });
       return;
     }

@@ -111,6 +111,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     if (user.role === 'customer') return true; // Customers don't need KYC
     if (user.role === 'admin') return true; // Admins bypass KYC
+    if (user.role === 'manager') return true; // Managers don't need KYC
 
     if (user.role === 'merchant') {
       return user.merchantInfo?.kyc?.reviewResult === 'verified';
