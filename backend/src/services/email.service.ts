@@ -21,7 +21,7 @@ export class EmailService {
     await sgMail.send(msg);
   }
 
-  static async sendPasswordResetEmail(email: string, token: string) {
+  static async sendPasswordReset(email: string, token: string) {
     const url = `${process.env.FRONTEND_URL}/reset-password/${token}`;
 
     return this.sendEmail({
@@ -56,6 +56,22 @@ export class EmailService {
         storeName,
         shippingCost,
         subtotal,
+      },
+    });
+  }
+
+  static async sendLoginAlert(email: string, browser: string) {
+    const loginTime = new Date().toLocaleString('es-AR', {
+      timeZone: 'America/Argentina/Buenos_Aires',
+      hour12: false,
+    });
+    return this.sendEmail({
+      to: email,
+      subject: 'New Login',
+      templateId: SENDGRID_CONFIG.TEMPLATE_ID_LOGIN_ALERT,
+      dynamic_template_data: {
+        browser,
+        loginTime,
       },
     });
   }

@@ -18,6 +18,7 @@ import Image from 'next/image';
 import { useEasyFitToast } from '@/hooks/use-toast';
 import type { CartItem } from '@/types/cart';
 import type { ShippingType } from '@/types/order';
+import { buildImageUrl } from '@/lib/utils/image-url';
 
 interface ShippingOption {
   id: ShippingType;
@@ -37,7 +38,7 @@ const shippingOptions: ShippingOption[] = [
     price: 0,
     tryOnTime: 'Sin tiempo de prueba',
     icon: Truck,
-    features: ['Entrega en tu domicilio', 'Probás cuando quieras', '7 días para decidir'],
+    features: ['Entrega en tu domicilio'],
   },
   {
     id: 'advanced',
@@ -239,7 +240,7 @@ function CartPageContent() {
                         {/* Product Image */}
                         <div className="relative w-24 h-24 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden">
                           <Image
-                            src={imageUrl || '/placeholder.svg'}
+                            src={buildImageUrl(imageUrl) || '/placeholder.svg'}
                             alt={primaryImage?.altText || item.variantId.productId.title}
                             fill
                             className="object-cover"
