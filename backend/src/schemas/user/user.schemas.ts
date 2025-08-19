@@ -36,3 +36,9 @@ export const MerchantInfoSchema = new Schema({
     updatedAt: { type: Date, default: Date.now },
   },
 });
+
+export const ManagerInfoSchema = new Schema({
+  assignedStores: [{ type: Schema.Types.ObjectId, ref: 'Store' }],
+  assignedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  createdAt: { type: Date, default: Date.now },
+});

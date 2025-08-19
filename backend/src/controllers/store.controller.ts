@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { StoreService } from '../services/store/store.service';
 import { MerchantService } from '../services/merchant/merchant.service';
 import { StoreAnalyticsService } from '../services/store/storeAnalytics.service';
+import { StoreManagerService } from '../services/storeManager.service';
 import { catchAsync } from '../utils/catchAsync';
 import { CreateStoreDTO, UpdateStoreDTO, StoreFilterOptions } from '../types/store.types';
 
@@ -205,6 +206,94 @@ export class StoreController {
       pagination: result.pagination,
       data: {
         products: result.products,
+      },
+    });
+  });
+
+  static getManagerDashboard = catchAsync(async (req: Request, res: Response) => {
+    const { user } = req;
+
+    const assignments = await StoreManagerService.getManagerStores(user._id);
+
+    // Format stores with consistent structure like merchant dashboard
+    const stores = assignments.map(assignment => {
+      const store = assignment.store as any;
+      return {
+        id: store._id,
+        _id: store._id,
+        name: store.name,
+        address: store.address?.formatted ? 
+          `${store.address.formatted.street} ${store.address.formatted.streetNumber || ''}, ${store.address.formatted.city}`.trim() :
+          store.address,
+        status: store.status,
+        storeType: store.storeType,
+        customization: store.customization,
+        productCount: 0, // Managers don't need to see product count in dashboard
+        rating: 0, // Managers don't need to see rating in dashboard
+        reviewCount: 0, // Managers don't need to see review count in dashboard
+        // Manager-specific info
+        assignedAt: assignment.assignedAt,
+        assignedBy: assignment.assignedByUser,
+      };
+    });
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        dashboard: {
+          stores,
+          summary: {
+            totalStores: stores.length,
+            activeStores: stores.filter(s => s.status === 'active').length,
+            inactiveStores: stores.filter(s => s.status !== 'active').length,
+          },
+        },
+      },
+    });
+  });
+
+  static getUserStoreAccess = catchAsync(async (req: Request, res: Response) => {
+    const storeId = req.params.id;
+    const { user } = req;
+
+    // Check if user owns the store
+    const store = await StoreService.getStoreById(storeId);
+    if (!store) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Store not found',
+      });
+    }
+    const isOwner = store.merchantId.toString() === user._id.toString();
+
+    let isManager = false;
+    let managerAssignment = null;
+
+    if (!isOwner) {
+      // Check if user is assigned as manager
+      const assignments = await StoreManagerService.getManagerStores(user._id);
+      const assignment = assignments.find(a => {
+        // Handle both populated object and string ID
+        const assignmentStoreId = (a.storeId as any)._id ? (a.storeId as any)._id.toString() : a.storeId.toString();
+        return assignmentStoreId === storeId;
+      });
+      if (assignment && assignment.isActive) {
+        isManager = true;
+        managerAssignment = assignment;
+      }
+    }
+
+    const hasAccess = isOwner || isManager;
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        storeId,
+        hasAccess,
+        accessType: isOwner ? 'owner' : isManager ? 'manager' : 'none',
+        isOwner,
+        isManager,
+        managerAssignment,
       },
     });
   });

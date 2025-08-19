@@ -4,8 +4,12 @@ import { VariantController } from '../controllers/variant.controller';
 import { protect, restrictTo, isKYCVerified } from '../middlewares/auth';
 import {
   verifyProductOwnership,
+  verifyProductAccess,
   verifyVariantOwnership,
+  verifyVariantAccess,
   verifyStoreOwnershipFromBody,
+  verifyStoreAccessFromBody,
+  verifyStoreAccess,
 } from '../middlewares/resourceAccess.middleware';
 
 export const productRoutes = Router();
@@ -24,9 +28,9 @@ productRoutes
   .route('/')
   .post(
     protect,
-    restrictTo('admin', 'merchant'),
+    restrictTo('admin', 'merchant', 'manager'),
     isKYCVerified,
-    verifyStoreOwnershipFromBody,
+    verifyStoreAccessFromBody,
     ProductController.createProduct,
   );
 
@@ -34,9 +38,9 @@ productRoutes
   .route('/id/:id')
   .patch(
     protect,
-    restrictTo('admin', 'merchant'),
+    restrictTo('admin', 'merchant', 'manager'),
     isKYCVerified,
-    verifyProductOwnership,
+    verifyProductAccess,
     ProductController.updateProduct,
   )
   .delete(
@@ -48,17 +52,17 @@ productRoutes
   );
 
 const variantRouter = Router({ mergeParams: true });
-productRoutes.use('/:id/variants', protect, restrictTo('admin', 'merchant'), isKYCVerified, variantRouter);
+productRoutes.use('/:id/variants', protect, restrictTo('admin', 'merchant', 'manager'), isKYCVerified, variantRouter);
 
 variantRouter.route('/').get(VariantController.getVariants).post(VariantController.createVariant);
 
 variantRouter
   .route('/:id')
   .get(VariantController.getVariantById)
-  .patch(verifyVariantOwnership, VariantController.updateVariant)
-  .delete(verifyVariantOwnership, VariantController.deleteVariant);
+  .patch(verifyVariantAccess, VariantController.updateVariant)
+  .delete(verifyVariantAccess, VariantController.deleteVariant);
 
 variantRouter
   .route('/:id/images')
-  .delete(verifyVariantOwnership, VariantController.deleteVariantImage)
-  .post(verifyVariantOwnership, VariantController.addVariantImage);
+  .delete(verifyVariantAccess, VariantController.deleteVariantImage)
+  .post(verifyVariantAccess, VariantController.addVariantImage);
