@@ -73,6 +73,6 @@ export class AuthPasswordService {
     user.passwordResetExpires = new Date(Date.now() + 10 * 60 * 1000);
     await user.save({ validateBeforeSave: false });
 
-    await EmailService.sendPasswordResetEmail(email, resetToken);
+    await EmailService.sendPasswordReset(email, resetToken);
   }
 }

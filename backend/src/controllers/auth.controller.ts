@@ -14,7 +14,7 @@ export class AuthController {
   });
 
   static login = catchAsync(async (req: Request, res: Response) => {
-    const user = await AuthService.login(req.body);
+    const user = await AuthService.login(req.body, req.headers['user-agent']);
     createSendToken(user, 200, res);
   });
 

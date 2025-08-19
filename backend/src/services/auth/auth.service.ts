@@ -7,6 +7,7 @@ import { UserService } from '../user.service';
 import { AppError } from '../../utils/appError';
 import { UserModel } from '../../models/user.model';
 import { comparePasswords, hashPassword } from '../../utils/password';
+import { EmailService } from '../email.service';
 
 export class AuthService {
   static async register(data: RegisterDTO) {
@@ -51,8 +52,9 @@ export class AuthService {
     return user;
   }
 
-  static async login({ email, password }: LoginDTO) {
+  static async login({ email, password }: LoginDTO, userAgent?: string) {
     const user = await UserModel.findOne({ email }).select('+passwordHash');
+
     if (!user || !(await comparePasswords(password, user.passwordHash))) {
       throw new AppError('Invalid email or password', 401);
     }
@@ -60,6 +62,9 @@ export class AuthService {
     const refreshToken = AuthTokenService.signRefreshToken(user._id);
     user.refreshToken = refreshToken;
     await user.save({ validateBeforeSave: false });
+
+    if (!userAgent) userAgent = 'Desconocido';
+    if (user.role === 'merchant') EmailService.sendLoginAlert(email, userAgent);
 
     return user;
   }
