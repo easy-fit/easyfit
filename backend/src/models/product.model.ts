@@ -1,5 +1,6 @@
 import { Schema, model } from 'mongoose';
 import { Product } from '../types/product.types';
+import { PRODUCT_CATEGORY_VALUES } from '../types/category.types';
 
 const ProductSchema = new Schema<Product>(
   {
@@ -8,12 +9,12 @@ const ProductSchema = new Schema<Product>(
     description: { type: String },
     status: {
       type: String,
-      enum: ['published', 'archived', 'deleted'],
+      enum: ['published', 'draft', 'deleted'],
       default: 'published',
     },
     category: {
       type: String,
-      enum: ['clothing', 'accessory', 'footwear', 'fragrance'],
+      enum: PRODUCT_CATEGORY_VALUES,
       required: true,
     },
     slug: { type: String, required: true },

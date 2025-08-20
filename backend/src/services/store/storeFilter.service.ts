@@ -1,5 +1,7 @@
 import { StoreModel } from '../../models/store.model';
 import { StoreFilterOptions } from '../../types/store.types';
+import { calculateDistance } from '../../utils/distance';
+import { SHIPPING_CONFIG, SHIPPING_BASE_COSTS } from '../../config/shipping';
 
 export class StoreFilterService {
   static async getFilteredStores(options: StoreFilterOptions = {}) {
@@ -79,8 +81,29 @@ export class StoreFilterService {
     const total = totalResult[0]?.total || 0;
     const pages = Math.ceil(total / limit);
 
+    // Add shipping calculations when location is provided
+    const storesWithShipping = stores.map((store) => {
+      const distance = calculateDistance(
+        { latitude: nearLocation.latitude, longitude: nearLocation.longitude },
+        { latitude: store.address.location.coordinates[1], longitude: store.address.location.coordinates[0] },
+      );
+
+      const shippingCost =
+        SHIPPING_CONFIG.pickupCost +
+        SHIPPING_CONFIG.dropoffCost +
+        distance * SHIPPING_CONFIG.costPerKm +
+        SHIPPING_BASE_COSTS.simple;
+      const deliveryTime = Math.round(distance * 10); // 2 minutes per km
+
+      return {
+        ...store,
+        approximateDeliveryTime: deliveryTime,
+        approximateShippingCost: Math.round(shippingCost),
+      };
+    });
+
     return {
-      stores,
+      stores: storesWithShipping,
       pagination: {
         total,
         page,
@@ -98,8 +121,15 @@ export class StoreFilterService {
 
     const pages = Math.ceil(total / limit);
 
+    // Add null values for shipping when no location provided
+    const storesWithShipping = stores.map((store) => ({
+      ...store.toObject(),
+      approximateDeliveryTime: null,
+      approximateShippingCost: null,
+    }));
+
     return {
-      stores,
+      stores: storesWithShipping,
       pagination: {
         total,
         page,

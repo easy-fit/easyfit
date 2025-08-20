@@ -1,4 +1,5 @@
 import { Types } from 'mongoose';
+import { Address } from './global';
 
 export type OrderStatus =
   | 'order_placed'
@@ -34,6 +35,7 @@ export interface ShippingInfo {
   cost: number;
   subsidizedBy?: ShippingSubsidy;
   type: ShippingType;
+  address: Address;
   tryOnEnabled: boolean;
   distanceKm?: number;
   durationMinutes?: number;

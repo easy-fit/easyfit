@@ -7,10 +7,25 @@ import { WebSocketService } from './websocket.service';
 import { RiderAssignmentOrchestrator } from './riderAssignmentOrchestrator.service';
 import { OrderStateManager } from './orderStateManager.service';
 import { TryPeriodManager } from './tryPeriodManager.service';
+import { PaymentService } from './payment/payment.service';
+import { MercadoPagoService } from './payment/mercadoPago.service';
+import { EmailService } from './email.service';
+import { UserModel } from '../models/user.model';
+import { StoreModel } from '../models/store.model';
 
 export class OrderService {
   static async getOrders() {
     return OrderModel.find();
+  }
+
+  static async getMyOrders(userId: string) {
+    return OrderModel.find({ userId })
+      .populate({
+        path: 'storeId',
+        select: 'name customization.logoUrl',
+      })
+      .select('-deliveryVerification -isStolen -isActive -externalPaymentId')
+      .sort({ createdAt: -1 });
   }
 
   static async getOrderById(orderId: string) {
@@ -37,7 +52,7 @@ export class OrderService {
       total,
       shipping,
       status: 'order_placed',
-      paymentId: externalPaymentId,
+      externalPaymentId,
       paymentStatus,
       deliveryVerification: {
         code: deliveryVerificationCode,
@@ -53,7 +68,6 @@ export class OrderService {
     const order = await OrderModel.create(orderData);
     await OrderItemService.createManyOrderItems(order._id.toString(), cartItems);
 
-    // Send WebSocket notification to store
     try {
       const orderPayload = await OrderStoreService.getCompleteOrderData(order._id.toString());
 
@@ -62,7 +76,11 @@ export class OrderService {
       console.error('Failed to send store notification:', error);
       // Don't fail the order creation if WebSocket fails
     }
-
+    const store = await StoreModel.findById(storeId);
+    const user = await UserModel.findById(userId);
+    if (user?.email && store) {
+      await EmailService.sendOrderReceipt(user.email, total, store.name, shipping.cost);
+    }
     return order;
   }
 
@@ -75,9 +93,6 @@ export class OrderService {
     return order;
   }
 
-  /**
-   * Handle store response (accept/reject order)
-   */
   static async handleStoreResponse(orderId: string, storeId: string, accepted: boolean, reason?: string) {
     const order = await OrderModel.findById(orderId);
     this.ensureOrderExists(order);
@@ -91,13 +106,13 @@ export class OrderService {
       throw new AppError('Store does not have permission to respond to this order', 403);
     }
 
-    // Update order status
     const newStatus = accepted ? 'order_accepted' : 'order_canceled';
-    const updatedOrder = await OrderModel.findByIdAndUpdate(orderId, { status: newStatus }, { new: true });
+    const updateData = accepted ? { status: newStatus } : { status: newStatus, isActive: false };
+
+    const updatedOrder = await OrderModel.findByIdAndUpdate(orderId, updateData, { new: true });
 
     this.ensureOrderExists(updatedOrder);
 
-    // Send WebSocket notifications
     try {
       WebSocketService.emitOrderStatusUpdate({
         order: {
@@ -110,13 +125,11 @@ export class OrderService {
       });
 
       if (accepted) {
-        // Start rider assignment asynchronously
         RiderAssignmentOrchestrator.assignRiderToOrder(orderId).catch((error) => {
           console.error('Failed to assign rider to order:', error);
         });
       } else {
-        // TODO: Implement refund logic
-        console.log(`Order ${orderId} was rejected by store. Reason: ${reason}`);
+        await this.processOrderRejectionRefund(orderId, reason);
       }
     } catch (error) {
       console.error('Failed to send order status update:', error);
@@ -181,21 +194,92 @@ export class OrderService {
       };
     }
 
-    const updatedOrder = await OrderStateManager.markAsDelivered(orderId, riderId);
+    await OrderStateManager.markAsDelivered(orderId, riderId);
 
-    await OrderModel.findByIdAndUpdate(orderId, {
+    const updatedOrder = await OrderModel.findByIdAndUpdate(orderId, {
       'deliveryVerification.verifiedAt': new Date(),
       'deliveryVerification.status': 'verified',
-    });
+    }).select('-deliveryVerification');
 
     if (order.shipping.tryOnEnabled) {
       await TryPeriodManager.startTryPeriod(orderId);
+    } else {
+      await OrderStateManager.markAsPurchased(orderId, 'Simple shipping - no try period');
     }
 
     return {
       success: true,
       order: updatedOrder,
     };
+  }
+
+  private static async processOrderRejectionRefund(orderId: string, reason?: string): Promise<void> {
+    try {
+      const payment = await PaymentService.getInternalPaymentByOrderId(orderId);
+
+      if (!payment) {
+        console.error(`No payment found for order ${orderId} - cannot process refund`);
+        return;
+      }
+
+      if (payment.type === 'hold') {
+        await MercadoPagoService.cancelPayment(payment.externalId);
+
+        await PaymentService.updateInternalPayment(payment._id.toString(), {
+          status: 'cancelled',
+        });
+      } else if (payment.type === 'capture') {
+        await MercadoPagoService.refundPayment(payment.externalId);
+
+        await PaymentService.createInternalPayment({
+          orderId: payment.orderId,
+          userId: payment.userId,
+          type: 'refund',
+          amount: payment.amount,
+          status: 'refunded',
+          externalId: payment.externalId,
+        });
+
+        await PaymentService.updateInternalPayment(payment._id.toString(), {
+          status: 'refunded',
+          finalPaymentInfo: {
+            settledAt: new Date(),
+            capturedAmount: 0,
+            refundedAmount: payment.amount,
+          },
+        });
+      }
+
+      WebSocketService.emitOrderStatusUpdate({
+        order: { _id: orderId } as any,
+        previousStatus: 'order_canceled',
+        newStatus: 'order_canceled',
+        timestamp: new Date(),
+        details: {
+          refundProcessed: true,
+          paymentType: payment.type,
+          storeRejectionReason: reason,
+        },
+      });
+    } catch (error: any) {
+      console.error(`Failed to process refund for order ${orderId}:`, error.message);
+
+      try {
+        WebSocketService.emitOrderStatusUpdate({
+          order: { _id: orderId } as any,
+          previousStatus: 'order_canceled',
+          newStatus: 'order_canceled',
+          timestamp: new Date(),
+          details: {
+            refundFailed: true,
+            error: error.message,
+            requiresManualIntervention: true,
+          },
+        });
+      } catch (notificationError) {
+        console.error('Failed to send refund error notification:', notificationError);
+      }
+    }
   }
 
   private static ensureOrderExists(order: any): void {

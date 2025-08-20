@@ -7,7 +7,8 @@ import { RiderOfferHandler } from './handlers/riderOffer.handler';
 import { DeliveryTrackingHandler } from './handlers/deliveryTracking.handler';
 import { TryPeriodHandler } from './handlers/tryPeriod.handler';
 import { ReturnFlowHandler } from './handlers/returnFlow.handler';
-import { OrderModel } from '../models/order.model';
+import { RiderAvailabilityHandler } from './handlers/riderAvailability.handler';
+import { RiderCancellationHandler } from './handlers/riderCancellation.handler';
 
 export class WebSocketOrchestrator {
   private io: SocketIOServer;
@@ -16,6 +17,8 @@ export class WebSocketOrchestrator {
   private deliveryTrackingHandler: DeliveryTrackingHandler;
   private tryPeriodHandler: TryPeriodHandler;
   private returnFlowHandler: ReturnFlowHandler;
+  private riderAvailabilityHandler: RiderAvailabilityHandler;
+  private riderCancellationHandler: RiderCancellationHandler;
 
   // Channel naming conventions
   public readonly CHANNELS: SocketChannels = {
@@ -39,6 +42,8 @@ export class WebSocketOrchestrator {
     this.deliveryTrackingHandler = new DeliveryTrackingHandler(this.io, this.CHANNELS);
     this.tryPeriodHandler = new TryPeriodHandler(this.io, this.CHANNELS);
     this.returnFlowHandler = new ReturnFlowHandler(this.io, this.CHANNELS);
+    this.riderAvailabilityHandler = new RiderAvailabilityHandler(this.io, this.CHANNELS);
+    this.riderCancellationHandler = new RiderCancellationHandler(this.io, this.CHANNELS);
 
     this.setupMiddleware();
     this.setupConnectionHandling();
@@ -67,7 +72,14 @@ export class WebSocketOrchestrator {
 
     switch (socket.userRole) {
       case 'merchant':
-        if (socket.storeId) {
+        if (socket.storeIds && socket.storeIds.length > 0) {
+          // Join all store channels for multi-store merchants
+          socket.storeIds.forEach(storeId => {
+            socket.join(this.CHANNELS.STORE(storeId));
+          });
+          console.log(`Merchant ${socket.userId} joined ${socket.storeIds.length} store channels: ${socket.storeIds.join(', ')}`);
+        } else if (socket.storeId) {
+          // Fallback for backward compatibility
           socket.join(this.CHANNELS.STORE(socket.storeId));
           console.log(`Merchant ${socket.userId} joined store channel: ${socket.storeId}`);
         }
@@ -81,6 +93,20 @@ export class WebSocketOrchestrator {
       case 'admin':
         socket.join(this.CHANNELS.ADMIN_DASHBOARD);
         console.log(`Admin ${socket.userId} joined admin dashboard`);
+        break;
+
+      case 'manager':
+        if (socket.storeIds && socket.storeIds.length > 0) {
+          // Join all assigned store channels
+          socket.storeIds.forEach(storeId => {
+            socket.join(this.CHANNELS.STORE(storeId));
+          });
+          console.log(`Manager ${socket.userId} joined ${socket.storeIds.length} store channels: ${socket.storeIds.join(', ')}`);
+        } else if (socket.storeId) {
+          // Fallback for backward compatibility
+          socket.join(this.CHANNELS.STORE(socket.storeId));
+          console.log(`Manager ${socket.userId} joined store channel: ${socket.storeId}`);
+        }
         break;
 
       case 'customer':
@@ -123,6 +149,43 @@ export class WebSocketOrchestrator {
     socket.on('return:inspection:complete', (data) => {
       this.returnFlowHandler.handleStoreInspectionResult(socket, data);
     });
+
+    // Rider availability events
+    socket.on('rider:availability:toggle', (data) => {
+      this.riderAvailabilityHandler.handleAvailabilityToggle(socket, data);
+    });
+
+    socket.on('rider:location:tracking', (data) => {
+      this.riderAvailabilityHandler.handleLocationUpdate(socket, data);
+    });
+
+    // Rider cancellation events
+    socket.on('rider:order:cancel', (data) => {
+      this.riderCancellationHandler.handleRiderCancellation(socket, data);
+    });
+
+    // Rider return confirmation events
+    socket.on('rider:confirm_return_pickup', (data) => {
+      this.returnFlowHandler.handleReturnPickupConfirmation(socket, data);
+    });
+
+    // Customer order channel management
+    socket.on('customer:join:order', (data) => {
+      this.orderNotificationHandler.handleCustomerJoinOrder(socket, data);
+    });
+
+    socket.on('customer:leave:order', (data) => {
+      this.orderNotificationHandler.handleCustomerLeaveOrder(socket, data);
+    });
+
+    // Merchant store channel management for multi-store support
+    socket.on('merchant:join:store', (data) => {
+      this.handleMerchantJoinStore(socket, data);
+    });
+
+    socket.on('merchant:leave:store', (data) => {
+      this.handleMerchantLeaveStore(socket, data);
+    });
   }
 
   // Public methods for emitting events from services
@@ -146,7 +209,49 @@ export class WebSocketOrchestrator {
     return this.returnFlowHandler;
   }
 
+  public getRiderAvailabilityHandler(): RiderAvailabilityHandler {
+    return this.riderAvailabilityHandler;
+  }
+
+  public getRiderCancellationHandler(): RiderCancellationHandler {
+    return this.riderCancellationHandler;
+  }
+
   public getIO(): SocketIOServer {
     return this.io;
+  }
+
+  // Merchant store channel management for multi-store support
+  private async handleMerchantJoinStore(socket: AuthenticatedSocket, data: { storeId: string }): Promise<void> {
+    if (socket.userRole !== 'merchant') {
+      socket.emit('error', { message: 'Only merchants can join store channels' });
+      return;
+    }
+
+    // Validate merchant owns this store
+    const merchantOwnsStore = socket.storeIds?.includes(data.storeId) || socket.storeId === data.storeId;
+    if (!merchantOwnsStore) {
+      socket.emit('error', { message: 'Unauthorized: You do not own this store' });
+      return;
+    }
+
+    // Join the specific store channel
+    socket.join(this.CHANNELS.STORE(data.storeId));
+    socket.emit('merchant:joined:store', { storeId: data.storeId, success: true });
+    
+    console.log(`Merchant ${socket.userId} joined store channel: ${data.storeId}`);
+  }
+
+  private async handleMerchantLeaveStore(socket: AuthenticatedSocket, data: { storeId: string }): Promise<void> {
+    if (socket.userRole !== 'merchant') {
+      socket.emit('error', { message: 'Only merchants can leave store channels' });
+      return;
+    }
+
+    // Leave the specific store channel
+    socket.leave(this.CHANNELS.STORE(data.storeId));
+    socket.emit('merchant:left:store', { storeId: data.storeId, success: true });
+    
+    console.log(`Merchant ${socket.userId} left store channel: ${data.storeId}`);
   }
 }

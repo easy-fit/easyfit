@@ -1,11 +1,19 @@
 import jwt from 'jsonwebtoken';
 import { AuthenticatedSocket } from '../../types/websocket.types';
 import { UserModel } from '../../models/user.model';
+import { StoreModel } from '../../models/store.model';
+import { StoreManagerModel } from '../../models/storeManager.model';
 import { JWT_CONFIG } from '../../config/env';
 
 export const socketAuthMiddleware = async (socket: AuthenticatedSocket, next: (err?: Error) => void) => {
   try {
-    const token = socket.handshake.auth?.token || (socket.handshake.query?.token as string);
+    // Try to get token from multiple sources: auth object, query params, or cookies
+    const token = 
+      socket.handshake.auth?.token || 
+      (socket.handshake.query?.token as string) ||
+      socket.handshake.headers?.cookie?.split(';')
+        ?.find(cookie => cookie.trim().startsWith('jwt='))
+        ?.split('=')[1];
 
     if (!token) {
       return next(new Error('Authentication token required'));
@@ -21,11 +29,38 @@ export const socketAuthMiddleware = async (socket: AuthenticatedSocket, next: (e
     socket.userId = user._id.toString();
     socket.userRole = user.role;
 
-    // For merchants, get their store ID (assuming they have one store for now)
+    // For merchants, get all their store IDs
     if (user.role === 'merchant') {
-      // TODO: Get store ID from StoreModel where merchantId = user._id
-      // For now, we'll set it when the store connects
-      socket.storeId = undefined; // Will be set by store-specific logic
+      const stores = await StoreModel.find({ merchantId: user._id }).select('_id').lean();
+      if (stores.length > 0) {
+        socket.storeIds = stores.map(store => store._id.toString());
+        // Keep backward compatibility: set storeId to first store for legacy handlers
+        socket.storeId = socket.storeIds[0];
+        console.log(`Merchant ${socket.userId} connected with ${socket.storeIds.length} stores: ${socket.storeIds.join(', ')}`);
+      } else {
+        console.warn(`Merchant ${socket.userId} has no associated stores`);
+        socket.storeId = undefined;
+        socket.storeIds = undefined;
+      }
+    }
+
+    // For managers, get their assigned store IDs
+    if (user.role === 'manager') {
+      const managerAssignments = await StoreManagerModel.find({ 
+        managerId: user._id,
+        isActive: true 
+      }).select('storeId').lean();
+      
+      if (managerAssignments.length > 0) {
+        socket.storeIds = managerAssignments.map(assignment => assignment.storeId.toString());
+        // Keep backward compatibility: set storeId to first store for legacy handlers
+        socket.storeId = socket.storeIds[0];
+        console.log(`Manager ${socket.userId} connected with ${socket.storeIds.length} assigned stores: ${socket.storeIds.join(', ')}`);
+      } else {
+        console.warn(`Manager ${socket.userId} has no store assignments`);
+        socket.storeId = undefined;
+        socket.storeIds = undefined;
+      }
     }
 
     if (user.role === 'rider') {

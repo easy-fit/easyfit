@@ -4,7 +4,7 @@ import { protect, restrictTo, isEmailVerified } from '../middlewares/auth';
 
 export const cartRoutes = Router();
 
-cartRoutes.use(protect, isEmailVerified, restrictTo('user'));
+cartRoutes.use(protect, isEmailVerified, restrictTo('customer'));
 
 cartRoutes
   .route('/')

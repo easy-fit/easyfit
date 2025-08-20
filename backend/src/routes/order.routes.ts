@@ -8,6 +8,7 @@ export const orderRoutes = Router();
 orderRoutes.use(protect);
 
 orderRoutes.route('/').get(restrictTo('admin'), OrderController.getOrders);
+orderRoutes.route('/my-orders').get(restrictTo('customer'), OrderController.getMyOrders);
 
 orderRoutes
   .route('/:id')
@@ -20,5 +21,5 @@ orderRoutes
   .post(restrictTo('rider'), verifyRiderOrderOwnership, OrderController.verifyDeliveryCode);
 
 orderRoutes
-  .route('/:id/try-period/save-decisions')
+  .route('/try-period/:id/save-decisions')
   .patch(restrictTo('customer'), verifyOrderOwnership, OrderController.saveDecisionsAndFinalize);

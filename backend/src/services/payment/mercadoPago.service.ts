@@ -11,7 +11,7 @@ export class MercadoPagoService {
       const idempotencyKey = uuidv4();
 
       const response = await mercadoPagoClient.payment.create({
-        body: paymentData,
+        body: { ...paymentData, issuer_id: Number(paymentData.issuer_id) },
         requestOptions: {
           idempotencyKey,
         },

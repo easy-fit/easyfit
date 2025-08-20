@@ -2,6 +2,7 @@ import { Server as SocketIOServer } from 'socket.io';
 import { AuthenticatedSocket, SocketChannels } from '../../types/websocket.types';
 import { OrderStateManager } from '../../services/orderStateManager.service';
 import { OrderService } from '../../services/order.service';
+import { OrderItemService } from '../../services/orderItem.service';
 
 interface ReturnPickupConfirmation {
   orderId: string;
@@ -31,8 +32,8 @@ export class ReturnFlowHandler {
    * Rider confirms they have collected returned items from customer
    */
   public async handleReturnPickupConfirmation(
-    socket: AuthenticatedSocket, 
-    data: ReturnPickupConfirmation
+    socket: AuthenticatedSocket,
+    data: ReturnPickupConfirmation,
   ): Promise<void> {
     if (socket.userRole !== 'rider') {
       socket.emit('error', { message: 'Unauthorized: Only riders can confirm return pickup' });
@@ -49,12 +50,17 @@ export class ReturnFlowHandler {
         // Update order status to returning_to_store
         await OrderStateManager.markReturnPickupComplete(data.orderId, data.riderId);
 
-        // Confirm to rider
+        // Get detailed return information for rider
+        const returnInfo = await this.getReturnPickupInfo(data.orderId);
+
+        // Send detailed return info to rider
         socket.emit('return:pickup_confirmed', {
           type: 'return_pickup_confirmed',
           data: {
             orderId: data.orderId,
-            message: 'Return pickup confirmed. Please head back to store.',
+            store: returnInfo.store,
+            returnItems: returnInfo.returnItems,
+            returnCount: returnInfo.returnItems.length,
             timestamp: new Date(),
           },
         });
@@ -69,10 +75,7 @@ export class ReturnFlowHandler {
   /**
    * Rider confirms they have delivered returns back to store
    */
-  public async handleStoreReturnDelivery(
-    socket: AuthenticatedSocket, 
-    data: StoreReturnDelivery
-  ): Promise<void> {
+  public async handleStoreReturnDelivery(socket: AuthenticatedSocket, data: StoreReturnDelivery): Promise<void> {
     if (socket.userRole !== 'rider') {
       socket.emit('error', { message: 'Unauthorized: Only riders can confirm store delivery' });
       return;
@@ -106,19 +109,23 @@ export class ReturnFlowHandler {
   /**
    * Store completes inspection of returned items
    */
-  public async handleStoreInspectionResult(
-    socket: AuthenticatedSocket, 
-    data: StoreInspectionResult
-  ): Promise<void> {
+  public async handleStoreInspectionResult(socket: AuthenticatedSocket, data: StoreInspectionResult): Promise<void> {
     if (socket.userRole !== 'merchant') {
       socket.emit('error', { message: 'Unauthorized: Only merchants can complete inspections' });
       return;
     }
 
+    // Validate merchant owns the store they're inspecting for
+    const merchantOwnsStore = socket.storeIds?.includes(data.storeId) || socket.storeId === data.storeId;
+    if (!merchantOwnsStore) {
+      socket.emit('error', { message: 'Unauthorized: You do not own this store' });
+      return;
+    }
+
     try {
       const order = await OrderService.getOrderById(data.orderId);
-      
-      if (!order || order.storeId.toString() !== socket.userId) {
+
+      if (!order || order.storeId.toString() !== data.storeId.toString()) {
         socket.emit('error', { message: 'Unauthorized: Can only inspect returns for your store' });
         return;
       }
@@ -154,5 +161,52 @@ export class ReturnFlowHandler {
     } catch (error: any) {
       socket.emit('error', { message: error.message || 'Failed to complete inspection' });
     }
+  }
+
+  private async getReturnPickupInfo(orderId: string) {
+    // Get order with store info
+    const order = await OrderService.getOrderById(orderId);
+    const store = order?.storeId as any;
+
+    // Get order items with full details
+    const orderItems = await OrderItemService.getCompleteOrderData(orderId);
+
+    // Filter items marked for return
+    const returnItems = orderItems
+      .filter((item: any) => item.returnStatus === 'returned')
+      .map((item: any) => {
+        const product = item.variantId.productId;
+        const variant = item.variantId;
+
+        // Get first image
+        const firstImage =
+          variant.images && variant.images.length > 0
+            ? variant.images.sort((a: any, b: any) => (a.order || 0) - (b.order || 0))[0]
+            : null;
+
+        return {
+          _id: item._id.toString(),
+          productName: product?.title || 'Product',
+          variantInfo: variant?.size || 'N/A',
+          quantity: item.quantity,
+          image: firstImage
+            ? {
+                key: firstImage.key,
+                altText: firstImage.altText || product?.title || 'Product',
+              }
+            : null,
+        };
+      });
+
+    return {
+      store: {
+        name: store.name,
+        address: {
+          formatted: store.address.formatted,
+          coordinates: store.address.location.coordinates,
+        },
+      },
+      returnItems,
+    };
   }
 }

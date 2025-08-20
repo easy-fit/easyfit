@@ -1,4 +1,4 @@
-import mongoose, { Schema, Types } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 import { CartItem } from '../types/cartItem.types';
 
 const CartItemSchema = new Schema<CartItem>(

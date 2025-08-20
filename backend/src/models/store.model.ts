@@ -1,5 +1,5 @@
 import { Schema, model } from 'mongoose';
-import { Store, StoreType } from '../types/store.types';
+import { Store } from '../types/store.types';
 import { getNextSequenceValue } from '../utils/counter';
 import { AddressSchema } from '../schemas/common/address.schema';
 import { PickupHoursEntrySchema, ShippingOptionSchema, StoreCustomizationSchema } from '../schemas/store/store.schemas';
@@ -8,6 +8,7 @@ import { STORE_TAGS_VALUES } from '../types/store.constants';
 const StoreSchema = new Schema<Store>(
   {
     merchantId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    cuit: { type: String },
     name: { type: String, required: true },
     address: { type: AddressSchema, required: true },
     pickupHours: { type: [PickupHoursEntrySchema], required: true },
@@ -19,7 +20,7 @@ const StoreSchema = new Schema<Store>(
     status: {
       type: String,
       enum: ['active', 'inactive', 'disabled'],
-      default: 'active',
+      default: 'inactive',
     },
     ratingCount: { type: Number, default: 0 },
     ratingSum: { type: Number, default: 0 },

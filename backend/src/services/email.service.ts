@@ -4,48 +4,75 @@ import { SENDGRID_CONFIG } from '../config/env';
 interface EmailPayload {
   to: string;
   subject: string;
-  html: string;
+  dynamic_template_data?: Record<string, any>;
+  templateId: string;
 }
 
 export class EmailService {
-  static async sendEmail({ to, subject, html }: EmailPayload) {
+  static async sendEmail({ to, subject, dynamic_template_data, templateId }: EmailPayload) {
     const msg = {
       to,
       from: SENDGRID_CONFIG.FROM_EMAIL,
       subject,
-      html,
+      templateId: templateId,
+      dynamic_template_data: dynamic_template_data,
     };
 
     await sgMail.send(msg);
   }
 
-  static async sendPasswordResetEmail(email: string, token: string) {
+  static async sendPasswordReset(email: string, token: string) {
     const url = `${process.env.FRONTEND_URL}/reset-password/${token}`;
-    const html = `
-      <p>Hi!</p>
-      <p>You requested a password reset. Click the link below to reset it:</p>
-      <a href="${url}">${url}</a>
-      <p>This link will expire in 10 minutes.</p>
-    `;
 
     return this.sendEmail({
       to: email,
       subject: 'Reset your EasyFit password',
-      html,
+      templateId: SENDGRID_CONFIG.TEMPLATE_ID_PASSWORD_RESET,
+      dynamic_template_data: {
+        url,
+      },
     });
   }
 
   static async sendVerificationCode(email: string, code: string) {
-    const html = `
-      <p>Welcome to EasyFit!</p>
-      <p>Your email verification code is: <strong>${code}</strong></p>
-      <p>This code expires in 10 minutes.</p>
-    `;
-
     return this.sendEmail({
       to: email,
       subject: 'Verify your EasyFit email',
-      html,
+      templateId: SENDGRID_CONFIG.TEMPLATE_ID_EMAIL_VERIFICATION,
+      dynamic_template_data: {
+        code,
+      },
+    });
+  }
+
+  static async sendOrderReceipt(email: string, total: number, storeName: string, shippingCost: number) {
+    const subtotal = total - shippingCost;
+    return this.sendEmail({
+      to: email,
+      subject: 'Your EasyFit Order Receipt',
+      templateId: SENDGRID_CONFIG.TEMPLATE_ID_ORDER_RECIPT,
+      dynamic_template_data: {
+        total,
+        storeName,
+        shippingCost,
+        subtotal,
+      },
+    });
+  }
+
+  static async sendLoginAlert(email: string, browser: string) {
+    const loginTime = new Date().toLocaleString('es-AR', {
+      timeZone: 'America/Argentina/Buenos_Aires',
+      hour12: false,
+    });
+    return this.sendEmail({
+      to: email,
+      subject: 'New Login',
+      templateId: SENDGRID_CONFIG.TEMPLATE_ID_LOGIN_ALERT,
+      dynamic_template_data: {
+        browser,
+        loginTime,
+      },
     });
   }
 }

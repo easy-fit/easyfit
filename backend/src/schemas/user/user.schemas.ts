@@ -4,7 +4,7 @@ export const RiderInfoSchema = new Schema({
   cuit: { type: String, required: true },
   vehicleType: {
     type: String,
-    enum: ['bike', 'motorcycle'],
+    enum: ['bike', 'motorcycle', 'car'],
     required: true,
   },
   licensePlate: { type: String },
@@ -35,4 +35,10 @@ export const MerchantInfoSchema = new Schema({
     reviewResult: { type: String, default: 'pending' },
     updatedAt: { type: Date, default: Date.now },
   },
+});
+
+export const ManagerInfoSchema = new Schema({
+  assignedStores: [{ type: Schema.Types.ObjectId, ref: 'Store' }],
+  assignedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  createdAt: { type: Date, default: Date.now },
 });

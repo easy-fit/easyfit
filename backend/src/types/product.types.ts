@@ -1,7 +1,7 @@
 import { Types } from 'mongoose';
+import { ProductCategory } from './category.types';
 
-export type ProductStatus = 'published' | 'archived' | 'deleted';
-export type ProductCategory = 'clothing' | 'accessories' | 'footwear' | 'fragrance';
+export type ProductStatus = 'published' | 'draft' | 'deleted';
 
 export interface ProductFilterOptions {
   search?: string;

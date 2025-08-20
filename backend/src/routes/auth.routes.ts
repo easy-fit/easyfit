@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { AuthController } from '../controllers/auth.controller';
-import { assignRoleFromPath, protect, isEmailVerified } from '../middlewares/auth';
+import { assignRoleFromPath, protect, isEmailVerified, restrictTo } from '../middlewares/auth';
 
 export const authRoutes = Router();
 
@@ -20,3 +20,6 @@ authRoutes.post('/verify-email/resend', AuthController.sendVerificationCode);
 
 authRoutes.patch('/update-password', isEmailVerified, AuthController.updatePassword);
 authRoutes.post('/logout', AuthController.logout);
+
+// Manager creation - only for merchants/store owners
+authRoutes.post('/create-manager', restrictTo('merchant'), isEmailVerified, AuthController.createManager);

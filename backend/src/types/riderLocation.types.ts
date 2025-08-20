@@ -9,4 +9,5 @@ export interface RiderLocation {
   riderId: Types.ObjectId;
   location: GeoPoint;
   isAvailable?: boolean;
+  updatedAt: Date;
 }

@@ -15,6 +15,8 @@ export interface Variant {
   images: VariantImage[];
   price: number;
   isDefault?: boolean;
+  isBulk?: boolean;
+  sku: string;
 }
 
 export interface CreateVariantDTO {
@@ -24,6 +26,8 @@ export interface CreateVariantDTO {
   price: number;
   images: VariantImage[];
   isDefault?: boolean;
+  isBulk?: boolean;
+  sku: string;
 }
 
 export interface UpdateVariantDTO {
@@ -33,4 +37,5 @@ export interface UpdateVariantDTO {
   price?: number;
   images?: VariantImage[];
   isDefault?: boolean;
+  sku?: string;
 }

@@ -1,4 +1,5 @@
 import { OrderService } from './order.service';
+import { OrderModel } from '../models/order.model';
 import { RiderAssignmentModel } from '../models/riderAssignment.model';
 import { RiderLocationService } from './riderLocation.service';
 import { OrderStoreService } from './orderStore.service';
@@ -58,33 +59,19 @@ export class RiderAssignmentOrchestrator {
 
     const store = order.storeId as any;
     const storeCoordinates: [number, number] = [
-      store.address.location.coordinates[1],
       store.address.location.coordinates[0],
+      store.address.location.coordinates[1],
     ];
 
     const availableRiders = await RiderLocationService.getAvailableNearbyRiders(storeCoordinates);
-    // TODO: check if rider need complete order data
-    const orderData = await OrderStoreService.getCompleteOrderData(orderId);
 
-    const baseOfferPayload: Omit<RiderOfferPayload, 'riderId'> = {
-      order: orderData.order,
-      orderItems: orderData.orderItems,
-      customer: orderData.customer,
-      storeInfo: {
-        name: store.name,
-        location: {
-          latitude: storeCoordinates[1],
-          longitude: storeCoordinates[0],
-        },
-      },
-      timeout: 30000,
-      timestamp: new Date(),
-    };
+    // Get optimized order data for rider offer
+    const orderData = await this.createRiderOfferPayload(orderId, store);
 
     const riderIds = availableRiders.map((rider) => rider.riderId.toString());
 
     const assignedRiderId = await WebSocketService.offerToRidersSequentially(riderIds, {
-      ...baseOfferPayload,
+      ...orderData,
       riderId: '',
     });
 
@@ -94,6 +81,45 @@ export class RiderAssignmentOrchestrator {
     } else {
       throw new AppError('No riders accepted the assignment', 404);
     }
+  }
+
+  static async createRiderOfferPayload(orderId: string, store: any): Promise<Omit<RiderOfferPayload, 'riderId'>> {
+    const order = (await OrderModel.findById(orderId).lean()) as any;
+    if (!order) {
+      throw new AppError('Order not found', 404);
+    }
+
+    return {
+      order: {
+        _id: order._id.toString(),
+        shipping: {
+          type: order.shipping.type,
+          address: {
+            formatted: {
+              street: order.shipping.address.formatted.street,
+              streetNumber: order.shipping.address.formatted.streetNumber,
+              apartment: order.shipping.address.formatted.apartment || '',
+              floor: order.shipping.address.formatted.floor || '',
+              building: order.shipping.address.formatted.building || '',
+            },
+          },
+          cost: order.shipping.cost,
+          distance: order.shipping.distanceKm,
+          tryOnEnabled: order.shipping.tryOnEnabled,
+        },
+      },
+      storeInfo: {
+        name: store.name,
+        address: {
+          formatted: {
+            street: store.address.formatted.street,
+            streetNumber: store.address.formatted.streetNumber,
+          },
+        },
+      },
+      timeout: 30000,
+      timestamp: new Date(),
+    };
   }
 
   static async handleNoRidersAvailable(orderId: string) {
@@ -177,6 +203,7 @@ export class RiderAssignmentOrchestrator {
     await RiderLocationService.setRiderAvailability(riderId, false);
 
     const orderData = await OrderStoreService.getCompleteOrderData(orderId);
+    console.log(orderData.order.shipping);
     const order = await OrderService.getOrderById(orderId);
     const store = order?.storeId as any;
     const storeCoordinates: [number, number] = [
@@ -195,29 +222,58 @@ export class RiderAssignmentOrchestrator {
         riderId,
       },
     });
-
     // 2. Send confirmation to the accepting rider
     WebSocketService.getIO()
       .to(`rider:${riderId}`)
       .emit('order:assignment_confirmed', {
         type: 'assignment_confirmed',
         data: {
-          orderId,
-          message: 'Order assigned successfully! Head to the store.',
+          order: {
+            orderId,
+            status: orderData?.order.status,
+          },
+          customer: {
+            name: orderData.customer.name,
+            surname: orderData.customer.surname,
+          },
           storeInfo: {
             name: store.name,
-            location: {
-              latitude: storeCoordinates[1],
-              longitude: storeCoordinates[0],
+            address: {
+              formatted: {
+                street: store.address.formatted.street,
+                streetNumber: store.address.formatted.streetNumber,
+              },
+              coordinates: {
+                latitude: storeCoordinates[1],
+                longitude: storeCoordinates[0],
+              },
             },
+          },
+          shipping: {
+            address: {
+              formatted: {
+                street: orderData?.order.shipping.address.formatted.street,
+                streetNumber: orderData?.order.shipping.address.formatted.streetNumber,
+                apartment: orderData?.order.shipping.address.formatted.apartment || '',
+                floor: orderData?.order.shipping.address.formatted.floor || '',
+                building: orderData?.order.shipping.address.formatted.building || '',
+              },
+              coordinates: {
+                latitude: orderData.order.shipping.address.coordinates[1],
+                longitude: orderData?.order.shipping.address.coordinates[0],
+              },
+            },
+            cost: order?.shipping.cost,
+            type: order?.shipping.type,
           },
           timestamp: new Date(),
         },
       });
 
     // 3. Notify store that rider was assigned
+    const storeId = (order?.storeId as any)._id?.toString() || order?.storeId.toString();
     WebSocketService.getIO()
-      .to(`store:${order?.storeId.toString()}`)
+      .to(`store:${storeId}`)
       .emit('order:rider_assigned', {
         type: 'rider_assigned',
         data: {

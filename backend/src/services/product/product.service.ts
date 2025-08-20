@@ -1,3 +1,4 @@
+import { Types } from 'mongoose';
 import { ProductModel } from '../../models/product.model';
 import { AppError } from '../../utils/appError';
 import { CreateProductDTO, UpdateProductDTO, ProductFilterOptions } from '../../types/product.types';
@@ -14,9 +15,23 @@ export class ProductService {
   }
 
   static async getProductById(productId: string) {
-    const product = await ProductModel.findById(productId);
-    this.ensureProductExists(product);
-    return product;
+    const result = await ProductModel.aggregate([
+      { $match: { _id: new Types.ObjectId(productId) } },
+      {
+        $lookup: {
+          from: 'variants',
+          localField: '_id',
+          foreignField: 'productId',
+          as: 'variants'
+        }
+      }
+    ]);
+
+    if (!result || result.length === 0) {
+      throw new AppError('Product not found', 404);
+    }
+
+    return result[0];
   }
 
   static async getProductsByStore(storeSlug: string) {
@@ -46,22 +61,28 @@ export class ProductService {
     const enhancedData = { ...data, storeId, slug };
     const product = await ProductModel.create(enhancedData);
 
-    // Process variant images
-    const images = variants.flatMap((variant) =>
+    // Separate bulk and non-bulk variants
+    const nonBulkVariants = variants.filter(variant => !variant.isBulk);
+    const bulkVariants = variants.filter(variant => variant.isBulk);
+
+    // Process images only for non-bulk variants
+    const images = nonBulkVariants.flatMap((variant) =>
       variant.images.map((img) => ({
         key: img.key,
         contentType: img.contentType || 'image/jpeg',
       })),
     );
 
+    // Get signed URLs only for non-bulk variant images
     const signedUrls = await R2Service.getSignedUrls({
       bucket: R2.BUCKET_PRODUCTS,
       typePrefix: 'products',
       files: images,
     });
 
+    // Process non-bulk variants with signed URLs
     let currentSignedUrlIndex = 0;
-    const updatedVariants = variants.map((variant) => {
+    const processedNonBulkVariants = nonBulkVariants.map((variant) => {
       const imagesWithSignedUrls = variant.images.map((img) => {
         const signedUrlIndex = currentSignedUrlIndex;
         currentSignedUrlIndex++;
@@ -75,7 +96,30 @@ export class ProductService {
       return { ...variant, images: imagesWithSignedUrls };
     });
 
-    await VariantService.createManyVariants(product._id.toString(), updatedVariants);
+    // Process bulk variants - copy image keys from parent variant (same color)
+    const processedBulkVariants = bulkVariants.map((bulkVariant) => {
+      // Find the parent variant with the same color (non-bulk)
+      const parentVariant = processedNonBulkVariants.find(
+        variant => variant.color === bulkVariant.color
+      );
+
+      if (!parentVariant) {
+        throw new AppError(`Parent variant not found for bulk variant with color: ${bulkVariant.color}`, 400);
+      }
+
+      // Copy image keys from parent variant
+      const copiedImages = parentVariant.images.map(parentImg => ({
+        ...parentImg,
+        // Keep the same key to reference the same image in R2
+      }));
+
+      return { ...bulkVariant, images: copiedImages };
+    });
+
+    // Combine all processed variants
+    const allProcessedVariants = [...processedNonBulkVariants, ...processedBulkVariants];
+
+    await VariantService.createManyVariants(product._id.toString(), allProcessedVariants);
 
     return { product, signedUrls };
   }

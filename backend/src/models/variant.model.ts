@@ -17,6 +17,8 @@ const VariantSchema = new Schema<Variant>(
     images: { type: [VariantImageSchema], default: [] },
     price: { type: Number, required: true },
     isDefault: { type: Boolean, default: false },
+    isBulk: { type: Boolean, default: false },
+    sku: { type: String, required: true },
   },
   { timestamps: true },
 );

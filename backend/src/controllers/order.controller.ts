@@ -1,30 +1,33 @@
 import { Request, Response } from 'express';
 import { OrderService } from '../services/order.service';
 import { catchAsync } from '../utils/catchAsync';
-import { CreateOrderDTO, UpdateOrderDTO } from '../types/order.types';
-import { OrderStateManager } from '../services/orderStateManager.service';
+import { UpdateOrderDTO } from '../types/order.types';
 import { TryPeriodManager } from '../services/tryPeriodManager.service';
-import { DeliveryTrackingService } from '../services/deliveryTracking.service';
-import { PaymentSettlementService } from '../services/paymentSettlement.service';
 import { ItemDecision } from '../types/tryPeriod.types';
 
 export class OrderController {
   static getOrders = catchAsync(async (_req: Request, res: Response) => {
     const orders = await OrderService.getOrders();
-    res.status(200).json({ total: orders.length, orders });
+    res.status(200).json({ total: orders.length, data: orders });
+  });
+
+  static getMyOrders = catchAsync(async (req: Request, res: Response) => {
+    const userId = req.user._id;
+    const orders = await OrderService.getMyOrders(userId);
+    res.status(200).json({ total: orders.length, data: orders });
   });
 
   static getOrderById = catchAsync(async (req: Request, res: Response) => {
     const orderId = req.params.id;
     const order = await OrderService.getOrderById(orderId);
-    res.status(200).json({ order });
+    res.status(200).json({ data: order });
   });
 
   static updateOrder = catchAsync(async (req: Request, res: Response) => {
     const data: UpdateOrderDTO = req.body;
     const orderId = req.params.id;
     const order = await OrderService.updateOrder(orderId, data);
-    res.status(200).json({ order });
+    res.status(200).json({ data: order });
   });
 
   static deleteOrder = catchAsync(async (req: Request, res: Response) => {
@@ -43,7 +46,7 @@ export class OrderController {
       res.status(200).json({
         status: 'success',
         message: 'Delivery verified successfully',
-        order: result.order,
+        data: result.order,
       });
     } else {
       res.status(400).json({

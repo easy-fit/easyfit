@@ -8,7 +8,6 @@ export interface CheckoutCartItem {
   quantity: number;
   price: number;
   unit_price: number;
-  metadata: {};
 }
 
 export interface CheckoutSession {
@@ -19,6 +18,7 @@ export interface CheckoutSession {
   shipping: ShippingInfo;
   total: number;
   status: CheckoutStatus;
+  preferenceId?: string;
 }
 
 export interface CreateCheckoutSessionDTO {

@@ -7,15 +7,17 @@ import { DeliveryTrackingService } from '../../services/deliveryTracking.service
 interface LocationUpdate {
   orderId: string;
   riderId: string;
-  latitude: number;
-  longitude: number;
+  location: {
+    latitude: number;
+    longitude: number;
+  };
   timestamp: Date;
 }
 
 interface DeliveryStatusUpdate {
   orderId: string;
   riderId: string;
-  status: 'picked_up' | 'in_transit' | 'delivered';
+  status: 'picked_up' | 'delivered';
   location?: {
     latitude: number;
     longitude: number;
@@ -46,8 +48,8 @@ export class DeliveryTrackingHandler {
       await DeliveryTrackingService.updateDeliveryLocation({
         orderId: update.orderId,
         riderId: update.riderId,
-        latitude: update.latitude,
-        longitude: update.longitude,
+        latitude: update.location.latitude,
+        longitude: update.location.longitude,
       });
 
       socket.emit('delivery:location_confirmed', {
@@ -81,11 +83,6 @@ export class DeliveryTrackingHandler {
       switch (update.status) {
         case 'picked_up':
           await OrderStateManager.markAsPickedUp(update.orderId, update.riderId);
-          break;
-        case 'in_transit':
-          await OrderStateManager.transitionOrderStatus(update.orderId, 'in_transit', {
-            riderId: update.riderId,
-          });
           break;
         case 'delivered':
           socket.emit('info', {

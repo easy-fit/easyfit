@@ -7,31 +7,106 @@ export class ProductFilterService {
   static async getFilteredProducts(options: ProductFilterOptions = {}) {
     const { search, category, minPrice, maxPrice, page = 1, limit = 20, sort = '-createdAt' } = options;
 
-    const filter: any = {
+    const matchFilter: any = {
       status: 'published',
     };
 
     if (category) {
-      filter.category = category;
-    }
-
-    if (minPrice !== undefined || maxPrice !== undefined) {
-      filter.price = {};
-      if (minPrice !== undefined) filter.price.$gte = minPrice;
-      if (maxPrice !== undefined) filter.price.$lte = maxPrice;
+      matchFilter.category = category;
     }
 
     if (search) {
-      filter.$text = { $search: search };
+      matchFilter.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { category: { $regex: search, $options: 'i' } }
+      ];
     }
 
     const skip = (page - 1) * limit;
 
-    const [products, total] = await Promise.all([
-      ProductModel.find(filter).sort(sort).skip(skip).limit(limit),
-      ProductModel.countDocuments(filter),
+    // Build aggregation pipeline
+    const pipeline: any[] = [
+      { $match: matchFilter },
+      {
+        $lookup: {
+          from: 'variants',
+          localField: '_id',
+          foreignField: 'productId',
+          as: 'variants',
+        },
+      },
+      {
+        $lookup: {
+          from: 'stores',
+          localField: 'storeId',
+          foreignField: '_id',
+          as: 'store',
+          pipeline: [
+            {
+              $project: {
+                _id: 1,
+                name: 1,
+                slug: 1,
+              },
+            },
+          ],
+        },
+      },
+      {
+        $unwind: {
+          path: '$store',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $addFields: {
+          minPrice: { $min: '$variants.price' },
+          defaultImage: {
+            $let: {
+              vars: {
+                defaultVariant: {
+                  $arrayElemAt: [
+                    { $filter: { input: '$variants', cond: { $eq: ['$$this.isDefault', true] } } },
+                    0,
+                  ],
+                },
+              },
+              in: {
+                $ifNull: [
+                  { $arrayElemAt: ['$$defaultVariant.images.key', 0] },
+                  { $arrayElemAt: [{ $arrayElemAt: ['$variants.images.key', 0] }, 0] },
+                ],
+              },
+            },
+          },
+          availableColors: {
+            $setUnion: ['$variants.color', []],
+          },
+        },
+      },
+    ];
+
+    // Add price filtering after aggregation calculations
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      const priceFilter: any = {};
+      if (minPrice !== undefined) priceFilter.$gte = minPrice;
+      if (maxPrice !== undefined) priceFilter.$lte = maxPrice;
+      pipeline.push({ $match: { minPrice: priceFilter } });
+    }
+
+    // Add sorting
+    const sortField = sort.startsWith('-') ? sort.substring(1) : sort;
+    const sortOrder = sort.startsWith('-') ? -1 : 1;
+    pipeline.push({ $sort: { [sortField]: sortOrder } });
+
+    // Execute aggregation with pagination
+    const [products, totalResult] = await Promise.all([
+      ProductModel.aggregate([...pipeline, { $skip: skip }, { $limit: limit }]),
+      ProductModel.aggregate([...pipeline, { $count: 'total' }]),
     ]);
 
+    const total = totalResult[0]?.total || 0;
     const pages = Math.ceil(total / limit);
 
     return {
@@ -46,10 +121,74 @@ export class ProductFilterService {
   static async getProductsByStore(storeSlug: string) {
     const storeId = await this.getStoreIdBySlug(storeSlug);
 
-    const products = await ProductModel.find({
-      storeId: storeId,
-      status: 'published',
-    });
+    const products = await ProductModel.aggregate([
+      {
+        $match: {
+          storeId: storeId,
+          status: 'published',
+        },
+      },
+      {
+        $lookup: {
+          from: 'variants',
+          localField: '_id',
+          foreignField: 'productId',
+          as: 'variants',
+        },
+      },
+      {
+        $lookup: {
+          from: 'stores',
+          localField: 'storeId',
+          foreignField: '_id',
+          as: 'store',
+          pipeline: [
+            {
+              $project: {
+                _id: 1,
+                name: 1,
+                slug: 1,
+              },
+            },
+          ],
+        },
+      },
+      {
+        $unwind: {
+          path: '$store',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $addFields: {
+          minPrice: { $min: '$variants.price' },
+          defaultImage: {
+            $let: {
+              vars: {
+                defaultVariant: {
+                  $arrayElemAt: [
+                    { $filter: { input: '$variants', cond: { $eq: ['$$this.isDefault', true] } } },
+                    0,
+                  ],
+                },
+              },
+              in: {
+                $ifNull: [
+                  { $arrayElemAt: ['$$defaultVariant.images.key', 0] },
+                  { $arrayElemAt: [{ $arrayElemAt: ['$variants.images.key', 0] }, 0] },
+                ],
+              },
+            },
+          },
+          availableColors: {
+            $setUnion: ['$variants.color', []],
+          },
+        },
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+    ]);
 
     return products;
   }
