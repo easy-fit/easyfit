@@ -272,8 +272,11 @@ export class CategoryUtils {
         
         if (childGender === 'bebe') {
           tree.ninos.bebe['0-18m'][subcategory] = config;
-        } else {
-          tree.ninos[childGender][ageGroup][subcategory] = config;
+        } else if (childGender === 'nina' || childGender === 'nino') {
+          // Type guard to ensure ageGroup is correct for nina/nino
+          if (ageGroup === '1-6' || ageGroup === '6-14') {
+            tree.ninos[childGender][ageGroup][subcategory] = config;
+          }
         }
       }
     });
