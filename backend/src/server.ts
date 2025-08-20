@@ -11,10 +11,10 @@ const startServer = async () => {
   const PORT = ENV.PORT || 3000;
   const server = http.createServer(app);
 
-  // Initialize WebSocket orchestrator
+  // Initialize WebSocket orchestrator for real-time communication
   const wsOrchestrator = new WebSocketOrchestrator(server);
 
-  // Make WebSocket orchestrator available globally for services
+  // Make WebSocket orchestrator available globally
   (global as any).wsOrchestrator = wsOrchestrator;
 
   server.listen(PORT, () => {
