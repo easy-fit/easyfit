@@ -8,7 +8,7 @@ interface PageStateProps {
   logoUrl?: string;
   storeId: string;
   message: string;
-  userRole?: string;
+  userRole?: 'owner' | 'manager' | 'none';
 }
 
 export function LoadingState({ storeName, logoUrl, storeId, message, userRole }: PageStateProps) {
