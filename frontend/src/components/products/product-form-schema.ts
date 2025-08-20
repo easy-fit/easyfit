@@ -1,19 +1,20 @@
 import { z } from 'zod';
-import { UploadState } from '@/types/upload';
+import type { UploadState } from '@/types/upload';
 
 export const variantSchema = z.object({
   size: z.string().min(1, 'Talle requerido'),
   color: z.string().min(1, 'Color requerido'),
-  stock: z.number().min(1, 'Stock debe ser mayor o igual a 0'),
+  stock: z.number().min(0, 'Stock debe ser mayor o igual a 0'),
   price: z.number().min(500, 'Precio debe ser mayor a 0'),
   sku: z.string().min(1, 'SKU requerido'),
   isDefault: z.boolean(),
+  isBulk: z.boolean().optional(),
   images: z.array(
     z.object({
       file: z.any().optional(),
       preview: z.string(),
       altText: z.string().optional(),
-      uploadState: z.any().optional(), // UploadState from types/upload
+      uploadState: z.custom<UploadState>().optional(),
     }),
   ),
 });
@@ -30,6 +31,10 @@ export const productSchema = z
   })
   .refine((data) => data.variants.some((variant) => variant.isDefault), {
     message: 'Al menos una variante debe ser marcada como predeterminada',
+    path: ['variants'],
+  })
+  .refine((data) => data.variants.some((variant) => variant.size), {
+    message: 'Debe seleccionar al menos un talle en las variantes',
     path: ['variants'],
   });
 

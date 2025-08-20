@@ -1,15 +1,4 @@
-import {
-  ProductCategory,
-  CategoryDisplayInfo,
-  Gender,
-  AgeGroup,
-  HombreCategoryKeys,
-  MujerCategoryKeys,
-  NinaSubcategoryKeys,
-  NinoSubcategoryKeys,
-  NinoAdolescenteSubcategoryKeys,
-  BebeCategoryKeys,
-} from '@/types/product';
+import { ProductCategory, CategoryDisplayInfo, Gender, AgeGroup } from '@/types/product';
 
 // Complete category configuration with display names
 export const CATEGORY_CONFIG: Record<ProductCategory, CategoryDisplayInfo> = {
@@ -797,8 +786,8 @@ export class CategoryUtils {
 
         if (childGender === 'bebe') {
           tree.ninos.bebe['0-18m'][subcategory] = config;
-        } else {
-          tree.ninos[childGender][ageGroup][subcategory] = config;
+        } else if (childGender === 'nina' || childGender === 'nino') {
+          tree.ninos[childGender][ageGroup as '1-6' | '6-14'][subcategory] = config;
         }
       }
     });

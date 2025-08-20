@@ -5,7 +5,7 @@ import * as React from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { productSchema, type ProductFormValues } from '@/components/products/product-form-schema';
-import { getImageUrl } from '@/components/products/product-form-constants';
+import { buildImageUrl } from '@/lib/utils/image-url';
 import type { ProductCategory } from '@/types/product';
 
 export function useEditProductForm(productData?: any) {
@@ -49,7 +49,7 @@ export function useEditProductForm(productData?: any) {
               variant.images?.map((img: any) => ({
                 _id: img._id,
                 key: img.key,
-                preview: getImageUrl(img.key),
+                preview: buildImageUrl(img.key),
                 altText: img.altText || '',
                 order: img.order,
                 contentType: img.contentType,

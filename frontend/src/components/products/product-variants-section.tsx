@@ -8,6 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { VariantCard } from './variant-card';
 import type { ProductFormValues } from './product-form-schema';
 
+interface BulkSizeData {
+  size: string;
+  stock: number;
+  sku: string;
+}
+
 interface ProductVariantsSectionProps {
   control: Control<ProductFormValues>;
   setValue: UseFormSetValue<ProductFormValues>;
@@ -16,6 +22,7 @@ interface ProductVariantsSectionProps {
   watchedCategory: string;
   onAddVariant: () => void;
   onDefaultChange: (index: number, checked: boolean) => void;
+  onBulkAdd: (baseVariantIndex: number, bulkSizes: BulkSizeData[]) => void;
   formErrors?: any;
 }
 
@@ -27,6 +34,7 @@ export function ProductVariantsSection({
   watchedCategory,
   onAddVariant,
   onDefaultChange,
+  onBulkAdd,
   formErrors,
 }: ProductVariantsSectionProps) {
   const { fields, remove } = fieldArray;
@@ -59,6 +67,7 @@ export function ProductVariantsSection({
             watchedCategory={watchedCategory}
             onRemove={() => remove(index)}
             onDefaultChange={(checked) => onDefaultChange(index, checked)}
+            onBulkAdd={onBulkAdd}
           />
         ))}
 

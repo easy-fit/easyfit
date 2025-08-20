@@ -29,26 +29,26 @@ export default function NewProductPage({ params }: { params: Promise<{ id: strin
   const [uploadingImages, setUploadingImages] = React.useState(false);
   const createProductMutation = useCreateProduct();
 
-  const { form, fieldArray, addVariant, handleDefaultChange } = useProductForm();
+  const { form, fieldArray, addVariant, addBulkVariants, handleDefaultChange } = useProductForm();
   const watchedCategory = form.watch('category');
-  
+
   const { uploadImages } = useImageUpload({
     onUploadComplete: (result) => {
       if (result.allSuccessful) {
         toast.success('Imágenes subidas', {
-          description: 'Todas las imágenes se subieron correctamente'
+          description: 'Todas las imágenes se subieron correctamente',
         });
       } else {
         toast.warning('Algunas imágenes fallaron', {
-          description: `${result.failedCount} de ${result.results.length} imágenes no se pudieron subir`
+          description: `${result.failedCount} de ${result.results.length} imágenes no se pudieron subir`,
         });
       }
     },
     onUploadError: (error) => {
       toast.error('Error subiendo imágenes', {
-        description: error
+        description: error,
       });
-    }
+    },
   });
 
   const handleSubmit = async (data: ProductFormValues) => {
@@ -73,6 +73,7 @@ export default function NewProductPage({ params }: { params: Promise<{ id: strin
           stock: variant.stock,
           sku: variant.sku,
           isDefault: variant.isDefault,
+          isBulk: variant.isBulk || false,
           images: variant.images.map((image, index) => ({
             key: generateRandomKey(),
             contentType: image.file?.type || 'image/jpeg',
@@ -86,26 +87,29 @@ export default function NewProductPage({ params }: { params: Promise<{ id: strin
       const response = await createProductMutation.mutateAsync(productPayload);
       const signedUrls = response.data.signedUrls;
 
-      // Collect all image files from variants
+      // Collect image files only from non-bulk variants (bulk variants share same images)
       const allImageFiles: File[] = [];
       data.variants.forEach((variant) => {
-        variant.images.forEach((image) => {
-          if (image.file) {
-            allImageFiles.push(image.file);
-          }
-        });
+        // Only upload images from non-bulk variants
+        if (!variant.isBulk) {
+          variant.images.forEach((image) => {
+            if (image.file) {
+              allImageFiles.push(image.file);
+            }
+          });
+        }
       });
 
       // Upload images if there are any
       if (allImageFiles.length > 0 && signedUrls.length > 0) {
         setUploadingImages(true);
         toast.info('Subiendo imágenes...', {
-          description: `Subiendo ${allImageFiles.length} imágenes`
+          description: `Subiendo ${allImageFiles.length} imágenes`,
         });
 
         try {
           const uploadResult = await uploadImages(allImageFiles, signedUrls);
-          
+
           if (!uploadResult.allSuccessful) {
             toast.warning('Producto creado con advertencias', {
               description: `El producto se creó pero ${uploadResult.failedCount} imágenes no se pudieron subir`,
@@ -134,7 +138,13 @@ export default function NewProductPage({ params }: { params: Promise<{ id: strin
   return (
     <div className="min-h-screen bg-gray-50">
       <SidebarProvider>
-        <StoreSidebar storeName={storeName} logoUrl={logoUrl} active="products" baseHref={`/dashboard/${id}`} userRole={accessType} />
+        <StoreSidebar
+          storeName={storeName}
+          logoUrl={logoUrl}
+          active="products"
+          baseHref={`/dashboard/${id}`}
+          userRole={accessType}
+        />
         <SidebarInset>
           {/* Header */}
           <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-white px-4">
@@ -171,6 +181,7 @@ export default function NewProductPage({ params }: { params: Promise<{ id: strin
                   watchedCategory={watchedCategory}
                   onAddVariant={addVariant}
                   onDefaultChange={handleDefaultChange}
+                  onBulkAdd={addBulkVariants}
                   formErrors={form.formState.errors}
                 />
 
