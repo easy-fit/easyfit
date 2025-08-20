@@ -15,6 +15,7 @@ app.use(
   }),
 );
 
+// route for webhooks
 app.use('/webhooks', webhooks);
 
 app.use(express.json());
