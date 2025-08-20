@@ -5,6 +5,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { productSchema, type ProductFormValues } from '@/components/products/product-form-schema';
 import type { ProductCategory } from '@/types/product';
 
+interface BulkSizeData {
+  size: string;
+  stock: number;
+  sku: string;
+}
+
 export function useProductForm() {
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
@@ -44,6 +50,30 @@ export function useProductForm() {
     });
   };
 
+  const addBulkVariants = (baseVariantIndex: number, bulkSizes: BulkSizeData[]) => {
+    const baseVariant = form.getValues(`variants.${baseVariantIndex}`);
+    
+    if (!baseVariant) {
+      return;
+    }
+
+    // Create new variants based on the base variant but with different sizes and stocks
+    const newVariants = bulkSizes.map((bulkSize) => ({
+      ...baseVariant,
+      size: bulkSize.size,
+      stock: bulkSize.stock,
+      sku: bulkSize.sku,
+      isDefault: false,
+      // Add isBulk flag to identify these variants for backend processing
+      isBulk: true,
+    }));
+
+    // Add all new variants to the form
+    newVariants.forEach((variant) => {
+      fieldArray.append(variant);
+    });
+  };
+
   const handleDefaultChange = (index: number, checked: boolean) => {
     if (checked) {
       // Uncheck all other variants
@@ -60,6 +90,7 @@ export function useProductForm() {
     form,
     fieldArray,
     addVariant,
+    addBulkVariants,
     handleDefaultChange,
   };
 }

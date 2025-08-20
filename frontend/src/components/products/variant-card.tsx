@@ -8,7 +8,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { VariantFormFields } from './variant-form-fields';
 import { VariantImageUpload } from './variant-image-upload';
+import { BulkSizeSelector } from './bulk-size-selector';
 import type { ProductFormValues } from './product-form-schema';
+
+interface BulkSizeData {
+  size: string;
+  stock: number;
+  sku: string;
+}
 
 interface VariantCardProps {
   control: Control<ProductFormValues>;
@@ -19,6 +26,7 @@ interface VariantCardProps {
   watchedCategory: string;
   onRemove: () => void;
   onDefaultChange: (checked: boolean) => void;
+  onBulkAdd: (baseVariantIndex: number, bulkSizes: BulkSizeData[]) => void;
 }
 
 export function VariantCard({
@@ -30,11 +38,17 @@ export function VariantCard({
   watchedCategory,
   onRemove,
   onDefaultChange,
+  onBulkAdd,
 }: VariantCardProps) {
   const variantImages = watch(`variants.${variantIndex}.images`) || [];
+  const currentVariant = watch(`variants.${variantIndex}`);
 
   const handleImagesChange = (images: any[]) => {
     setValue(`variants.${variantIndex}.images`, images);
+  };
+
+  const handleBulkAdd = (bulkSizes: BulkSizeData[]) => {
+    onBulkAdd(variantIndex, bulkSizes);
   };
 
   return (
@@ -73,6 +87,15 @@ export function VariantCard({
 
       {/* Images Section */}
       <VariantImageUpload images={variantImages} onImagesChange={handleImagesChange} variantIndex={variantIndex} />
+
+      {/* Bulk Size Addition */}
+      {currentVariant?.color && currentVariant?.price && currentVariant?.size && (
+        <BulkSizeSelector
+          category={watchedCategory}
+          currentSize={currentVariant.size}
+          onBulkAdd={handleBulkAdd}
+        />
+      )}
     </div>
   );
 }
