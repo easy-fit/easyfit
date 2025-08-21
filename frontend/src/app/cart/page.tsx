@@ -144,6 +144,7 @@ function CartPageContent() {
   const selectedShippingOption = shippingOptions.find((option) => option.id === selectedShipping)!;
   const shippingCost = selectedShippingOption.price;
   const total = subtotal + shippingCost;
+  const totalQuantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   // Loading state
   if (isLoading) {
@@ -206,7 +207,7 @@ function CartPageContent() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-[#20313A] font-helvetica mb-2">Tu Carrito</h1>
           <p className="text-gray-600 font-satoshi">
-            {cartItems.length} {cartItems.length === 1 ? 'producto' : 'productos'} para probar en casa
+            {totalQuantity} {totalQuantity === 1 ? 'producto' : 'productos'} para probar en casa
           </p>
         </div>
 
