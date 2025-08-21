@@ -32,7 +32,7 @@ export class StoreService {
   }
 
   static async getStoreStatus(storeId: string) {
-    const store = await StoreModel.findById(storeId).select('status').lean();
+    const store = await StoreModel.findById(storeId).select('status isOpen').lean();
 
     this.ensureStoreExists(store);
     return store?.status;
@@ -66,8 +66,8 @@ export class StoreService {
 
     if (data.address) {
       const storeCoordinates = {
-        latitude: data.address.location.coordinates[1], // coordinates stored as [lng, lat] in MongoDB
-        longitude: data.address.location.coordinates[0],
+        latitude: data.address.location.coordinates[0], // coordinates stored as [lng, lat] in MongoDB
+        longitude: data.address.location.coordinates[1],
       };
 
       const isValidDeliveryLocation = isDeliveryLocationValid(storeCoordinates);
@@ -95,8 +95,8 @@ export class StoreService {
 
     if (data.address) {
       const storeCoordinates = {
-        latitude: data.address.location.coordinates[1],
-        longitude: data.address.location.coordinates[0],
+        latitude: data.address.location.coordinates[0],
+        longitude: data.address.location.coordinates[1],
       };
 
       const isValidDeliveryLocation = isDeliveryLocationValid(storeCoordinates);
@@ -448,31 +448,32 @@ export class StoreService {
       const processedCategories = categoryBreakdown.reduce((acc, item) => {
         const displayName = CategoryUtils.getCategoryDisplayName(item._id);
         const gender = CategoryUtils.getCategoryGender(item._id);
-        
+
         if (gender) {
           const genderKey = CategoryUtils.getMainCategoryDisplayName(gender);
           acc[genderKey] = (acc[genderKey] || 0) + item.count;
         }
-        
+
         return acc;
       }, {} as Record<string, number>);
 
       // Find most popular category
-      const topCategory = Object.entries(processedCategories)
-        .sort(([, a], [, b]) => (b as number) - (a as number))[0];
+      const topCategory = Object.entries(processedCategories).sort(([, a], [, b]) => (b as number) - (a as number))[0];
 
       return {
         totalProducts,
         publishedProducts,
         draftProducts,
         lowStockCount: lowStockCount + outOfStockCount, // Combine low and out of stock
-        topCategory: topCategory ? {
-          name: topCategory[0],
-          count: topCategory[1],
-        } : {
-          name: 'Sin productos',
-          count: 0,
-        },
+        topCategory: topCategory
+          ? {
+              name: topCategory[0],
+              count: topCategory[1],
+            }
+          : {
+              name: 'Sin productos',
+              count: 0,
+            },
         categoriesBreakdown: processedCategories,
         stockBreakdown: {
           inStock: stockMap.get('in-stock') || 0,
@@ -504,18 +505,18 @@ export class StoreService {
     try {
       // Build match query
       const matchQuery: any = { storeId: storeObjectId };
-      
+
       if (search) {
         matchQuery.$or = [
           { title: { $regex: search, $options: 'i' } },
           { description: { $regex: search, $options: 'i' } },
         ];
       }
-      
+
       if (category && category !== 'all') {
         matchQuery.category = { $regex: `^${category}`, $options: 'i' };
       }
-      
+
       if (status && status !== 'all') {
         matchQuery.status = status;
       }

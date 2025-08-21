@@ -121,11 +121,18 @@ export function StoreBasicInfo({ form, store }: StoreBasicInfoProps) {
                 <FormControl>
                   <Switch
                     checked={field.value}
-                    onCheckedChange={field.onChange}
-                    className="data-[state=checked]:bg-[#9EE493] data-[state=unchecked]:bg-gray-200"
+                    disabled
+                    className="data-[state=checked]:bg-[#9EE493] data-[state=unchecked]:bg-gray-200 opacity-75"
                   />
                 </FormControl>
-                <FormLabel className="text-sm font-medium text-[#20313A]">Tienda Abierta</FormLabel>
+                <div className="flex flex-col">
+                  <FormLabel className="text-sm font-medium text-[#20313A]">
+                    Tienda Abierta (Automático)
+                  </FormLabel>
+                  <p className="text-xs text-gray-600">
+                    El estado se actualiza automáticamente según los horarios de retiro
+                  </p>
+                </div>
               </FormItem>
             )}
           />

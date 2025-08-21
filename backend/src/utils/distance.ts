@@ -50,7 +50,7 @@ const isPointInPolygon = (point: [number, number], polygon: [number, number][]):
 };
 
 export const isDeliveryLocationValid = (coordinates: Coordinates): boolean => {
-  const point: [number, number] = [coordinates.latitude, coordinates.longitude];
+  const point: [number, number] = [coordinates.longitude, coordinates.latitude];
 
   const deliveryZone = allowedDeliveryZones.features[0];
   if (!deliveryZone || deliveryZone.geometry.type !== 'Polygon') {

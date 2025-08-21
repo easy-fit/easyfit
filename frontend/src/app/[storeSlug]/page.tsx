@@ -104,14 +104,9 @@ export default function StorePage() {
   };
 
   const isStoreOpen = () => {
-    const now = new Date();
-    const currentDay = now.toLocaleDateString('en-US', { weekday: 'short' }).toLowerCase();
-    const currentTime = now.toTimeString().slice(0, 5);
-
-    const todayHours = store.pickupHours.find((h) => h.day === currentDay);
-    if (!todayHours || todayHours.open === '00:00') return false;
-
-    return currentTime >= todayHours.open && currentTime <= todayHours.close;
+    // Use the isOpen field from database which is automatically managed by the backend cron job
+    // This ensures consistency with backend business logic and checkout validation
+    return store.isOpen;
   };
 
   const handleShare = async () => {
@@ -187,7 +182,7 @@ export default function StorePage() {
                 <h1 className="text-3xl font-bold text-[#20313A] font-helvetica">{store.name}</h1>
                 <Badge
                   variant={isStoreOpen() ? 'default' : 'secondary'}
-                  className={isStoreOpen() ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}
+                  className={isStoreOpen() ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-600'}
                 >
                   {isStoreOpen() ? 'Abierto' : 'Cerrado'}
                 </Badge>
