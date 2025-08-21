@@ -529,105 +529,126 @@ export class StoreService {
         sortQuery[sort] = 1;
       }
 
-      // Calculate skip for pagination
-      const skip = (page - 1) * limit;
-
-      const [products, totalCount] = await Promise.all([
-        ProductModel.aggregate([
-          { $match: matchQuery },
-          {
-            $lookup: {
-              from: 'variants',
-              localField: '_id',
-              foreignField: 'productId',
-              as: 'variants',
+      // Build aggregation pipeline
+      const pipeline: any[] = [
+        { $match: matchQuery },
+        {
+          $lookup: {
+            from: 'variants',
+            localField: '_id',
+            foreignField: 'productId',
+            as: 'variants',
+          },
+        },
+        {
+          $addFields: {
+            variantCount: { $size: '$variants' },
+            totalStock: { 
+              $cond: {
+                if: { $eq: [{ $size: '$variants' }, 0] },
+                then: 0,
+                else: { $sum: '$variants.stock' }
+              }
+            },
+            minPrice: { $min: '$variants.price' },
+            maxPrice: { $max: '$variants.price' },
+            defaultVariant: {
+              $arrayElemAt: [
+                {
+                  $filter: {
+                    input: '$variants',
+                    cond: { $eq: ['$$this.isDefault', true] },
+                  },
+                },
+                0,
+              ],
             },
           },
-          {
-            $addFields: {
-              variantCount: { $size: '$variants' },
-              totalStock: { $sum: '$variants.stock' },
-              minPrice: { $min: '$variants.price' },
-              maxPrice: { $max: '$variants.price' },
-              defaultVariant: {
-                $arrayElemAt: [
+        },
+        {
+          $addFields: {
+            stockStatus: {
+              $switch: {
+                branches: [
                   {
-                    $filter: {
-                      input: '$variants',
-                      cond: { $eq: ['$$this.isDefault', true] },
-                    },
+                    case: { $or: [{ $eq: ['$totalStock', 0] }, { $eq: ['$totalStock', null] }] },
+                    then: 'out-of-stock'
                   },
-                  0,
+                  {
+                    case: { $and: [{ $gt: ['$totalStock', 0] }, { $lte: ['$totalStock', 10] }] },
+                    then: 'low-stock'
+                  }
                 ],
-              },
-              stockStatus: {
-                $cond: {
-                  if: { $eq: ['$totalStock', 0] },
-                  then: 'out-of-stock',
-                  else: {
-                    $cond: {
-                      if: { $and: [{ $gt: ['$totalStock', 0] }, { $lte: ['$totalStock', 10] }] },
-                      then: 'low-stock',
-                      else: 'in-stock',
+                default: 'in-stock'
+              }
+            },
+          },
+        },
+        {
+          $addFields: {
+            defaultImageKey: {
+              $let: {
+                vars: {
+                  firstVariant: { $arrayElemAt: ['$variants', 0] },
+                },
+                in: {
+                  $cond: {
+                    if: {
+                      $and: [
+                        { $ne: ['$$firstVariant', null] },
+                        { $isArray: '$$firstVariant.images' },
+                        { $gt: [{ $size: '$$firstVariant.images' }, 0] },
+                      ],
                     },
+                    then: { $arrayElemAt: ['$$firstVariant.images.key', 0] },
+                    else: null,
                   },
                 },
               },
             },
           },
-          {
-            $addFields: {
-              defaultImageKey: {
-                $let: {
-                  vars: {
-                    firstVariant: { $arrayElemAt: ['$variants', 0] },
-                  },
-                  in: {
-                    $cond: {
-                      if: {
-                        $and: [
-                          { $ne: ['$$firstVariant', null] },
-                          { $isArray: '$$firstVariant.images' },
-                          { $gt: [{ $size: '$$firstVariant.images' }, 0] },
-                        ],
-                      },
-                      then: { $arrayElemAt: ['$$firstVariant.images.key', 0] },
-                      else: null,
-                    },
-                  },
-                },
-              },
-            },
-          },
-          {
-            $project: {
-              _id: 1,
-              title: 1,
-              category: 1,
-              status: 1,
-              createdAt: 1,
-              variantCount: 1,
-              totalStock: 1,
-              stockStatus: 1,
-              minPrice: 1,
-              maxPrice: 1,
-              defaultImageKey: 1,
-              slug: 1,
-            },
-          },
-          { $sort: sortQuery },
-          { $skip: skip },
-          { $limit: limit },
-        ]),
+        },
+      ];
 
-        ProductModel.countDocuments(matchQuery),
+      // Add stock status filter before pagination if specified
+      if (stockStatus && stockStatus !== 'all') {
+        pipeline.push({ $match: { stockStatus: stockStatus } });
+      }
+
+      pipeline.push(
+        {
+          $project: {
+            _id: 1,
+            title: 1,
+            category: 1,
+            status: 1,
+            createdAt: 1,
+            variantCount: 1,
+            totalStock: 1,
+            stockStatus: 1,
+            minPrice: 1,
+            maxPrice: 1,
+            defaultImageKey: 1,
+            slug: 1,
+          },
+        },
+        { $sort: sortQuery },
+      );
+
+      // Calculate total count before pagination
+      const countPipeline = [...pipeline, { $count: 'total' }];
+      
+      // Add pagination
+      const skip = (page - 1) * limit;
+      pipeline.push({ $skip: skip }, { $limit: limit });
+
+      const [products, countResult] = await Promise.all([
+        ProductModel.aggregate(pipeline),
+        ProductModel.aggregate(countPipeline),
       ]);
 
-      // Filter by stock status if specified
-      let filteredProducts = products;
-      if (stockStatus && stockStatus !== 'all') {
-        filteredProducts = products.filter((product) => product.stockStatus === stockStatus);
-      }
+      const totalCount = countResult.length > 0 ? countResult[0].total : 0;
+      const filteredProducts = products;
 
       // Format products for frontend
       const formattedProducts = filteredProducts.map((product) => ({
