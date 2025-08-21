@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Upload, X, ImageIcon } from 'lucide-react';
+import { Upload, X, ImageIcon, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,17 +18,48 @@ interface VariantImage {
 interface VariantImageUploadProps {
   images: VariantImage[];
   variantIndex: number;
+  productId: string;
+  variantId?: string;
   onImageUpload: (variantIndex: number, files: FileList | null) => void;
   onImageRemove: (variantIndex: number, imageIndex: number) => void;
+  onDeleteImage?: (variantId: string, imageKey: string) => Promise<void>;
+  isDeletingImage?: boolean;
 }
 
 export function VariantImageUpload({ 
   images, 
   variantIndex, 
+  productId,
+  variantId,
   onImageUpload, 
-  onImageRemove 
+  onImageRemove,
+  onDeleteImage,
+  isDeletingImage = false
 }: VariantImageUploadProps) {
   const [dragActive, setDragActive] = useState(false);
+  const [deletingImageIndex, setDeletingImageIndex] = useState<number | null>(null);
+
+  const handleImageDelete = async (imageIndex: number) => {
+    const image = images[imageIndex];
+    const isExistingImage = image.key && !image.isNew;
+    
+    if (isExistingImage && variantId) {
+      // Show confirmation for existing images
+      if (window.confirm('¿Estás seguro de eliminar esta imagen? Esta acción no se puede deshacer.')) {
+        try {
+          setDeletingImageIndex(imageIndex);
+          await onDeleteImage?.(variantId, image.key!);
+        } catch (error) {
+          console.error('Error deleting image:', error);
+        } finally {
+          setDeletingImageIndex(null);
+        }
+      }
+    } else {
+      // For new images, just remove from form
+      onImageRemove(variantIndex, imageIndex);
+    }
+  };
 
   const handleDragEnter = (e: React.DragEvent) => {
     e.preventDefault();
@@ -113,10 +144,15 @@ export function VariantImageUpload({
               type="button"
               variant="destructive"
               size="sm"
-              onClick={() => onImageRemove(variantIndex, imageIndex)}
-              className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={() => handleImageDelete(imageIndex)}
+              disabled={deletingImageIndex === imageIndex}
+              className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
             >
-              <X className="h-3 w-3" />
+              {deletingImageIndex === imageIndex ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <X className="h-3 w-3" />
+              )}
             </Button>
           </div>
         ))}

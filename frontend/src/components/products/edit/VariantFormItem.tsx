@@ -1,5 +1,5 @@
 import { Control } from 'react-hook-form';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -15,10 +15,15 @@ interface VariantFormItemProps {
   index: number;
   canRemove: boolean;
   category?: string;
+  productId: string;
   onRemove: (index: number) => void;
+  onDeleteVariant?: (variantId: string) => Promise<void>;
   onDefaultChange: (index: number, checked: boolean) => void;
   onImageUpload: (variantIndex: number, files: FileList | null) => void;
   onImageRemove: (variantIndex: number, imageIndex: number) => void;
+  onDeleteImage?: (variantId: string, imageKey: string) => Promise<void>;
+  isDeleting?: boolean;
+  isDeletingImage?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   watchVariant: any;
 }
@@ -28,12 +33,34 @@ export function VariantFormItem({
   index,
   canRemove,
   category,
+  productId,
   onRemove,
+  onDeleteVariant,
   onDefaultChange,
   onImageUpload,
   onImageRemove,
+  onDeleteImage,
+  isDeleting = false,
+  isDeletingImage = false,
   watchVariant,
 }: VariantFormItemProps) {
+  const handleDelete = async () => {
+    const isExistingVariant = watchVariant._id;
+    
+    if (isExistingVariant) {
+      // Show confirmation for existing variants
+      if (window.confirm('¿Estás seguro de eliminar esta variante? Esta acción no se puede deshacer.')) {
+        try {
+          await onDeleteVariant?.(watchVariant._id);
+        } catch (error) {
+          console.error('Error deleting variant:', error);
+        }
+      }
+    } else {
+      // For new variants, just remove from form
+      onRemove(index);
+    }
+  };
   return (
     <div className="border rounded-lg p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -66,10 +93,15 @@ export function VariantFormItem({
               type="button"
               variant="ghost"
               size="sm"
-              onClick={() => onRemove(index)}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="text-red-600 hover:text-red-700 hover:bg-red-50 disabled:opacity-50"
             >
-              <Trash2 className="h-4 w-4" />
+              {isDeleting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4" />
+              )}
             </Button>
           )}
         </div>
@@ -149,8 +181,12 @@ export function VariantFormItem({
       <VariantImageUpload
         images={watchVariant.images || []}
         variantIndex={index}
+        productId={productId}
+        variantId={watchVariant._id}
         onImageUpload={onImageUpload}
         onImageRemove={onImageRemove}
+        onDeleteImage={onDeleteImage}
+        isDeletingImage={isDeletingImage}
       />
     </div>
   );

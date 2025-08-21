@@ -17,9 +17,9 @@ export class CheckoutPaymentService {
     }
 
     await OrderService.ensureNoActiveOrder(session.userId.toString());
-    const storeStatus = await StoreService.getStoreStatus(session.storeId.toString());
-    if (storeStatus !== 'active') {
-      throw new AppError('Store is not active', 400);
+    const storeStatus: any = await StoreService.getStoreStatus(session.storeId.toString());
+    if (storeStatus?.status !== 'active' || storeStatus?.isOpen === false) {
+      throw new AppError('Store is not active or closed', 400);
     }
     try {
       const isStockAvailable = await VariantService.checkStockAvailableForItems(session.cartItems);

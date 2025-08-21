@@ -2,7 +2,7 @@ import { Types } from 'mongoose';
 import { RiderAssignmentModel } from '../models/riderAssignment.model';
 import { RiderLocationModel } from '../models/riderLocation.model';
 import { UserModel } from '../models/user.model';
-import { WeeklySummaryDTO, RecentActivityDTO, RecentActivityItemDTO } from '../types/rider.types';
+import { WeeklySummaryDTO, RecentActivityDTO, RecentActivityItemDTO, ActiveAssignmentDTO } from '../types/rider.types';
 import { AppError } from '../utils/appError';
 
 export class RiderService {
@@ -210,7 +210,7 @@ export class RiderService {
     }
   }
 
-  static async getActiveAssignments(riderId: string) {
+  static async getActiveAssignments(riderId: string): Promise<ActiveAssignmentDTO> {
     try {
       const riderLocation = await RiderLocationModel.findOne({ riderId }).lean();
 
@@ -219,7 +219,17 @@ export class RiderService {
       })
         .populate({
           path: 'orderId',
-          select: 'status shipping',
+          select: 'status shipping userId storeId',
+          populate: [
+            {
+              path: 'userId',
+              select: 'name surname',
+            },
+            {
+              path: 'storeId',
+              select: 'name address',
+            },
+          ],
         })
         .sort({ createdAt: -1 })
         .lean()
@@ -238,10 +248,33 @@ export class RiderService {
           'returned_damaged',
           'cancelled',
         ].includes(order.status);
-
         if (isOrderActive) {
           inService = true;
-          activeAssignment = lastAssignment;
+
+          // Extract customer and store information
+          const customer = order.userId || {};
+          const store = order.storeId || {};
+
+          activeAssignment = {
+            _id: lastAssignment._id.toString(),
+            orderId: order._id.toString(),
+            status: lastAssignment.status,
+            createdAt: (lastAssignment as any).createdAt,
+            updatedAt: (lastAssignment as any).updatedAt,
+            assignedAt: lastAssignment.assignedAt,
+            pickedUpAt: lastAssignment.pickedUpAt,
+            deliveredAt: lastAssignment.deliveredAt,
+            customer: {
+              name: customer.name || '',
+              surname: customer.surname || '',
+            },
+            store: {
+              name: store.name || '',
+              address: store.address || null,
+            },
+            shipping: order.shipping || null,
+            orderStatus: order.status || '',
+          };
         }
       }
 

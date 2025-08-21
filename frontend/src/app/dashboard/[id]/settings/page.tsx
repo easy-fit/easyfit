@@ -64,7 +64,7 @@ export default function StoreSettingsPage() {
         tags: data.tags,
         pickupHours: data.pickupHours,
         customization: data.customization,
-        isOpen: data.isOpen,
+        // isOpen is now automatically managed by backend cron job based on pickup hours
         address: data.address,
       };
 

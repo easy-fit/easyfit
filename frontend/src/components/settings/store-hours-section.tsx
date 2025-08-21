@@ -27,41 +27,39 @@ export function StoreHoursSection({ form }: StoreHoursSectionProps) {
           </div>
           Horarios de Atención
         </CardTitle>
-        <CardDescription className="text-gray-600">
-          Configura los horarios de retiro en tu tienda
-        </CardDescription>
+        <CardDescription className="text-gray-600">Configura los horarios de retiro en tu tienda</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {pickupHours.map((hours, index) => (
             <div key={hours.day} className="p-4 bg-gray-50 rounded-lg border border-gray-100">
               <div className="space-y-3">
-                <Label className="text-sm font-semibold text-[#20313A] block">
-                  {dayLabels[hours.day]}
-                </Label>
+                <Label className="text-sm font-semibold text-[#20313A] block">{dayLabels[hours.day]}</Label>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-gray-500 w-12">Abre:</span>
-                    <div className="relative flex-1">
-                      <Input
-                        type="time"
-                        value={hours.open}
-                        onChange={(e) => updateHour(index, 'open', e.target.value)}
-                        className="h-9 text-sm border-gray-200 focus:border-[#9EE493] focus:ring-[#9EE493] pr-8"
-                      />
-                      <Clock className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                    <div className="flex-1">
+                      <div className="relative">
+                        <input
+                          type="time"
+                          value={hours.open}
+                          onChange={(e) => updateHour(index, 'open', e.target.value)}
+                          className="flex h-9 w-full rounded-md border border-gray-200 bg-transparent px-3 py-1 text-sm shadow-xs transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#9EE493] focus-visible:border-[#9EE493] disabled:cursor-not-allowed disabled:opacity-50"
+                        />
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-gray-500 w-12">Cierra:</span>
-                    <div className="relative flex-1">
-                      <Input
-                        type="time"
-                        value={hours.close}
-                        onChange={(e) => updateHour(index, 'close', e.target.value)}
-                        className="h-9 text-sm border-gray-200 focus:border-[#9EE493] focus:ring-[#9EE493] pr-8"
-                      />
-                      <Clock className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                    <div className="flex-1">
+                      <div className="relative">
+                        <input
+                          type="time"
+                          value={hours.close}
+                          onChange={(e) => updateHour(index, 'close', e.target.value)}
+                          className="flex h-9 w-full rounded-md border border-gray-200 bg-transparent px-3 py-1 text-sm shadow-xs transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#9EE493] focus-visible:border-[#9EE493] disabled:cursor-not-allowed disabled:opacity-50"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>

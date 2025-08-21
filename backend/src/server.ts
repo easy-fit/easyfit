@@ -4,6 +4,7 @@ import { connectDB } from './config/db';
 import { ENV } from './config/env';
 import http from 'http';
 import { WebSocketOrchestrator } from './sockets/websocket.orchestrator';
+import { StoreStatusCronService } from './services/cron/storeStatusCron.service';
 
 const startServer = async () => {
   await connectDB();
@@ -20,8 +21,24 @@ const startServer = async () => {
   server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
     console.log(`WebSocket server initialized`);
+    
+    // Start the store status cron job
+    StoreStatusCronService.start();
   });
 };
+
+// Graceful shutdown handling
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully');
+  StoreStatusCronService.stop();
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT received, shutting down gracefully');
+  StoreStatusCronService.stop();
+  process.exit(0);
+});
 
 startServer().catch((err) => {
   console.error('Failed to start server:', err);
