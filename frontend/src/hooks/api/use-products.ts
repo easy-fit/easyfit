@@ -115,4 +115,17 @@ export const useUpdateVariant = (productId: string, variantId: string) => {
   });
 };
 
+export const useDeleteVariant = (productId: string, variantId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.products.deleteVariant(productId, variantId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products', productId] });
+      queryClient.setQueryData(['products', productId, 'variants'], (oldVariants: any) =>
+        oldVariants.filter((v: any) => v._id !== variantId),
+      );
+    },
+  });
+};
+
 export type { ProductFilterOptions };
