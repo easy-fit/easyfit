@@ -49,8 +49,24 @@ export default function VerifyEmailPage() {
   };
 
   const handleCodeChange = (index: number, value: string) => {
-    if (value.length > 1) return; // Only allow single digit
+    if (value.length > 1) {
+      // Handle paste event
+      const pastedCode = value.slice(0, 6).split('');
+      const newCode = [...code];
+      pastedCode.forEach((digit, i) => {
+        if (index + i < 6) {
+          newCode[index + i] = digit;
+        }
+      });
+      setCode(newCode);
 
+      // Auto-focus the next empty input
+      const nextIndex = Math.min(index + pastedCode.length, 5);
+      inputRefs.current[nextIndex]?.focus();
+      return;
+    }
+
+    // Handle single digit input
     const newCode = [...code];
     newCode[index] = value;
 
@@ -59,6 +75,23 @@ export default function VerifyEmailPage() {
     // Auto-focus next input
     if (value && index < 5) {
       inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const pastedData = e.clipboardData.getData('Text').slice(0, 6).replace(/\D/g, '');
+    if (pastedData.length > 0) {
+      const newCode = [...code];
+      pastedData.split('').forEach((digit, i) => {
+        if (i < 6) {
+          newCode[i] = digit;
+        }
+      });
+      setCode(newCode);
+
+      // Auto-focus the next empty input
+      const nextIndex = Math.min(pastedData.length, 5);
+      inputRefs.current[nextIndex]?.focus();
     }
   };
 
@@ -75,7 +108,7 @@ export default function VerifyEmailPage() {
     try {
       await resendCodeMutation.mutateAsync();
       toast.success('Código reenviado exitosamente', {
-        description: 'Revisa tu bandeja de entrada'
+        description: 'Revisa tu bandeja de entrada',
       });
       setCode(['', '', '', '', '', '']); // Clear current code
       inputRefs.current[0]?.focus();
@@ -127,6 +160,7 @@ export default function VerifyEmailPage() {
               value={digit}
               onChange={(e) => handleCodeChange(index, e.target.value.replace(/\D/g, ''))}
               onKeyDown={(e) => handleKeyDown(index, e)}
+              onPaste={handlePaste} // Add this line
               className="w-14 h-14 text-center text-2xl font-mono border-2 border-gray-300 focus:border-[#9EE493] focus:ring-[#9EE493] rounded-lg"
               disabled={isVerifying}
             />
