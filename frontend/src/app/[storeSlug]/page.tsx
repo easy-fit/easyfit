@@ -207,9 +207,9 @@ export default function StorePage() {
               </div>
 
               {/* Tags */}
-              <div className="flex gap-2 mb-4">
+              <div className="flex flex-wrap gap-2 mb-4 overflow-hidden">
                 {store.tags.map((tag) => (
-                  <Badge key={tag} variant="outline" className="text-xs">
+                  <Badge key={tag} variant="outline" className="text-xs flex-shrink-0">
                     {tag}
                   </Badge>
                 ))}
@@ -231,27 +231,33 @@ export default function StorePage() {
           <div className="lg:col-span-3">
             {/* Products Section */}
             <div className="mb-8">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-[#20313A] font-helvetica">Productos ({products.length})</h2>
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-[#20313A] font-helvetica mb-4">
+                  Productos <span className="text-gray-500">({products.length})</span>
+                </h2>
 
                 {/* Category Filter */}
                 {categories.length > 2 && (
-                  <div className="flex gap-2">
-                    {categories.map((category: string) => (
-                      <Button
-                        key={category}
-                        variant={selectedCategory === category ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setSelectedCategory(category)}
-                        className={
-                          selectedCategory === category
-                            ? 'bg-[#9EE493] text-[#20313A] hover:bg-[#8BD480]'
-                            : 'border-gray-300 text-gray-600 hover:bg-gray-50 bg-transparent'
-                        }
-                      >
-                        {category === 'all' ? 'Todos' : category}
-                      </Button>
-                    ))}
+                  <div className="relative">
+                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                      {categories.map((category: string) => (
+                        <Button
+                          key={category}
+                          variant={selectedCategory === category ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setSelectedCategory(category)}
+                          className={`flex-shrink-0 whitespace-nowrap ${
+                            selectedCategory === category
+                              ? 'bg-[#9EE493] text-[#20313A] hover:bg-[#8BD480]'
+                              : 'border-gray-300 text-gray-600 hover:bg-gray-50 bg-transparent'
+                          }`}
+                        >
+                          {category === 'all' ? 'Todos' : category}
+                        </Button>
+                      ))}
+                    </div>
+                    {/* Fade effect for scroll indication */}
+                    <div className="absolute right-0 top-0 bottom-2 w-8 bg-gradient-to-l from-[#F7F7F7] to-transparent pointer-events-none"></div>
                   </div>
                 )}
               </div>
