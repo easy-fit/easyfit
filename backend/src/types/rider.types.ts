@@ -22,3 +22,34 @@ export interface RiderDashboardStatsDTO {
   weeklySummary: WeeklySummaryDTO;
   recentActivity: RecentActivityDTO;
 }
+
+export interface ActiveAssignmentCustomerDTO {
+  name: string;
+  surname: string;
+}
+
+export interface ActiveAssignmentStoreDTO {
+  name: string;
+  address: any; // Store address object
+}
+
+export interface ActiveAssignmentDTO {
+  riderId: string;
+  isAvailable: boolean;
+  inService: boolean;
+  activeAssignment: {
+    _id: string;
+    orderId: string;
+    status: string;
+    createdAt: Date;
+    updatedAt: Date;
+    assignedAt?: Date;
+    pickedUpAt?: Date;
+    deliveredAt?: Date;
+    customer: ActiveAssignmentCustomerDTO;
+    store: ActiveAssignmentStoreDTO;
+    shipping: any; // Shipping object
+    orderStatus: string;
+  } | null;
+  currentStatus: string | null;
+}
