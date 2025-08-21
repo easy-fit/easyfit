@@ -5,8 +5,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { productSchema, type ProductFormValues } from '@/components/products/edit/schemas';
 import { buildImageUrl } from '@/lib/utils/image-url';
 import type { ProductCategory } from '@/types/product';
+import { api } from '@/lib/api/client';
 
-export function useEditProductForm(productData?: any) {
+export function useEditProductForm(productData?: any, productId?: string) {
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     defaultValues: {
@@ -22,6 +23,13 @@ export function useEditProductForm(productData?: any) {
     control: form.control,
     name: 'variants',
   });
+
+  // Deletion states
+  const [deletingVariantId, setDeletingVariantId] = React.useState<string | null>(null);
+  const [deletingImageKey, setDeletingImageKey] = React.useState<string | null>(null);
+
+  // Initialize deletion mutations - these will be created when needed
+  // We can't call these hooks conditionally, so we'll create factory functions instead
 
   // Load product data into form when available
   React.useEffect(() => {
@@ -111,6 +119,51 @@ export function useEditProductForm(productData?: any) {
     form.setValue(`variants.${variantIndex}.images`, updatedImages);
   };
 
+  // Database deletion handlers
+  const handleDeleteVariant = React.useCallback(async (variantId: string) => {
+    if (!productId) return;
+    
+    setDeletingVariantId(variantId);
+    try {
+      await api.products.deleteVariant(productId, variantId);
+      
+      // Remove from form state after successful deletion
+      const currentVariants = form.getValues('variants');
+      const variantIndex = currentVariants.findIndex((v: any) => v._id === variantId);
+      if (variantIndex !== -1) {
+        remove(variantIndex);
+      }
+    } catch (error) {
+      console.error('Error deleting variant:', error);
+      throw error;
+    } finally {
+      setDeletingVariantId(null);
+    }
+  }, [productId, form, remove]);
+
+  const handleDeleteImage = React.useCallback(async (variantId: string, imageKey: string) => {
+    if (!productId) return;
+    
+    setDeletingImageKey(imageKey);
+    try {
+      await api.products.deleteImageFromProduct(productId, variantId, imageKey);
+      
+      // Remove from form state after successful deletion
+      const currentVariants = form.getValues('variants');
+      const variantIndex = currentVariants.findIndex((v: any) => v._id === variantId);
+      if (variantIndex !== -1) {
+        const currentImages = form.getValues(`variants.${variantIndex}.images`) || [];
+        const updatedImages = currentImages.filter((img: any) => img.key !== imageKey);
+        form.setValue(`variants.${variantIndex}.images`, updatedImages);
+      }
+    } catch (error) {
+      console.error('Error deleting image:', error);
+      throw error;
+    } finally {
+      setDeletingImageKey(null);
+    }
+  }, [productId, form]);
+
   return {
     form,
     fields,
@@ -119,5 +172,9 @@ export function useEditProductForm(productData?: any) {
     handleDefaultChange,
     handleImageUpload,
     removeImage,
+    handleDeleteVariant,
+    handleDeleteImage,
+    isDeleting: (variantId: string) => deletingVariantId === variantId,
+    isDeletingImage: (imageKey: string) => deletingImageKey === imageKey,
   };
 }

@@ -50,12 +50,12 @@ export function StoreSidebar({
   const items = React.useMemo(() => {
     // When you’re ready, replace # with `${baseHref}/subroute`
     let filteredItems = baseItems;
-    
+
     // Hide managers page for managers themselves
     if (userRole === 'manager') {
-      filteredItems = baseItems.filter(item => item.key !== 'managers');
+      filteredItems = baseItems.filter((item) => item.key !== 'managers');
     }
-    
+
     return filteredItems.map((i) => ({ ...i, url: i.url === '#' ? i.url : `${baseHref}${i.url}` }));
   }, [baseHref, userRole]);
 

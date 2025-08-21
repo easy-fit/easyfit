@@ -144,6 +144,7 @@ function CartPageContent() {
   const selectedShippingOption = shippingOptions.find((option) => option.id === selectedShipping)!;
   const shippingCost = selectedShippingOption.price;
   const total = subtotal + shippingCost;
+  const totalQuantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   // Loading state
   if (isLoading) {
@@ -206,7 +207,7 @@ function CartPageContent() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-[#20313A] font-helvetica mb-2">Tu Carrito</h1>
           <p className="text-gray-600 font-satoshi">
-            {cartItems.length} {cartItems.length === 1 ? 'producto' : 'productos'} para probar en casa
+            {totalQuantity} {totalQuantity === 1 ? 'producto' : 'productos'} para probar en casa
           </p>
         </div>
 
@@ -235,35 +236,35 @@ function CartPageContent() {
                     key={item._id}
                     className="overflow-hidden shadow-sm hover:shadow-md transition-shadow rounded-lg"
                   >
-                    <CardContent className="p-6">
-                      <div className="flex gap-4">
+                    <CardContent className="p-4 sm:p-6">
+                      <div className="flex gap-3 sm:gap-4">
                         {/* Product Image */}
-                        <div className="relative w-24 h-24 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden">
+                        <div className="relative w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden">
                           <Image
                             src={buildImageUrl(imageUrl) || '/placeholder.svg'}
                             alt={primaryImage?.altText || item.variantId.productId.title}
                             fill
                             className="object-cover"
-                            sizes="96px"
+                            sizes="(max-width: 640px) 80px, 96px"
                           />
                         </div>
 
                         {/* Product Info */}
-                        <div className="flex-1 space-y-4">
+                        <div className="flex-1 min-w-0 space-y-3 sm:space-y-4">
                           {/* Header */}
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <h3 className="font-bold text-[#20313A] text-lg font-helvetica mb-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-bold text-[#20313A] text-base sm:text-lg font-helvetica mb-1 truncate">
                                 {item.variantId.productId.title}
                               </h3>
-                              <div className="flex items-center gap-3 text-sm text-gray-600">
+                              <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-sm text-gray-600">
                                 <span>
                                   Talle <strong className="text-[#20313A]">{item.variantId.size}</strong>
                                 </span>
                                 <div className="flex items-center gap-1">
                                   <span>Color</span>
                                   <div
-                                    className="w-4 h-4 rounded-full border border-gray-300"
+                                    className="w-4 h-4 rounded-full border border-gray-300 flex-shrink-0"
                                     style={{ backgroundColor: item.variantId.color }}
                                   />
                                 </div>
@@ -274,48 +275,50 @@ function CartPageContent() {
                               size="icon"
                               onClick={() => handleRemoveItem(item._id)}
                               disabled={deleteCartItemMutation.isPending}
-                              className="text-gray-400 hover:text-red-500 hover:bg-red-50"
+                              className="text-gray-400 hover:text-red-500 hover:bg-red-50 flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                             </Button>
                           </div>
 
-                          {/* Quantity and Price */}
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <span className="text-sm text-gray-600">Cantidad:</span>
+                          {/* Price and Quantity - Responsive Layout */}
+                          <div className="space-y-3 sm:space-y-0">
+                            {/* Price */}
+                            <div className="text-right sm:mb-3">
+                              <p className="text-lg sm:text-xl font-bold text-[#20313A] font-helvetica">
+                                ${(item.variantId.price * item.quantity).toLocaleString('es-AR')}
+                              </p>
+                              {item.quantity > 1 && (
+                                <p className="text-xs sm:text-sm text-gray-500">
+                                  ${item.variantId.price.toLocaleString('es-AR')} por unidad
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Quantity Controls */}
+                            <div className="flex items-center justify-between sm:justify-start gap-3">
+                              <span className="text-sm text-gray-600 flex-shrink-0">Cantidad:</span>
                               <div className="flex items-center bg-[#F7F7F7] rounded-lg border">
                                 <Button
                                   variant="ghost"
                                   size="icon"
                                   onClick={() => handleQuantityChange(item._id, item.quantity - 1)}
                                   disabled={item.quantity <= 1 || updateCartItemMutation.isPending}
-                                  className="h-9 w-9 hover:bg-[#DBF7DC]"
+                                  className="h-8 w-8 sm:h-9 sm:w-9 hover:bg-[#DBF7DC]"
                                 >
-                                  <Minus className="h-4 w-4" />
+                                  <Minus className="h-3 w-3 sm:h-4 sm:w-4" />
                                 </Button>
-                                <span className="w-12 text-center font-semibold text-[#20313A]">{item.quantity}</span>
+                                <span className="w-10 sm:w-12 text-center font-semibold text-[#20313A] text-sm sm:text-base">{item.quantity}</span>
                                 <Button
                                   variant="ghost"
                                   size="icon"
                                   onClick={() => handleQuantityChange(item._id, item.quantity + 1)}
                                   disabled={updateCartItemMutation.isPending}
-                                  className="h-9 w-9 hover:bg-[#DBF7DC]"
+                                  className="h-8 w-8 sm:h-9 sm:w-9 hover:bg-[#DBF7DC]"
                                 >
-                                  <Plus className="h-4 w-4" />
+                                  <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
                                 </Button>
                               </div>
-                            </div>
-
-                            <div className="text-right">
-                              <p className="text-xl font-bold text-[#20313A] font-helvetica">
-                                ${(item.variantId.price * item.quantity).toLocaleString('es-AR')}
-                              </p>
-                              {item.quantity > 1 && (
-                                <p className="text-sm text-gray-500">
-                                  ${item.variantId.price.toLocaleString('es-AR')} por unidad
-                                </p>
-                              )}
                             </div>
                           </div>
                         </div>

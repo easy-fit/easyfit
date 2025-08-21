@@ -40,8 +40,19 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   const createVariantMutation = useCreateVariant(productId);
 
   // Use the custom hook for form management
-  const { form, fields, addVariant, removeVariant, handleDefaultChange, handleImageUpload, removeImage } =
-    useEditProductForm(productData);
+  const {
+    form,
+    fields,
+    addVariant,
+    removeVariant,
+    handleDefaultChange,
+    handleImageUpload,
+    removeImage,
+    handleDeleteVariant,
+    handleDeleteImage,
+    isDeleting,
+    isDeletingImage,
+  } = useEditProductForm(productData, productId);
 
   // Image upload functionality
   const { uploadImages } = useImageUpload({
@@ -93,7 +104,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
       // Show final results
       showResults(result, callbacks);
-      
+
       // Navigate back
       router.push(`/dashboard/${id}/products`);
     } catch (error) {
@@ -105,7 +116,15 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
   // Loading state
   if (isLoading) {
-    return <LoadingState storeName={storeName} logoUrl={logoUrl} storeId={id} message="Cargando producto..." userRole={accessType as 'owner' | 'manager' | 'none'} />;
+    return (
+      <LoadingState
+        storeName={storeName}
+        logoUrl={logoUrl}
+        storeId={id}
+        message="Cargando producto..."
+        userRole={accessType as 'owner' | 'manager' | 'none'}
+      />
+    );
   }
 
   // Error state
@@ -125,7 +144,13 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   return (
     <div className="min-h-screen bg-gray-50">
       <SidebarProvider>
-        <StoreSidebar storeName={storeName} logoUrl={logoUrl} active="products" baseHref={`/dashboard/${id}`} userRole={accessType as 'owner' | 'manager' | 'none'} />
+        <StoreSidebar
+          storeName={storeName}
+          logoUrl={logoUrl}
+          active="products"
+          baseHref={`/dashboard/${id}`}
+          userRole={accessType as 'owner' | 'manager' | 'none'}
+        />
         <SidebarInset>
           {/* Header */}
           <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-white px-4">
@@ -170,20 +195,28 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-8">
-                    {fields.map((field, index) => (
-                      <VariantFormItem
-                        key={field.id}
-                        control={form.control}
-                        index={index}
-                        canRemove={fields.length > 1}
-                        category={watchedCategory}
-                        onRemove={removeVariant}
-                        onDefaultChange={handleDefaultChange}
-                        onImageUpload={handleImageUpload}
-                        onImageRemove={removeImage}
-                        watchVariant={form.watch(`variants.${index}`)}
-                      />
-                    ))}
+                    {fields.map((field, index) => {
+                      const watchVariant = form.watch(`variants.${index}`);
+                      return (
+                        <VariantFormItem
+                          key={field.id}
+                          control={form.control}
+                          index={index}
+                          canRemove={fields.length > 1}
+                          category={watchedCategory}
+                          productId={productId}
+                          onRemove={removeVariant}
+                          onDeleteVariant={handleDeleteVariant}
+                          onDefaultChange={handleDefaultChange}
+                          onImageUpload={handleImageUpload}
+                          onImageRemove={removeImage}
+                          onDeleteImage={handleDeleteImage}
+                          isDeleting={isDeleting(watchVariant._id || '')}
+                          isDeletingImage={false}
+                          watchVariant={watchVariant}
+                        />
+                      );
+                    })}
 
                     {form.formState.errors.variants?.root && (
                       <p className="text-sm text-red-600">{form.formState.errors.variants.root.message}</p>

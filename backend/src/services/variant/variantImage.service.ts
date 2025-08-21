@@ -71,10 +71,18 @@ export class VariantImageService {
 
     await variant.save();
 
-    // Delete from R2 asynchronously
-    R2Service.deleteObject(BUCKET_PRODUCTS, key).catch((err) =>
-      console.error(`Error deleting image ${key} from R2:`, err),
-    );
+    // Check if any other variants are using this image key before deleting from R2
+    const otherVariantsUsingImage = await VariantModel.countDocuments({
+      'images.key': key,
+      _id: { $ne: variantId } // Exclude current variant
+    });
+
+    // Only delete from R2 if no other variants are using this image
+    if (otherVariantsUsingImage === 0) {
+      R2Service.deleteObject(BUCKET_PRODUCTS, key).catch((err) =>
+        console.error(`Error deleting image ${key} from R2:`, err),
+      );
+    }
 
     return variant;
   }
@@ -104,13 +112,29 @@ export class VariantImageService {
 
   static async deleteVariantImages(imageKeys: string[]) {
     if (imageKeys.length > 0) {
-      Promise.all(
-        imageKeys.map((key) =>
-          R2Service.deleteObject(BUCKET_PRODUCTS, key).catch((err) =>
-            console.error(`Failed to delete image ${key}:`, err),
+      // Check each image key to see if it's used by other variants before deleting from R2
+      const imagesToDelete = [];
+      
+      for (const key of imageKeys) {
+        const otherVariantsUsingImage = await VariantModel.countDocuments({
+          'images.key': key
+        });
+        
+        // Only delete from R2 if no variants are using this image
+        if (otherVariantsUsingImage === 0) {
+          imagesToDelete.push(key);
+        }
+      }
+      
+      if (imagesToDelete.length > 0) {
+        Promise.all(
+          imagesToDelete.map((key) =>
+            R2Service.deleteObject(BUCKET_PRODUCTS, key).catch((err) =>
+              console.error(`Failed to delete image ${key}:`, err),
+            ),
           ),
-        ),
-      ).catch((err) => console.error('Error deleting images:', err));
+        ).catch((err) => console.error('Error deleting images:', err));
+      }
     }
   }
 }

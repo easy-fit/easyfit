@@ -93,12 +93,18 @@ export function ProductVariantSelector({
       </div>
 
       {/* Stock Info */}
-      {selectedVariant && (
+      {selectedVariant && selectedVariant.stock > 0 && selectedVariant.stock <= 5 && (
         <div className="flex items-center gap-2 text-sm">
           <div className={`w-2 h-2 rounded-full ${selectedVariant.stock > 0 ? 'bg-green-500' : 'bg-red-500'}`} />
           <span className="text-gray-600">
-            {selectedVariant.stock > 0 ? `${selectedVariant.stock} disponibles` : 'Sin stock'}
+            {selectedVariant.stock === 1 ? 'Última unidad' : selectedVariant.stock < 5 ? 'Últimas unidades' : ''}
           </span>
+        </div>
+      )}
+      {selectedVariant && selectedVariant.stock === 0 && (
+        <div className="flex items-center gap-2 text-sm">
+          <div className="w-2 h-2 rounded-full bg-red-500" />
+          <span className="text-gray-600">Sin stock</span>
         </div>
       )}
     </div>

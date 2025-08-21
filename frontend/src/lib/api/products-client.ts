@@ -63,6 +63,10 @@ export class ProductsClient extends BaseApiClient {
     });
   }
 
+  public async deleteVariant(id: string, variantId: string): Promise<void> {
+    return this.fetchApi<void>(`/products/${id}/variants/${variantId}`, { method: 'DELETE' });
+  }
+
   public async addImageToProduct(
     productId: string,
     variantId: string,
