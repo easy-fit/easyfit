@@ -75,7 +75,7 @@ UserSchema.pre('validate', function (next) {
 });
 
 UserSchema.set('toJSON', {
-  transform: (_doc, ret) => {
+  transform: (_doc, ret: Partial<User>) => {
     delete ret.passwordHash;
     delete ret.refreshToken;
     delete ret.passwordResetToken;
@@ -85,7 +85,7 @@ UserSchema.set('toJSON', {
 });
 
 UserSchema.set('toObject', {
-  transform: (_doc, ret) => {
+  transform: (_doc, ret: Partial<User>) => {
     delete ret.passwordHash;
     delete ret.refreshToken;
     delete ret.passwordResetToken;
