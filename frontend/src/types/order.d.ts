@@ -89,6 +89,66 @@ export interface OrderCommonResponse {
   data: Order[];
 }
 
+export interface OrderItem {
+  _id: string;
+  quantity: number;
+  unitPrice: number;
+  returnStatus: string;
+  variantId: {
+    _id: string;
+    size: string;
+    color: string;
+    images: string[];
+    price: number;
+    sku: string;
+    productId: {
+      _id: string;
+      title: string;
+      description: string;
+      category: string;
+      slug: string;
+    };
+  };
+}
+
+export interface RiderDetails {
+  _id: string;
+  name: string;
+  surname: string;
+  phone?: string;
+  profilePictureUrl?: string;
+  rating?: number;
+}
+
+export interface RiderAssignment {
+  _id: string;
+  orderId: string;
+  riderId: string;
+  status: 'assigned' | 'picked_up' | 'in_transit' | 'delivered' | 'cancelled';
+  assignedAt?: string;
+  pickedUpAt?: string;
+  deliveredAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CompleteOrder extends Order {
+  storeId: {
+    _id: string;
+    name: string;
+    customization: {
+      logoUrl: string;
+    };
+  };
+  orderItems: OrderItem[];
+  riderAssignment?: RiderAssignment;
+  riderDetails?: RiderDetails;
+}
+
+export interface SingleOrderResponse {
+  data: CompleteOrder;
+}
+
 import type { Order } from './order';
 
 export interface GetMyOrdersResponse {
