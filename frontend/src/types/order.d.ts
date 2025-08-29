@@ -1,4 +1,5 @@
 import type { Address } from './address';
+import type { VariantImage } from './variant';
 
 export type OrderStatus =
   | 'order_placed'
@@ -12,10 +13,10 @@ export type OrderStatus =
   | 'returning_to_store'
   | 'store_checking_returns'
   | 'purchased'
-  | 'returned_ok'
-  | 'returned_partial'
-  | 'returned_damaged'
+  | 'return_completed'
   | 'stolen';
+
+export type OrderItemReturnStatus = 'kept' | 'returned' | 'undecided' | 'returned_damaged' | 'stolen';
 
 export type PaymentStatus =
   | 'hold_placed'
@@ -59,6 +60,16 @@ export interface TryPeriodInfo {
   finalizedAt?: Date;
 }
 
+export interface ItemDecision {
+  variantId: string;
+  orderItemId?: string; // For individual OrderItem targeting
+  decision: 'keep' | 'return';
+}
+
+export interface TryPeriodDecisionRequest {
+  items: ItemDecision[];
+}
+
 export interface Order {
   _id: string;
   userId: string;
@@ -93,12 +104,12 @@ export interface OrderItem {
   _id: string;
   quantity: number;
   unitPrice: number;
-  returnStatus: string;
+  returnStatus: OrderItemReturnStatus;
   variantId: {
     _id: string;
     size: string;
     color: string;
-    images: string[];
+    images: VariantImage[];
     price: number;
     sku: string;
     productId: {
