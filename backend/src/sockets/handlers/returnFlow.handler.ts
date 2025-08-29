@@ -116,6 +116,7 @@ export class ReturnFlowHandler {
     }
 
     // Validate merchant owns the store they're inspecting for
+    console.log('Socket storeIds:', socket.storeIds, 'Socket storeId:', socket.storeId, data.storeId);
     const merchantOwnsStore = socket.storeIds?.includes(data.storeId) || socket.storeId === data.storeId;
     if (!merchantOwnsStore) {
       socket.emit('error', { message: 'Unauthorized: You do not own this store' });
@@ -123,15 +124,29 @@ export class ReturnFlowHandler {
     }
 
     try {
-      const order = await OrderService.getOrderById(data.orderId);
+      const order = await OrderService.getOrderByIdInternal(data.orderId);
 
-      if (!order || order.storeId.toString() !== data.storeId.toString()) {
+      if (!order) {
+        socket.emit('error', { message: 'Order not found' });
+        return;
+      }
+
+      if (order.storeId._id.toString() !== data.storeId.toString()) {
         socket.emit('error', { message: 'Unauthorized: Can only inspect returns for your store' });
         return;
       }
 
-      // Update order to final return status
-      await OrderStateManager.markAsReturned(data.orderId, data.returnStatus);
+      console.log(`\n=== STORE INSPECTION PROCESSING ===`);
+      console.log(`Store ${data.storeId} completing inspection for order ${data.orderId}`);
+      console.log(`Overall inspection result: ${data.returnStatus}`);
+      console.log(`Number of damaged items: ${data.damagedItems?.length || 0}`);
+      
+      // Update individual order items based on inspection results
+      await OrderItemService.updateReturnStatusAfterInspection(data.orderId, data);
+      console.log(`Individual item statuses updated based on inspection results`);
+
+      // Set order to generic completed status (not payment-specific)
+      await OrderStateManager.transitionOrderStatus(data.orderId, 'return_completed');
 
       // If damaged items, notify admin
       if (data.returnStatus === 'returned_damaged' && data.damagedItems) {
@@ -157,6 +172,18 @@ export class ReturnFlowHandler {
         },
       });
 
+      // Notify customer that inspection is completed and order is finalized
+      this.io.to(this.channels.ORDER(data.orderId)).emit('order:status_update', {
+        type: 'order_status_update',
+        data: {
+          order: { _id: data.orderId },
+          newStatus: 'return_completed',
+          previousStatus: 'store_checking_returns',
+          message: 'Inspección completada. Tu devolución ha sido procesada.',
+          timestamp: new Date(),
+        },
+      });
+
       console.log(`Store inspection completed for order ${data.orderId}: ${data.returnStatus}`);
     } catch (error: any) {
       socket.emit('error', { message: error.message || 'Failed to complete inspection' });
@@ -165,7 +192,7 @@ export class ReturnFlowHandler {
 
   private async getReturnPickupInfo(orderId: string) {
     // Get order with store info
-    const order = await OrderService.getOrderById(orderId);
+    const order = await OrderService.getOrderByIdInternal(orderId);
     const store = order?.storeId as any;
 
     // Get order items with full details

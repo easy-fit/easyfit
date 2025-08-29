@@ -19,11 +19,9 @@ export class OrderStateManager {
     delivered: ['purchased', 'awaiting_return_pickup', 'stolen'],
     awaiting_return_pickup: ['returning_to_store'],
     returning_to_store: ['store_checking_returns'],
-    store_checking_returns: ['returned_ok', 'returned_partial', 'returned_damaged'],
+    store_checking_returns: ['return_completed'],
     purchased: [],
-    returned_ok: [],
-    returned_partial: [],
-    returned_damaged: [],
+    return_completed: [],
     stolen: [],
   };
 
@@ -90,9 +88,7 @@ export class OrderStateManager {
         break;
 
       case 'purchased':
-      case 'returned_ok':
-      case 'returned_partial':
-      case 'returned_damaged':
+      case 'return_completed':
         await this.handleOrderCompletion(orderId);
         break;
 
@@ -126,34 +122,14 @@ export class OrderStateManager {
   }
 
   private static async handleOrderCompletion(orderId: string) {
-    const order = await OrderService.getOrderById(orderId);
+    const order = await OrderService.getOrderByIdInternal(orderId);
     const store = order?.storeId as any;
 
     try {
       let settlementData: any = {
         orderId,
-        finalStatus: order?.status,
+        finalStatus: order?.status === 'purchased' ? 'purchased' : order?.status === 'stolen' ? 'stolen' : 'item_based',
       };
-
-      if (order?.status === 'returned_partial') {
-        const orderItems = await OrderItemService.getOrderItemsByOrderId(orderId);
-
-        settlementData.keptItems = orderItems
-          .filter((item) => item.returnStatus === 'kept')
-          .map((item) => ({
-            variantId: item.variantId.toString(),
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-          }));
-
-        settlementData.returnedItems = orderItems
-          .filter((item) => item.returnStatus === 'returned')
-          .map((item) => ({
-            variantId: item.variantId.toString(),
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-          }));
-      }
 
       const settlementResult = await PaymentSettlementService.processPaymentSettlement(settlementData);
 
@@ -222,10 +198,6 @@ export class OrderStateManager {
     return this.transitionOrderStatus(orderId, 'purchased', { reason });
   }
 
-  static async markAsReturned(orderId: string, returnType: 'returned_ok' | 'returned_partial' | 'returned_damaged') {
-    return this.transitionOrderStatus(orderId, returnType);
-  }
-
   static async cancelOrder(orderId: string, reason: string) {
     return this.transitionOrderStatus(orderId, 'order_canceled', { reason });
   }
@@ -269,11 +241,11 @@ export class OrderStateManager {
 
   private static async handleReturningToStore(orderId: string) {
     const assignment = await RiderAssignmentService.getAssignmentByOrderId(orderId);
-    const order = await OrderService.getOrderById(orderId);
+    const order = await OrderService.getOrderByIdInternal(orderId);
 
     if (assignment && order) {
       WebSocketService.getIO()
-        .to(`store:${order.storeId.toString()}`)
+        .to(`store:${order.storeId._id.toString()}`)
         .emit('return:rider_returning', {
           type: 'return_rider_returning',
           data: {
@@ -301,18 +273,37 @@ export class OrderStateManager {
   }
 
   private static async handleStoreCheckingReturns(orderId: string) {
-    const order = await OrderService.getOrderById(orderId);
-    const orderItems = await OrderItemService.getOrderItemsByOrderId(orderId);
-    const returnedItems = orderItems.filter((item) => item.returnStatus === 'returned');
+    const order = await OrderService.getOrderByIdInternal(orderId);
+    const orderItems = await OrderItemService.getCompleteOrderData(orderId);
+    const returnedItems = orderItems.filter((item: any) => item.returnStatus === 'returned');
+
+    // Transform the data to match frontend expectations
+    const transformedReturnedItems = returnedItems.map((item: any) => ({
+      _id: item._id,
+      variantId: {
+        _id: item.variantId._id,
+        size: item.variantId.size,
+        color: item.variantId.color,
+        images: item.variantId.images || [],
+      },
+      product: {
+        _id: item.variantId.productId._id,
+        title: item.variantId.productId.title,
+        category: item.variantId.productId.category,
+      },
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      returnStatus: item.returnStatus,
+    }));
 
     if (order) {
       WebSocketService.getIO()
-        .to(`store:${order.storeId.toString()}`)
+        .to(`store:${order.storeId._id.toString()}`)
         .emit('return:inspect_items', {
           type: 'return_inspect_items',
           data: {
             orderId,
-            returnedItems,
+            returnedItems: transformedReturnedItems,
             message: 'Please inspect returned items for damage',
             timestamp: new Date(),
           },
@@ -345,26 +336,45 @@ export class OrderStateManager {
   private static async restoreStockForReturnedItems(orderId: string): Promise<void> {
     try {
       const orderItems = await OrderItemService.getOrderItemsByOrderId(orderId);
-      const returnedItems = orderItems.filter((item) => item.returnStatus === 'returned');
+      
+      // Only restore stock for items that were returned in good condition
+      const goodReturnedItems = orderItems.filter((item) => item.returnStatus === 'returned');
+      const damagedReturnedItems = orderItems.filter((item) => item.returnStatus === 'returned_damaged');
 
-      if (returnedItems.length === 0) {
-        console.log(`No returned items to restore stock for order ${orderId}`);
+      console.log(`Stock restoration analysis for order ${orderId}:`);
+      console.log(`- Good returned items (will restore): ${goodReturnedItems.length}`);
+      console.log(`- Damaged returned items (will NOT restore): ${damagedReturnedItems.length}`);
+
+      if (goodReturnedItems.length === 0) {
+        console.log(`No good returned items to restore stock for order ${orderId}`);
         return;
       }
 
-      const stockRestorations = returnedItems.map(async (item) => {
+      const stockRestorations = goodReturnedItems.map(async (item) => {
         try {
-          await VariantService.increaseStock(item.variantId.toString(), item.quantity);
+          const variantId = item.variantId._id || item.variantId;
+          await VariantService.increaseStock(variantId.toString(), item.quantity);
           console.log(
-            `Restored ${item.quantity} units of variant ${item.variantId} to stock (returned from order ${orderId})`,
+            `✅ Restored ${item.quantity} units of variant ${variantId} to stock (good return from order ${orderId})`,
           );
         } catch (error: any) {
-          console.error(`Failed to restore stock for variant ${item.variantId}:`, error.message);
+          console.error(`❌ Failed to restore stock for variant ${item.variantId._id || item.variantId}:`, error.message);
         }
       });
 
+      // Log damaged items that are NOT being restored
+      damagedReturnedItems.forEach((item) => {
+        const variantId = item.variantId._id || item.variantId;
+        console.log(
+          `🚫 Skipping stock restoration for variant ${variantId} - item was damaged (order ${orderId})`,
+        );
+      });
+
       await Promise.all(stockRestorations);
-      console.log(`Stock restored for ${returnedItems.length} returned items from order ${orderId}`);
+      console.log(`Stock restored for ${goodReturnedItems.length} good returned items from order ${orderId}`);
+      if (damagedReturnedItems.length > 0) {
+        console.log(`Stock NOT restored for ${damagedReturnedItems.length} damaged returned items from order ${orderId}`);
+      }
     } catch (error: any) {
       console.error(`Error restoring stock for returned items in order ${orderId}:`, error.message);
     }
@@ -381,12 +391,11 @@ export class OrderStateManager {
 
       const stockRestorations = orderItems.map(async (item) => {
         try {
-          await VariantService.increaseStock(item.variantId.toString(), item.quantity);
-          console.log(
-            `Restored ${item.quantity} units of variant ${item.variantId} to stock (cancelled order ${orderId})`,
-          );
+          const variantId = item.variantId._id || item.variantId;
+          await VariantService.increaseStock(variantId.toString(), item.quantity);
+          console.log(`Restored ${item.quantity} units of variant ${variantId} to stock (cancelled order ${orderId})`);
         } catch (error: any) {
-          console.error(`Failed to restore stock for variant ${item.variantId}:`, error.message);
+          console.error(`Failed to restore stock for variant ${item.variantId._id || item.variantId}:`, error.message);
         }
       });
 
