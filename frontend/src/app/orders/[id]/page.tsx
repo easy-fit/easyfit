@@ -11,24 +11,34 @@ import { AuthGuard } from '@/components/auth/auth-guard';
 import { useOrder } from '@/hooks/api/use-orders';
 import { webSocketClient } from '@/lib/websocket/websocket-client';
 import { useAuth } from '@/hooks/use-auth';
-//import { buildImageUrl } from '@/lib/utils/image-url';
+import { buildImageUrl } from '@/lib/utils/image-url';
 import { ArrowLeft, Package, Truck, CheckCircle, Clock, User, Shield, Star, Bike, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { useEasyFitToast } from '@/hooks/use-toast';
 import { OrderSuccessModal } from '@/components/orders/order-success-modal';
-import type { OrderStatus } from '@/types/order';
+import { TryPeriodModal } from '@/components/orders/try-period-modal';
+import { TryPeriodIndicator } from '@/components/orders/try-period-indicator';
+import type { OrderStatus, TryPeriodInfo } from '@/types/order';
 
 // Status mapping for UI display
 const statusMapping = {
-  order_placed: { label: 'Pedido realizado', icon: Package, description: 'Tu pedido fue confirmado' },
-  order_accepted: { label: 'Confirmado por la tienda', icon: CheckCircle, description: 'La tienda preparó tu pedido' },
+  order_placed: { label: 'Pedido realizado', icon: Package, description: 'Esperando aprobacion de la tienda' },
+  order_accepted: {
+    label: 'Confirmado por la tienda',
+    icon: CheckCircle,
+    description: 'La tienda esta preparando tu pedido',
+  },
   pending_rider: { label: 'Buscando repartidor', icon: Clock, description: 'Asignando repartidor' },
   rider_assigned: { label: 'Repartidor asignado', icon: User, description: 'Un repartidor tomó tu pedido' },
   in_transit: { label: 'En camino', icon: Truck, description: 'Tu pedido está en camino' },
   delivered: { label: 'Entregado', icon: CheckCircle, description: 'Pedido entregado exitosamente' },
   // Additional statuses
   order_canceled: { label: 'Cancelado', icon: Package, description: 'Pedido cancelado' },
-  awaiting_return_pickup: { label: 'Esperando retiro', icon: Package, description: 'Esperando retiro de productos' },
+  awaiting_return_pickup: {
+    label: 'Devolucion de productos',
+    icon: Package,
+    description: 'Esperando retiro de productos',
+  },
   returning_to_store: { label: 'Regresando a tienda', icon: Truck, description: 'Productos regresando a la tienda' },
   store_checking_returns: {
     label: 'Revisando devolución',
@@ -36,9 +46,11 @@ const statusMapping = {
     description: 'La tienda revisa los productos',
   },
   purchased: { label: 'Comprado', icon: CheckCircle, description: 'Compra finalizada' },
-  returned_ok: { label: 'Devuelto', icon: CheckCircle, description: 'Devolución completada' },
-  returned_partial: { label: 'Devolución parcial', icon: CheckCircle, description: 'Devolución parcial completada' },
-  returned_damaged: { label: 'Devuelto dañado', icon: CheckCircle, description: 'Producto devuelto con daños' },
+  return_completed: {
+    label: 'Devolución completada',
+    icon: CheckCircle,
+    description: 'Proceso de devolución finalizado',
+  },
   stolen: { label: 'Robado', icon: Shield, description: 'Pedido reportado como robado' },
 };
 
@@ -68,6 +80,31 @@ const getStatusSteps = (currentStatus: OrderStatus, shippingType: string) => {
   // Always include rider assignment step for all shipping types
   baseStatuses.push(statusMapping.rider_assigned, statusMapping.in_transit, statusMapping.delivered);
 
+  // Add return flow statuses if applicable
+  const returnFlowStatuses: OrderStatus[] = [
+    'awaiting_return_pickup',
+    'returning_to_store',
+    'store_checking_returns',
+    'return_completed',
+  ];
+
+  // If current status is in return flow, add all return flow steps
+  if (returnFlowStatuses.includes(currentStatus)) {
+    baseStatuses.push(
+      statusMapping.awaiting_return_pickup,
+      statusMapping.returning_to_store,
+      statusMapping.store_checking_returns,
+    );
+
+    // Add final return status based on current status
+    if (currentStatus === 'return_completed') {
+      baseStatuses.push(statusMapping.return_completed);
+    }
+  } else if (currentStatus === 'purchased') {
+    // For purchased status, show completed flow
+    baseStatuses.push(statusMapping.purchased);
+  }
+
   return baseStatuses;
 };
 
@@ -79,6 +116,8 @@ function OrderTrackingPageContent() {
   const [codeCopied, setCodeCopied] = useState(false);
   const [riderLocation, setRiderLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showTryPeriodModal, setShowTryPeriodModal] = useState(false);
+  const [tryPeriodData, setTryPeriodData] = useState<TryPeriodInfo | null>(null);
 
   const orderId = params.id as string;
   const { data: orderData, isLoading, error, refetch } = useOrder(orderId);
@@ -159,15 +198,6 @@ function OrderTrackingPageContent() {
     return `${formatTimeFrame(startTime)} - ${formatTimeFrame(endTime)}`;
   }, [orderData?.data, riderLocation, calculateDistance]);
 
-  const copyCode = useCallback(async () => {
-    if (!orderData?.data?.deliveryVerification?.code) return;
-
-    await navigator.clipboard.writeText(orderData.data.deliveryVerification.code);
-    setCodeCopied(true);
-    toast.success('Código copiado al portapapeles');
-    setTimeout(() => setCodeCopied(false), 2000);
-  }, [orderData?.data?.deliveryVerification?.code, toast]);
-
   // Helper function to check if success modal was already shown for this order
   const hasShownSuccessModal = useCallback((orderId: string): boolean => {
     try {
@@ -185,11 +215,11 @@ function OrderTrackingPageContent() {
     try {
       const shownOrders = localStorage.getItem('easyfit-shown-success-modals');
       let parsedOrders: string[] = [];
-      
+
       if (shownOrders) {
         parsedOrders = JSON.parse(shownOrders) || [];
       }
-      
+
       if (!parsedOrders.includes(orderId)) {
         parsedOrders.push(orderId);
         localStorage.setItem('easyfit-shown-success-modals', JSON.stringify(parsedOrders));
@@ -199,9 +229,22 @@ function OrderTrackingPageContent() {
     }
   }, []);
 
-  // WebSocket connection for real-time updates
+  // Helper function to check if order is completed
+  const isOrderCompleted = useCallback((status: OrderStatus) => {
+    return ['purchased', 'return_completed', 'stolen'].includes(status);
+  }, []);
+
+  // WebSocket connection for real-time updates (only for active orders)
   useEffect(() => {
     if (orderData?.data && user) {
+      const order = orderData.data;
+      
+      // Skip WebSocket connection for completed orders
+      if (isOrderCompleted(order.status)) {
+        console.log(`Order ${orderId} is completed (${order.status}), skipping WebSocket connection`);
+        return;
+      }
+
       webSocketClient.connect();
       webSocketClient.joinOrder(orderId);
 
@@ -209,12 +252,12 @@ function OrderTrackingPageContent() {
       const handleStatusUpdate = (data: any) => {
         if (data.data.order._id === orderId) {
           const newStatus = data.data.newStatus as OrderStatus;
-          
+
           // Update the query cache with new status
           refetch();
-          
-          // Handle 'purchased' status - show success modal
-          if (newStatus === 'purchased') {
+
+          // Handle final statuses - show success modal
+          if (newStatus === 'purchased' || newStatus === 'return_completed') {
             // Check if we've already shown the success modal for this order
             if (!hasShownSuccessModal(orderId)) {
               // Mark as shown and display the modal
@@ -223,9 +266,7 @@ function OrderTrackingPageContent() {
             }
           } else {
             // Show regular toast for other status updates
-            toast.info(
-              `Estado actualizado: ${statusMapping[newStatus]?.label || newStatus}`,
-            );
+            toast.info(`Estado actualizado: ${statusMapping[newStatus]?.label || newStatus}`);
           }
         }
       };
@@ -242,17 +283,56 @@ function OrderTrackingPageContent() {
         }
       };
 
+      const handleTryPeriodUpdate = (data: any) => {
+        if (data.data.orderId === orderId) {
+          console.log('Try period update:', data);
+
+          switch (data.data.type) {
+            case 'try_period_started':
+              setTryPeriodData(data.data.tryPeriod);
+              setShowTryPeriodModal(true);
+              toast.info('¡Período de prueba iniciado! Decide qué productos conservar.');
+              break;
+
+            case 'try_period_updated':
+              setTryPeriodData(data.data.tryPeriod);
+              break;
+
+            case 'try_period_expired':
+              setTryPeriodData(data.data.tryPeriod);
+              toast.warning('¡Tiempo agotado! Decide rápidamente para evitar cargos adicionales.');
+              break;
+
+            case 'try_period_finalized':
+              setTryPeriodData(data.data.tryPeriod);
+              setShowTryPeriodModal(false);
+              toast.success('Decisiones confirmadas. Procesando tu pedido...');
+              refetch(); // Refresh order data
+              break;
+          }
+        }
+      };
+
       // Listen for events
       webSocketClient.on('order:status_update', handleStatusUpdate);
       webSocketClient.on('delivery:tracking_update', handleTrackingUpdate);
+      webSocketClient.on('try_period:update', handleTryPeriodUpdate);
 
       return () => {
         webSocketClient.leaveOrder(orderId);
         webSocketClient.off('order:status_update', handleStatusUpdate);
         webSocketClient.off('delivery:tracking_update', handleTrackingUpdate);
+        webSocketClient.off('try_period:update', handleTryPeriodUpdate);
       };
     }
-  }, [orderData?.data, orderId, user, refetch, toast, hasShownSuccessModal, markSuccessModalShown]);
+  }, [orderData?.data, orderId, user, refetch, toast, hasShownSuccessModal, markSuccessModalShown, isOrderCompleted]);
+
+  // Initialize try period data from order
+  useEffect(() => {
+    if (orderData?.data?.tryPeriod) {
+      setTryPeriodData(orderData.data.tryPeriod);
+    }
+  }, [orderData?.data?.tryPeriod]);
 
   if (isLoading) {
     return (
@@ -319,7 +399,7 @@ function OrderTrackingPageContent() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-[#20313A] font-helvetica mb-2">Seguimiento de Pedido</h1>
           <p className="text-gray-600 font-satoshi">
-            Pedido #{order._id.slice(-8).toUpperCase()} • {formatDate(order.createdAt)}
+            Pedido #{order._id.slice(-4).toUpperCase()} • {formatDate(order.createdAt)}
           </p>
         </div>
 
@@ -334,58 +414,82 @@ function OrderTrackingPageContent() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="relative">
-                  {/* Progress Line */}
-                  <div className="absolute top-5 left-5 right-5 h-0.5 bg-gray-200">
-                    <div
-                      className="h-full bg-[#9EE493] transition-all duration-300"
-                      style={{ width: `${(currentStatusIndex / (statusSteps.length - 1)) * 100}%` }}
-                    />
+                {isOrderCompleted(order.status) ? (
+                  // Simplified completed status display
+                  <div className="flex flex-col items-center justify-center py-8">
+                    <div className="w-16 h-16 rounded-full bg-[#9EE493] flex items-center justify-center mb-4">
+                      <CheckCircle className="w-8 h-8 text-[#20313A]" />
+                    </div>
+                    <h3 className="text-xl font-bold text-[#20313A] mb-2">
+                      {statusMapping[order.status]?.label}
+                    </h3>
+                    <p className="text-gray-600 text-center">
+                      {statusMapping[order.status]?.description}
+                    </p>
+                    <Badge className="bg-[#9EE493] text-[#20313A] hover:bg-[#8BD480] mt-3">
+                      Pedido Completado
+                    </Badge>
                   </div>
+                ) : (
+                  // Regular progress tracking for active orders
+                  <div className="relative">
+                    {/* Progress Line */}
+                    <div className="absolute top-5 left-5 right-5 h-0.5 bg-gray-200">
+                      <div
+                        className="h-full bg-[#9EE493] transition-all duration-300"
+                        style={{ width: `${(currentStatusIndex / (statusSteps.length - 1)) * 100}%` }}
+                      />
+                    </div>
 
-                  {/* Status Steps */}
-                  <div className="relative flex justify-between">
-                    {statusSteps.map((status, index) => {
-                      const Icon = status.icon;
-                      const isCompleted = index <= currentStatusIndex;
-                      const isCurrent = index === currentStatusIndex;
+                    {/* Status Steps */}
+                    <div className="relative flex justify-between">
+                      {statusSteps.map((status, index) => {
+                        const Icon = status.icon;
+                        const isCompleted = index <= currentStatusIndex;
+                        const isCurrent = index === currentStatusIndex;
 
-                      return (
-                        <div
-                          key={`${status.label}-${index}`}
-                          className="flex flex-col items-center text-center max-w-[120px]"
-                        >
+                        return (
                           <div
-                            className={`w-10 h-10 rounded-full flex items-center justify-center border-2 mb-3 ${
-                              isCompleted
-                                ? 'bg-[#9EE493] border-[#9EE493] text-[#20313A]'
-                                : 'bg-white border-gray-300 text-gray-400'
-                            }`}
+                            key={`${status.label}-${index}`}
+                            className="flex flex-col items-center text-center max-w-[120px]"
                           >
-                            <Icon className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <p
-                              className={`text-sm font-semibold mb-1 ${
-                                isCurrent ? 'text-[#20313A]' : isCompleted ? 'text-gray-700' : 'text-gray-400'
+                            <div
+                              className={`w-10 h-10 rounded-full flex items-center justify-center border-2 mb-3 ${
+                                isCompleted
+                                  ? 'bg-[#9EE493] border-[#9EE493] text-[#20313A]'
+                                  : 'bg-white border-gray-300 text-gray-400'
                               }`}
                             >
-                              {status.label}
-                            </p>
-                            <p className="text-xs text-gray-600">{status.description}</p>
-                            {isCurrent && (
-                              <Badge className="bg-[#9EE493] text-[#20313A] hover:bg-[#8BD480] mt-1 text-xs">
-                                En progreso
-                              </Badge>
-                            )}
+                              <Icon className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <p
+                                className={`text-sm font-semibold mb-1 ${
+                                  isCurrent ? 'text-[#20313A]' : isCompleted ? 'text-gray-700' : 'text-gray-400'
+                                }`}
+                              >
+                                {status.label}
+                              </p>
+                              <p className="text-xs text-gray-600">{status.description}</p>
+                              {isCurrent && (
+                                <Badge className="bg-[#9EE493] text-[#20313A] hover:bg-[#8BD480] mt-1 text-xs">
+                                  En progreso
+                                </Badge>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
+                )}
               </CardContent>
             </Card>
+
+            {/* Try Period Indicator */}
+            {tryPeriodData && (
+              <TryPeriodIndicator tryPeriod={tryPeriodData} onOpenModal={() => setShowTryPeriodModal(true)} />
+            )}
 
             {/* Products Section - Now moved up for better visibility */}
             <Card>
@@ -397,7 +501,7 @@ function OrderTrackingPageContent() {
                   <div key={item._id} className="flex gap-4 p-4 bg-gray-50 rounded-lg">
                     <div className="relative w-20 h-20 bg-white rounded-lg flex-shrink-0 overflow-hidden">
                       <Image
-                        src={'/remera-2-frente.jpg'}
+                        src={buildImageUrl(item.variantId.images?.[0].key)}
                         alt={item.variantId.productId.title}
                         fill
                         className="object-cover"
@@ -452,7 +556,7 @@ function OrderTrackingPageContent() {
                   <div className="text-center space-y-2">
                     <div className="flex items-center justify-center gap-2">
                       <Clock className="w-6 h-6 text-[#9EE493]" />
-                      <p className="text-xl font-bold text-[#20313A] font-helvetica">{getDeliveryTimeFrame()}</p>
+                      <p className="text-2xl font-bold text-[#20313A] font-helvetica">{getDeliveryTimeFrame()}</p>
                       {riderLocation && (
                         <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" title="Tracking en vivo" />
                       )}
@@ -466,65 +570,53 @@ function OrderTrackingPageContent() {
             )}
 
             {/* Combined Verification Code and Rider Info */}
-            {['rider_assigned', 'in_transit', 'delivered'].includes(order.status) && order.riderDetails && (
-              <Card>
-                <CardContent className="p-4 space-y-4">
-                  {/* Verification Code */}
-                  <div className="text-center space-y-2">
-                    <div className="flex items-center justify-center gap-2 mb-2">
-                      <Package className="w-5 h-5 text-gray-600" />
-                      <h3 className="font-bold text-[#20313A] font-helvetica">Código de Verificación</h3>
-                    </div>
-                    <div className="bg-gray-100 px-6 py-3 rounded-lg border border-gray-300">
-                      <span className="text-2xl font-bold text-[#20313A] tracking-widest font-helvetica">
-                        {order.deliveryVerification.code}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-600">Muestra este código al repartidor</p>
-                  </div>
-
-                  <Separator />
-
-                  {/* Rider Info */}
-                  {order.riderDetails && (
-                    <div className="flex items-center gap-3">
-                      <div className="bg-gray-100 p-2 rounded-full flex-shrink-0">
-                        <Bike className="w-5 h-5 text-gray-600" />
+            {['rider_assigned', 'in_transit', 'delivered', 'awaiting_return_pickup'].includes(order.status) &&
+              order.riderDetails && (
+                <Card>
+                  <CardContent className="p-4 space-y-4">
+                    {/* Verification Code */}
+                    <div className="text-center space-y-2">
+                      <div className="flex items-center justify-center gap-2 mb-2">
+                        <Package className="w-5 h-5 text-gray-600" />
+                        <h3 className="font-bold text-[#20313A] font-helvetica">Código de Verificación</h3>
                       </div>
-                      <div className="flex-1">
-                        <p className="font-bold text-[#20313A] font-helvetica text-sm">Tu Repartidor</p>
-                        <div className="flex items-center gap-2">
-                          <div className="relative w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
-                            {order.riderDetails.profilePictureUrl ? (
-                              <Image
-                                src={'/remera-2-frente.jpg'}
-                                alt={`${order.riderDetails.name} ${order.riderDetails.surname}`}
-                                fill
-                                className="object-cover"
-                                sizes="32px"
-                              />
-                            ) : (
-                              <User className="w-4 h-4 text-gray-600" />
-                            )}
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-[#20313A]">
-                              {order.riderDetails.name} {order.riderDetails.surname}
-                            </p>
-                            {order.riderDetails.rating && (
-                              <div className="flex items-center gap-1">
-                                <Star className="w-3 h-3 text-yellow-500 fill-current" />
-                                <span className="text-xs text-gray-600">{order.riderDetails.rating}</span>
-                              </div>
-                            )}
+                      <div className="bg-gray-100 px-6 py-3 rounded-lg border border-gray-300">
+                        <span className="text-2xl font-bold text-[#20313A] tracking-widest font-helvetica">
+                          {order.deliveryVerification.code}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-600">Muestra este código al repartidor</p>
+                    </div>
+
+                    <Separator />
+
+                    {/* Rider Info */}
+                    {order.riderDetails && (
+                      <div className="flex items-center gap-3">
+                        <div className="bg-gray-100 p-2 rounded-full flex-shrink-0">
+                          <Bike className="w-5 h-5 text-gray-600" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-bold text-[#20313A] font-helvetica text-sm">Tu Repartidor</p>
+                          <div className="flex items-center gap-2">
+                            <div>
+                              <p className="text-sm font-medium text-[#20313A]">
+                                {order.riderDetails.name} {order.riderDetails.surname}
+                              </p>
+                              {order.riderDetails.rating && (
+                                <div className="flex items-center gap-1">
+                                  <Star className="w-3 h-3 text-yellow-500 fill-current" />
+                                  <span className="text-xs text-gray-600">{order.riderDetails.rating}</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+                    )}
+                  </CardContent>
+                </Card>
+              )}
 
             {/* Order Summary */}
             <Card>
@@ -559,6 +651,20 @@ function OrderTrackingPageContent() {
           isOpen={showSuccessModal}
           onClose={() => setShowSuccessModal(false)}
           order={orderData.data}
+        />
+      )}
+
+      {/* Try Period Modal */}
+      {showTryPeriodModal && orderData?.data && tryPeriodData && (
+        <TryPeriodModal
+          isOpen={showTryPeriodModal}
+          onClose={() => setShowTryPeriodModal(false)}
+          order={orderData.data}
+          tryPeriod={tryPeriodData}
+          onDecisionsSubmitted={() => {
+            // Modal will be closed by WebSocket event handler
+            refetch();
+          }}
         />
       )}
     </div>
