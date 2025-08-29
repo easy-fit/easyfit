@@ -13,9 +13,7 @@ export type OrderStatus =
   | 'returning_to_store'
   | 'store_checking_returns'
   | 'purchased'
-  | 'returned_ok'
-  | 'returned_partial'
-  | 'returned_damaged'
+  | 'return_completed'
   | 'stolen';
 
 export type PaymentStatus =

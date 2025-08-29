@@ -12,7 +12,7 @@ import { TryPeriodInfo, ItemDecision } from '../types/tryPeriod.types';
 
 export class TryPeriodManager {
   static async startTryPeriod(orderId: string): Promise<TryPeriodInfo> {
-    const order = await OrderService.getOrderById(orderId);
+    const order = await OrderService.getOrderByIdInternal(orderId);
 
     if (order?.status !== 'delivered') {
       throw new AppError('Order must be delivered to start try period', 400);
@@ -76,7 +76,13 @@ export class TryPeriodManager {
     await Promise.all(
       items.map((item) => {
         const returnStatus = item.decision === 'keep' ? 'kept' : 'returned';
-        return OrderItemModel.findOneAndUpdate({ orderId, variantId: item.variantId }, { returnStatus }, { new: true });
+        
+        // Use orderItemId if provided (for individual items), otherwise fall back to variantId (legacy)
+        if (item.orderItemId) {
+          return OrderItemModel.findByIdAndUpdate(item.orderItemId, { returnStatus }, { new: true });
+        } else {
+          return OrderItemModel.findOneAndUpdate({ orderId, variantId: item.variantId }, { returnStatus }, { new: true });
+        }
       }),
     );
 

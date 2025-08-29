@@ -37,7 +37,7 @@ export class DeliveryTrackingService {
 
     await RiderLocationService.updateLocation(riderId, {
       type: 'Point',
-      coordinates: [longitude, latitude],
+      coordinates: [latitude, longitude],
     });
 
     WebSocketService.emitDeliveryUpdate({
