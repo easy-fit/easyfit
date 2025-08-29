@@ -1,4 +1,5 @@
 import type { Address } from './address';
+import type { VariantImage } from './variant';
 
 export type OrderStatus =
   | 'order_placed'
@@ -12,10 +13,10 @@ export type OrderStatus =
   | 'returning_to_store'
   | 'store_checking_returns'
   | 'purchased'
-  | 'returned_ok'
-  | 'returned_partial'
-  | 'returned_damaged'
+  | 'return_completed'
   | 'stolen';
+
+export type OrderItemReturnStatus = 'kept' | 'returned' | 'undecided' | 'returned_damaged' | 'stolen';
 
 export type PaymentStatus =
   | 'hold_placed'
@@ -59,6 +60,16 @@ export interface TryPeriodInfo {
   finalizedAt?: Date;
 }
 
+export interface ItemDecision {
+  variantId: string;
+  orderItemId?: string; // For individual OrderItem targeting
+  decision: 'keep' | 'return';
+}
+
+export interface TryPeriodDecisionRequest {
+  items: ItemDecision[];
+}
+
 export interface Order {
   _id: string;
   userId: string;
@@ -87,6 +98,66 @@ export interface UpdateOrderDTO {
 export interface OrderCommonResponse {
   total?: number;
   data: Order[];
+}
+
+export interface OrderItem {
+  _id: string;
+  quantity: number;
+  unitPrice: number;
+  returnStatus: OrderItemReturnStatus;
+  variantId: {
+    _id: string;
+    size: string;
+    color: string;
+    images: VariantImage[];
+    price: number;
+    sku: string;
+    productId: {
+      _id: string;
+      title: string;
+      description: string;
+      category: string;
+      slug: string;
+    };
+  };
+}
+
+export interface RiderDetails {
+  _id: string;
+  name: string;
+  surname: string;
+  phone?: string;
+  profilePictureUrl?: string;
+  rating?: number;
+}
+
+export interface RiderAssignment {
+  _id: string;
+  orderId: string;
+  riderId: string;
+  status: 'assigned' | 'picked_up' | 'in_transit' | 'delivered' | 'cancelled';
+  assignedAt?: string;
+  pickedUpAt?: string;
+  deliveredAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CompleteOrder extends Order {
+  storeId: {
+    _id: string;
+    name: string;
+    customization: {
+      logoUrl: string;
+    };
+  };
+  orderItems: OrderItem[];
+  riderAssignment?: RiderAssignment;
+  riderDetails?: RiderDetails;
+}
+
+export interface SingleOrderResponse {
+  data: CompleteOrder;
 }
 
 import type { Order } from './order';

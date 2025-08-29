@@ -94,22 +94,10 @@ export function OrderCard({
             <CheckCircle2 className="h-4 w-4" /> Comprada
           </div>
         );
-      case 'returned_ok':
+      case 'return_completed':
         return (
-          <div className="flex items-center gap-1 text-blue-600 text-sm">
-            <Package className="h-4 w-4" /> Devuelta OK
-          </div>
-        );
-      case 'returned_partial':
-        return (
-          <div className="flex items-center gap-1 text-yellow-700 text-sm">
-            <Package className="h-4 w-4" /> Devuelta parcial
-          </div>
-        );
-      case 'returned_damaged':
-        return (
-          <div className="flex items-center gap-1 text-red-700 text-sm">
-            <XCircle className="h-4 w-4" /> Devuelta dañada
+          <div className="flex items-center gap-1 text-gray-700 text-sm">
+            <Package className="h-4 w-4" /> Devolución completada
           </div>
         );
       case 'stolen':

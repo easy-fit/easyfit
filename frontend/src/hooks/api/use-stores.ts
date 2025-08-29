@@ -192,6 +192,20 @@ export const usePendingOrders = (storeId: string, since?: string) => {
   });
 };
 
+export const usePendingInspections = (storeId: string) => {
+  return useQuery<StoreOrdersResponse>({
+    queryKey: ['stores', storeId, 'pending-inspections'],
+    queryFn: () => api.stores.getStoreOrders(storeId, { 
+      status: 'store_checking_returns',
+      limit: 20,
+      sortBy: 'createdAt',
+      sortOrder: 'desc',
+    }),
+    staleTime: 10000, // 10 seconds for pending inspections
+    enabled: !!storeId,
+  });
+};
+
 export const useStoreDetailedAnalytics = (
   storeId: string,
   filters?: {

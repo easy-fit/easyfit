@@ -51,7 +51,7 @@ export class RiderAssignmentOrchestrator {
   }
 
   static async executeRiderAssignment(orderId: string): Promise<string | null> {
-    const order = await OrderService.getOrderById(orderId);
+    const order = await OrderService.getOrderByIdInternal(orderId);
 
     if (order?.status !== 'order_accepted') {
       throw new AppError('Order must be accepted by store before rider assignment', 400);
@@ -136,7 +136,7 @@ export class RiderAssignmentOrchestrator {
     await this.retryWithExpandedRadius(orderId, 20);
 
     setTimeout(async () => {
-      const order = await OrderService.getOrderById(orderId);
+      const order = await OrderService.getOrderByIdInternal(orderId);
       if (order && order.status === 'pending_rider') {
         console.log(`Retrying rider assignment for order ${orderId} after 5 minutes`);
         await this.assignRiderToOrder(orderId);
@@ -144,7 +144,7 @@ export class RiderAssignmentOrchestrator {
     }, 5 * 60 * 1000);
 
     setTimeout(async () => {
-      const order = await OrderService.getOrderById(orderId);
+      const order = await OrderService.getOrderByIdInternal(orderId);
       if (order && order.status === 'pending_rider') {
         await this.notifyAdminOfAssignmentIssue(orderId);
       }
@@ -153,7 +153,7 @@ export class RiderAssignmentOrchestrator {
 
   static async retryWithExpandedRadius(orderId: string, radiusKm: number) {
     try {
-      const order = await OrderService.getOrderById(orderId);
+      const order = await OrderService.getOrderByIdInternal(orderId);
       const store = order?.storeId as any;
       const storeCoordinates: [number, number] = [
         store.address.location.coordinates[1],
@@ -204,7 +204,7 @@ export class RiderAssignmentOrchestrator {
 
     const orderData = await OrderStoreService.getCompleteOrderData(orderId);
     console.log(orderData.order.shipping);
-    const order = await OrderService.getOrderById(orderId);
+    const order = await OrderService.getOrderByIdInternal(orderId);
     const store = order?.storeId as any;
     const storeCoordinates: [number, number] = [
       store.address.location.coordinates[1],
@@ -244,8 +244,8 @@ export class RiderAssignmentOrchestrator {
                 streetNumber: store.address.formatted.streetNumber,
               },
               coordinates: {
-                latitude: storeCoordinates[1],
-                longitude: storeCoordinates[0],
+                latitude: storeCoordinates[0],
+                longitude: storeCoordinates[1],
               },
             },
           },

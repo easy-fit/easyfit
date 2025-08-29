@@ -10,6 +10,7 @@ export interface TryPeriodInfo {
 
 export interface ItemDecision {
   variantId: string;
+  orderItemId?: string; // For individual OrderItem targeting
   decision: 'keep' | 'return';
 }
 

@@ -18,7 +18,7 @@ export function buildImageUrl(imagePath?: string | null, fallback = '/placeholde
 
   // Remove leading slash if present
   const cleanPath = imagePath.startsWith('/') ? imagePath.slice(1) : imagePath;
-  
+
   return `${ENV.R2_PUBLIC_URL}/${cleanPath}`;
 }
 
@@ -40,7 +40,7 @@ export function buildStoreAssetUrl(imagePath?: string | null, fallback = '/place
 
   // Remove leading slash if present
   const cleanPath = imagePath.startsWith('/') ? imagePath.slice(1) : imagePath;
-  
+
   return `${ENV.R2_PUBLIC_URL_ASSETS}/${cleanPath}`;
 }
 

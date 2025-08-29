@@ -78,7 +78,7 @@ export class MerchantService {
               completedOrders: {
                 $sum: {
                   $cond: {
-                    if: { $in: ['$status', ['purchased', 'returned_ok', 'returned_partial']] },
+                    if: { $in: ['$status', ['purchased', 'return_completed']] },
                     then: 1,
                     else: 0,
                   },

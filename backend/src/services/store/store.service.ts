@@ -35,7 +35,7 @@ export class StoreService {
     const store = await StoreModel.findById(storeId).select('status isOpen').lean();
 
     this.ensureStoreExists(store);
-    return store?.status;
+    return store;
   }
 
   static async getStoreLocationById(storeId: string) {
@@ -277,70 +277,102 @@ export class StoreService {
 
       const [orders, totalCount] = await Promise.all([
         OrderModel.find(matchQuery).populate('userId', 'name surname').sort(sortQuery).skip(skip).limit(limit).lean(),
-
         OrderModel.countDocuments(matchQuery),
       ]);
 
-      // Get order items for each order
-      const ordersWithItems = await Promise.all(
-        orders.map(async (order) => {
-          const items = await OrderItemModel.find({ orderId: order._id })
-            .populate({
-              path: 'variantId',
-              populate: {
-                path: 'productId',
-                select: 'title',
-              },
-              select: 'size color price sku productId',
-            })
-            .select('quantity unitPrice variantId')
-            .lean();
+      // Batch fetch all order items for these orders
+      const orderIds = orders.map((order) => order._id);
 
-          // Format items for frontend
-          const formattedItems = items.map((item: any) => ({
-            id: item._id.toString(),
-            name: item.variantId?.productId?.title || 'Producto',
-            variant: item.variantId ? `${item.variantId.color} / ${item.variantId.size}` : undefined,
-            quantity: item.quantity,
-            price: `$${item.unitPrice.toLocaleString('es-AR')}`,
-            sku: item.variantId?.sku || 'N/A',
-          }));
+      // Build item query for all orders
+      const itemQuery: any = { orderId: { $in: orderIds } };
+      if (status === 'store_checking_returns') {
+        itemQuery.returnStatus = 'returned';
+      }
 
-          // Calculate time since order was placed
-          const orderCreatedAt = (order as any).createdAt;
-          const createdAt = new Date(orderCreatedAt);
-          const now = new Date();
-          const diffMinutes = Math.floor((now.getTime() - createdAt.getTime()) / (1000 * 60));
+      // Fetch all order items in one go
+      const items = await OrderItemModel.find(itemQuery)
+        .populate({
+          path: 'variantId',
+          populate: {
+            path: 'productId',
+            select: 'title',
+          },
+          select: 'size color price sku productId images',
+        })
+        .select('quantity unitPrice variantId returnStatus orderId')
+        .lean();
 
-          let placedAt: string;
-          if (diffMinutes < 1) {
-            placedAt = 'Hace menos de 1 min';
-          } else if (diffMinutes < 60) {
-            placedAt = `Hace ${diffMinutes} min`;
+      // Group items by orderId
+      const itemsByOrderId: Record<string, any[]> = {};
+      for (const item of items) {
+        const key = item.orderId.toString();
+        if (!itemsByOrderId[key]) itemsByOrderId[key] = [];
+        itemsByOrderId[key].push(item);
+      }
+
+      // Format orders with their items
+      const ordersWithItems = orders.map((order) => {
+        const orderIdStr = order._id.toString();
+        const orderItems = itemsByOrderId[orderIdStr] || [];
+
+        // Format items for frontend
+        const formattedItems = orderItems.map((item: any) => ({
+          id: item._id.toString(),
+          name: item.variantId?.productId?.title || 'Producto',
+          variant: item.variantId ? `${item.variantId.color} / ${item.variantId.size}` : undefined,
+          quantity: item.quantity,
+          price: `$${item.unitPrice.toLocaleString('es-AR')}`,
+          sku: item.variantId?.sku || 'N/A',
+          // Include additional fields needed for inspection modal
+          returnStatus: item.returnStatus,
+          variantId: {
+            _id: item.variantId?._id?.toString(),
+            size: item.variantId?.size,
+            color: item.variantId?.color,
+            images: item.variantId?.images || [],
+          },
+          product: {
+            _id: item.variantId?.productId?._id?.toString(),
+            title: item.variantId?.productId?.title || 'Producto',
+            category: 'clothing', // Default category
+          },
+          unitPrice: item.unitPrice,
+        }));
+
+        // Calculate time since order was placed
+        const orderCreatedAt = (order as any).createdAt;
+        const createdAt = new Date(orderCreatedAt);
+        const now = new Date();
+        const diffMinutes = Math.floor((now.getTime() - createdAt.getTime()) / (1000 * 60));
+
+        let placedAt: string;
+        if (diffMinutes < 1) {
+          placedAt = 'Hace menos de 1 min';
+        } else if (diffMinutes < 60) {
+          placedAt = `Hace ${diffMinutes} min`;
+        } else {
+          const diffHours = Math.floor(diffMinutes / 60);
+          if (diffHours < 24) {
+            placedAt = `Hace ${diffHours}h`;
           } else {
-            const diffHours = Math.floor(diffMinutes / 60);
-            if (diffHours < 24) {
-              placedAt = `Hace ${diffHours}h`;
-            } else {
-              const diffDays = Math.floor(diffHours / 24);
-              placedAt = `Hace ${diffDays}d`;
-            }
+            const diffDays = Math.floor(diffHours / 24);
+            placedAt = `Hace ${diffDays}d`;
           }
+        }
 
-          const userId = order.userId as any;
+        const userId = order.userId as any;
 
-          return {
-            id: order._id.toString(),
-            number: `#${order._id.toString().slice(-4).toUpperCase()}`,
-            customer: userId && userId.name ? `${userId.name} ${userId.surname}` : 'Cliente',
-            items: formattedItems,
-            total: `$${order.total.toLocaleString('es-AR')}`,
-            status: order.status,
-            placedAt,
-            createdAt: orderCreatedAt,
-          };
-        }),
-      );
+        return {
+          id: order._id.toString(),
+          number: `#${order._id.toString().slice(-4).toUpperCase()}`,
+          customer: userId && userId.name ? `${userId.name} ${userId.surname}` : 'Cliente',
+          items: formattedItems,
+          total: `$${order.total.toLocaleString('es-AR')}`,
+          status: order.status,
+          placedAt,
+          createdAt: orderCreatedAt,
+        };
+      });
 
       const totalPages = Math.ceil(totalCount / limit);
 
@@ -543,12 +575,12 @@ export class StoreService {
         {
           $addFields: {
             variantCount: { $size: '$variants' },
-            totalStock: { 
+            totalStock: {
               $cond: {
                 if: { $eq: [{ $size: '$variants' }, 0] },
                 then: 0,
-                else: { $sum: '$variants.stock' }
-              }
+                else: { $sum: '$variants.stock' },
+              },
             },
             minPrice: { $min: '$variants.price' },
             maxPrice: { $max: '$variants.price' },
@@ -572,15 +604,15 @@ export class StoreService {
                 branches: [
                   {
                     case: { $or: [{ $eq: ['$totalStock', 0] }, { $eq: ['$totalStock', null] }] },
-                    then: 'out-of-stock'
+                    then: 'out-of-stock',
                   },
                   {
                     case: { $and: [{ $gt: ['$totalStock', 0] }, { $lte: ['$totalStock', 10] }] },
-                    then: 'low-stock'
-                  }
+                    then: 'low-stock',
+                  },
                 ],
-                default: 'in-stock'
-              }
+                default: 'in-stock',
+              },
             },
           },
         },
@@ -637,7 +669,7 @@ export class StoreService {
 
       // Calculate total count before pagination
       const countPipeline = [...pipeline, { $count: 'total' }];
-      
+
       // Add pagination
       const skip = (page - 1) * limit;
       pipeline.push({ $skip: skip }, { $limit: limit });

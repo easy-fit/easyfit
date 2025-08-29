@@ -1,0 +1,160 @@
+{
+  "data": {
+    "_id": "68ab524c7b8b21bef4fe0786",
+    "userId": "687d39daa44cd37b18d3fef0",
+    "storeId": {
+      "_id": "687d3a4fa44cd37b18d3fef9",
+      "name": "Signori",
+      "customization": {
+        "logoUrl": "assets/1755474231177-3e8c9490ad15816f-store-logos_687d3a4fa44cd37b18d3fef9_1755474231034-f324e846-2ffb-4db5-940e-fc8ed182d9cf.jpg"
+      }
+    },
+    "total": 208398,
+    "shipping": {
+      "cost": 3408,
+      "subsidizedBy": "user",
+      "type": "premium",
+      "address": {
+        "formatted": {
+          "street": "Bartolomé Mitre",
+          "streetNumber": "1097",
+          "apartment": "",
+          "floor": "",
+          "building": "",
+          "city": "Bahía Blanca",
+          "province": "Provincia de Buenos Aires",
+          "postalCode": "B8000"
+        },
+        "coordinates": [-38.7065423, -62.2758784]
+      },
+      "tryOnEnabled": true,
+      "distanceKm": 2.77,
+      "durationMinutes": 4,
+      "_id": "68ab52307b8b21bef4fe077b"
+    },
+    "status": "delivered",
+    "externalPaymentId": "1324531874",
+    "paymentStatus": "hold_placed",
+    "deliveryVerification": {
+      "code": "859874",
+      "status": "verified",
+      "attempts": {
+        "made": 0,
+        "max": 3
+      },
+      "_id": "68ab524c7b8b21bef4fe0788",
+      "verifiedAt": "2025-08-24T17:57:30.206Z"
+    },
+    "isStolen": false,
+    "isActive": true,
+    "createdAt": "2025-08-24T17:56:28.671Z",
+    "updatedAt": "2025-08-24T17:57:30.336Z",
+    "__v": 0,
+    "tryPeriod": {
+      "isActive": true,
+      "startedAt": "2025-08-24T17:57:30.336Z",
+      "endsAt": "2025-08-24T18:14:30.336Z",
+      "duration": 1020,
+      "status": "active",
+      "exceededTime": 0,
+      "_id": "68ab528a7b8b21bef4fe0858"
+    },
+    "orderItems": [
+      {
+        "_id": "68ab524c7b8b21bef4fe078a",
+        "orderId": "68ab524c7b8b21bef4fe0786",
+        "variantId": {
+          "_id": "688e594b7d509edb1d938ca4",
+          "productId": {
+            "_id": "689e986e086396622efd0818",
+            "title": "remera nudee",
+            "description": "testtttttttt",
+            "category": "hombre.jeans",
+            "slug": "remera-nudee"
+          },
+          "size": "S",
+          "color": "#20313A",
+          "images": [
+            {
+              "key": "products/remera-4-frente.jpg",
+              "altText": "Frente",
+              "order": 1,
+              "contentType": "image/jpeg",
+              "_id": "688e594b7d509edb1d938ca4"
+            },
+            {
+              "key": "products/remera-4-dorso.jpg",
+              "altText": "Lateral",
+              "order": 2,
+              "contentType": "image/jpeg",
+              "_id": "688e594b7d509edb1d938ca5"
+            }
+          ],
+          "price": 19990
+        },
+        "unitPrice": 19990,
+        "quantity": 1,
+        "returnStatus": "undecided",
+        "returnVerification": null,
+        "__v": 0,
+        "createdAt": "2025-08-24T17:56:28.716Z",
+        "updatedAt": "2025-08-24T17:56:28.716Z"
+      },
+      {
+        "_id": "68ab524c7b8b21bef4fe078b",
+        "orderId": "68ab524c7b8b21bef4fe0786",
+        "variantId": {
+          "_id": "689fc2388058eec22e6906fa",
+          "productId": {
+            "_id": "689fc2378058eec22e6906f8",
+            "title": "Perfect Cropped Knit Sweater Dark Green",
+            "description": "If you like this is because you have recovered from Covid-19 and now you have a sense of taste again.",
+            "category": "hombre.camisetas",
+            "slug": "perfect-cropped-knit-sweater-dark-green"
+          },
+          "size": "M",
+          "color": "#008000",
+          "images": [
+            {
+              "key": "products/1755300408050-4da6a3d01b6153f9-kko93mukw.jpg",
+              "altText": "Imagen del producto",
+              "order": 1,
+              "contentType": "image/jpeg",
+              "_id": "689fc2e48058eec22e69079c"
+            },
+            {
+              "key": "products/1755300408052-6c7c127b6c9c5d2b-0qsbt9sg6.jpg",
+              "altText": "Imagen del producto",
+              "order": 2,
+              "contentType": "image/webp",
+              "_id": "689fc2e48058eec22e69079d"
+            }
+          ],
+          "price": 185000
+        },
+        "unitPrice": 185000,
+        "quantity": 1,
+        "returnStatus": "undecided",
+        "returnVerification": null,
+        "__v": 0,
+        "createdAt": "2025-08-24T17:56:28.716Z",
+        "updatedAt": "2025-08-24T17:56:28.716Z"
+      }
+    ],
+    "riderAssignment": {
+      "_id": "68ab52610cd890bbdeabd177",
+      "riderId": "687d4013b5cbd3f056f34de6",
+      "orderId": "68ab524c7b8b21bef4fe0786",
+      "__v": 0,
+      "createdAt": "2025-08-24T17:56:49.307Z",
+      "status": "delivered",
+      "updatedAt": "2025-08-24T17:57:30.159Z",
+      "deliveredAt": "2025-08-24T17:57:30.158Z"
+    },
+    "riderDetails": {
+      "_id": "687d4013b5cbd3f056f34de6",
+      "name": "felipe",
+      "surname": "rider"
+    }
+  }
+}

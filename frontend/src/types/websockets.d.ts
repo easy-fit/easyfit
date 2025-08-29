@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // WebSocket event types for frontend
 
+import type { OrderStatus, OrderItemReturnStatus } from './order';
+
 // ============ Client to Server Events ============
 
 // Customer Events
@@ -75,7 +77,7 @@ export interface OrderNewEvent {
       _id: string;
       quantity: number;
       unitPrice: number;
-      returnStatus: string;
+      returnStatus: OrderItemReturnStatus;
       product: {
         _id: string;
         title: string;
@@ -186,7 +188,7 @@ export interface ReturnInspectionCompletedEvent {
   type: 'return_inspection_completed';
   data: {
     orderId: string;
-    returnStatus: 'returned_ok' | 'returned_partial' | 'returned_damaged';
+    returnStatus: OrderStatus;
     message: string;
     timestamp: Date;
   };
