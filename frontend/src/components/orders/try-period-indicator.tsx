@@ -1,91 +1,24 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Clock, AlertTriangle, CheckCircle } from 'lucide-react';
-import type { TryPeriodInfo } from '@/types/order';
+import { CheckCircle } from 'lucide-react';
+import type { TryPeriodInfo, ShippingType } from '@/types/order';
+import { TryPeriodTimer } from './try-period-timer';
+import { useTryPeriodTimer } from '@/hooks/use-try-period-timer';
+import { getUrgencyProps } from '@/utils/try-period-phases';
 
 interface TryPeriodIndicatorProps {
   tryPeriod: TryPeriodInfo;
   onOpenModal: () => void;
+  shippingType: ShippingType;
 }
 
-export function TryPeriodIndicator({ tryPeriod, onOpenModal }: TryPeriodIndicatorProps) {
-  const [timeRemaining, setTimeRemaining] = useState<number>(0);
-
-  // Calculate time remaining
-  useEffect(() => {
-    if (!tryPeriod.endsAt || tryPeriod.status !== 'active') return;
-
-    const calculateTimeRemaining = () => {
-      const now = new Date().getTime();
-      const end = new Date(tryPeriod.endsAt!).getTime();
-      const remaining = Math.max(0, Math.floor((end - now) / 1000));
-      setTimeRemaining(remaining);
-    };
-
-    calculateTimeRemaining();
-    const interval = setInterval(calculateTimeRemaining, 1000);
-
-    return () => clearInterval(interval);
-  }, [tryPeriod.endsAt, tryPeriod.status]);
-
-  // Format time display
-  const formatTime = useCallback((seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  }, []);
-
-  // Get urgency level and colors
-  const getUrgencyProps = useCallback((seconds: number) => {
-    if (seconds <= 60) {
-      return {
-        level: 'critical',
-        bgColor: 'bg-red-50',
-        borderColor: 'border-red-200',
-        textColor: 'text-red-700',
-        timerColor: 'text-red-600',
-        buttonColor: 'bg-red-600 hover:bg-red-700',
-        icon: AlertTriangle,
-        pulse: true
-      };
-    }
-    if (seconds <= 180) {
-      return {
-        level: 'high',
-        bgColor: 'bg-orange-50',
-        borderColor: 'border-orange-200',
-        textColor: 'text-orange-700',
-        timerColor: 'text-orange-600',
-        buttonColor: 'bg-orange-600 hover:bg-orange-700',
-        icon: AlertTriangle,
-        pulse: true
-      };
-    }
-    if (seconds <= 300) {
-      return {
-        level: 'medium',
-        bgColor: 'bg-yellow-50',
-        borderColor: 'border-yellow-200',
-        textColor: 'text-yellow-700',
-        timerColor: 'text-yellow-600',
-        buttonColor: 'bg-yellow-600 hover:bg-yellow-700',
-        icon: Clock,
-        pulse: false
-      };
-    }
-    return {
-      level: 'low',
-      bgColor: 'bg-blue-50',
-      borderColor: 'border-blue-200',
-      textColor: 'text-blue-700',
-      timerColor: 'text-blue-600',
-      buttonColor: 'bg-[#9EE493] hover:bg-[#8BD480] text-[#20313A]',
-      icon: Clock,
-      pulse: false
-    };
-  }, []);
+export function TryPeriodIndicator({ tryPeriod, onOpenModal, shippingType }: TryPeriodIndicatorProps) {
+  // Timer hook for try period
+  const { timeRemaining } = useTryPeriodTimer({ 
+    tryPeriod, 
+    shippingType 
+  });
 
   // Get status message and styling
   const getStatusContent = () => {
@@ -114,7 +47,7 @@ export function TryPeriodIndicator({ tryPeriod, onOpenModal }: TryPeriodIndicato
           borderColor: 'border-red-200',
           textColor: 'text-red-700',
           buttonColor: 'bg-red-600 hover:bg-red-700',
-          icon: AlertTriangle,
+          icon: CheckCircle,
           pulse: true
         };
       case 'finalized':
@@ -152,15 +85,10 @@ export function TryPeriodIndicator({ tryPeriod, onOpenModal }: TryPeriodIndicato
               {content.message}
             </p>
             {content.showTimer && (
-              <div className="mt-2 flex items-center gap-2">
-                <Clock className={`w-4 h-4 ${(content as any).timerColor || content.textColor}`} />
-                <span className={`font-mono font-bold text-lg ${(content as any).timerColor || content.textColor}`}>
-                  {formatTime(timeRemaining)}
-                </span>
-                <span className={`text-sm ${content.textColor} opacity-80`}>
-                  restantes
-                </span>
-              </div>
+              <TryPeriodTimer 
+                timeRemaining={timeRemaining} 
+                className={`mt-2 ${(content as any).timerColor || content.textColor}`}
+              />
             )}
           </div>
         </div>

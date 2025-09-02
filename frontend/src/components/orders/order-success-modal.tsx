@@ -22,23 +22,46 @@ export function OrderSuccessModal({ isOpen, onClose, order }: OrderSuccessModalP
     return `$${price.toLocaleString('es-AR')}`;
   };
 
+  // Utility functions for calculating charged items
+  const getChargedItems = () => {
+    return order.orderItems.filter(item => 
+      item.returnStatus === 'kept' || item.returnStatus === 'returned_damaged'
+    );
+  };
+
+  const calculateChargedItemsTotal = () => {
+    const chargedItems = getChargedItems();
+    return chargedItems.reduce((total, item) => {
+      return total + (item.unitPrice * item.quantity);
+    }, 0);
+  };
+
+  const getChargedItemsCount = () => {
+    return getChargedItems().length;
+  };
+
+  // Calculate totals
+  const chargedItemsCount = getChargedItemsCount();
+  const chargedItemsTotal = calculateChargedItemsTotal();
+  const finalChargedAmount = chargedItemsTotal + order.shipping.cost;
+
   // Countdown and auto-redirect logic
-  useEffect(() => {
-    if (!isOpen) return;
+  // useEffect(() => {
+  //   if (!isOpen) return;
 
-    const interval = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          handleGoHome();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+  //   const interval = setInterval(() => {
+  //     setCountdown((prev) => {
+  //       if (prev <= 1) {
+  //         clearInterval(interval);
+  //         handleGoHome();
+  //         return 0;
+  //       }
+  //       return prev - 1;
+  //     });
+  //   }, 1000);
 
-    return () => clearInterval(interval);
-  }, [isOpen]);
+  //   return () => clearInterval(interval);
+  // }, [isOpen]);
 
   const handleGoHome = () => {
     onClose();
@@ -61,43 +84,35 @@ export function OrderSuccessModal({ isOpen, onClose, order }: OrderSuccessModalP
 
           {/* Success Message */}
           <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-[#20313A] font-helvetica">
-              ¡Compra completada exitosamente! 🎉
-            </h2>
-            <p className="text-gray-600 font-satoshi">
-              Gracias por tu compra en EasyFit
-            </p>
+            <h2 className="text-2xl font-bold text-[#20313A] font-helvetica">¡Compra completada exitosamente! 🎉</h2>
+            <p className="text-gray-600 font-satoshi">Gracias por tu compra en EasyFit</p>
           </div>
 
           {/* Order Details */}
           <div className="bg-gray-50 rounded-lg p-4 space-y-3">
             <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
               <Package className="w-4 h-4" />
-              <span>Pedido #{order._id.slice(-8).toUpperCase()} finalizado</span>
+              <span>Pedido #{order._id.slice(-4).toUpperCase()} finalizado</span>
             </div>
-            
+
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">
-                  {order.orderItems.length} {order.orderItems.length === 1 ? 'producto' : 'productos'} comprados
+                  {chargedItemsCount} {chargedItemsCount === 1 ? 'producto' : 'productos'} comprados
                 </span>
-                <span className="font-medium text-[#20313A]">
-                  {formatPrice(order.total - order.shipping.cost)}
-                </span>
+                <span className="font-medium text-[#20313A]">{formatPrice(chargedItemsTotal)}</span>
               </div>
-              
+
               {order.shipping.cost > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Envío</span>
-                  <span className="font-medium text-[#20313A]">
-                    {formatPrice(order.shipping.cost)}
-                  </span>
+                  <span className="font-medium text-[#20313A]">{formatPrice(order.shipping.cost)}</span>
                 </div>
               )}
-              
+
               <div className="border-t pt-2 flex justify-between font-semibold">
                 <span className="text-[#20313A]">Total pagado</span>
-                <span className="text-[#20313A]">{formatPrice(order.total)}</span>
+                <span className="text-[#20313A]">{formatPrice(finalChargedAmount)}</span>
               </div>
             </div>
           </div>
@@ -111,7 +126,7 @@ export function OrderSuccessModal({ isOpen, onClose, order }: OrderSuccessModalP
               <ShoppingBag className="w-4 h-4 mr-2" />
               Ver todos mis pedidos
             </Button>
-            
+
             <Button
               onClick={handleGoHome}
               variant="outline"
