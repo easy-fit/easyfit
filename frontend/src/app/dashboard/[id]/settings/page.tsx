@@ -60,7 +60,6 @@ export default function StoreSettingsPage() {
       const updateData: UpdateStoreDTO = {
         contactEmail: data.contactEmail,
         contactPhone: data.contactPhone,
-        cuit: data.cuit,
         tags: data.tags,
         pickupHours: data.pickupHours,
         customization: data.customization,
@@ -168,7 +167,13 @@ export default function StoreSettingsPage() {
 
   return (
     <SidebarProvider>
-      <StoreSidebar storeName={storeName} logoUrl={logoUrl} active="settings" baseHref={`/dashboard/${id}`} userRole={accessType} />
+      <StoreSidebar
+        storeName={storeName}
+        logoUrl={logoUrl}
+        active="settings"
+        baseHref={`/dashboard/${id}`}
+        userRole={accessType}
+      />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-white px-4 shadow-sm">
           <SidebarTrigger className="-ml-1" />
@@ -201,19 +206,22 @@ export default function StoreSettingsPage() {
                   <div>
                     <p className="text-blue-800 font-medium mb-1">Acceso limitado a configuración</p>
                     <p className="text-blue-700 text-sm">
-                      Como manager, puedes gestionar horarios y etiquetas. Solo el propietario puede modificar información básica y diseño.
+                      Como manager, puedes gestionar horarios y etiquetas. Solo el propietario puede modificar
+                      información básica y diseño.
                     </p>
                   </div>
                 </div>
               </CardContent>
             </Card>
           )}
-          
+
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
               {canManageStore && <StoreBasicInfo form={form} store={store} />}
 
-              {canManageStore && <StoreAddressSection form={form} store={store} onChangeAddress={() => setIsLocationModalOpen(true)} />}
+              {canManageStore && (
+                <StoreAddressSection form={form} store={store} onChangeAddress={() => setIsLocationModalOpen(true)} />
+              )}
 
               <StoreHoursSection form={form} />
 

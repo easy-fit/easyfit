@@ -1,11 +1,10 @@
 import { UseFormReturn } from 'react-hook-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Building, Store, Hash, Mail, Phone, Instagram, Facebook, Twitter } from 'lucide-react';
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Building, Store, Mail, Phone, Instagram, Facebook, Twitter } from 'lucide-react';
 import { StoreSettingsFormValues } from '@/constants/store-settings';
 import type { Store as StoreType } from '@/types/store';
 
@@ -24,9 +23,7 @@ export function StoreBasicInfo({ form, store }: StoreBasicInfoProps) {
           </div>
           Información Básica
         </CardTitle>
-        <CardDescription className="text-gray-600">
-          Configura los datos principales de tu tienda
-        </CardDescription>
+        <CardDescription className="text-gray-600">Configura los datos principales de tu tienda</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -42,26 +39,6 @@ export function StoreBasicInfo({ form, store }: StoreBasicInfoProps) {
               className="h-11 border-gray-200 bg-gray-50 text-gray-600 cursor-not-allowed"
             />
           </div>
-          <FormField
-            control={form.control}
-            name="cuit"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-sm font-medium text-[#20313A] flex items-center gap-2">
-                  <Hash className="h-4 w-4" />
-                  CUIT
-                </FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="20-12345678-9"
-                    className="h-11 border-gray-200 focus:border-[#9EE493] focus:ring-[#9EE493]"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
           <FormField
             control={form.control}
             name="contactEmail"
@@ -126,9 +103,7 @@ export function StoreBasicInfo({ form, store }: StoreBasicInfoProps) {
                   />
                 </FormControl>
                 <div className="flex flex-col">
-                  <FormLabel className="text-sm font-medium text-[#20313A]">
-                    Tienda Abierta (Automático)
-                  </FormLabel>
+                  <FormLabel className="text-sm font-medium text-[#20313A]">Tienda Abierta (Automático)</FormLabel>
                   <p className="text-xs text-gray-600">
                     El estado se actualiza automáticamente según los horarios de retiro
                   </p>

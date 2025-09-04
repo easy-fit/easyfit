@@ -4,7 +4,15 @@ import { MerchantService } from '../services/merchant/merchant.service';
 import { StoreAnalyticsService } from '../services/store/storeAnalytics.service';
 import { StoreManagerService } from '../services/storeManager.service';
 import { catchAsync } from '../utils/catchAsync';
-import { CreateStoreDTO, UpdateStoreDTO, StoreFilterOptions } from '../types/store.types';
+import { 
+  CreateStoreDTO, 
+  UpdateStoreDTO, 
+  StoreFilterOptions,
+  UpdateBillingDTO,
+  UploadTaxDocumentDTO,
+  UpdateDocumentStatusDTO,
+  UpdateBillingStatusDTO
+} from '../types/store.types';
 
 export class StoreController {
   static getStores = catchAsync(async (req: Request, res: Response) => {
@@ -296,5 +304,59 @@ export class StoreController {
         managerAssignment,
       },
     });
+  });
+
+  // New Billing Management Endpoints
+  static getStoreBilling = catchAsync(async (req: Request, res: Response) => {
+    const storeId = req.params.id;
+    const billing = await StoreService.getStoreBilling(storeId);
+
+    res.status(200).json(billing);
+  });
+
+  static updateStoreBilling = catchAsync(async (req: Request, res: Response) => {
+    const storeId = req.params.id;
+    const data = req.body as UpdateBillingDTO;
+
+    const billing = await StoreService.updateStoreBilling(storeId, data);
+
+    res.status(200).json(billing);
+  });
+
+  static uploadTaxDocument = catchAsync(async (req: Request, res: Response) => {
+    const storeId = req.params.id;
+    const { fileName, type } = req.body as UploadTaxDocumentDTO;
+    
+    const result = await StoreService.uploadTaxDocument(storeId, { fileName, type });
+
+    res.status(200).json(result);
+  });
+
+  static deleteDocument = catchAsync(async (req: Request, res: Response) => {
+    const storeId = req.params.id;
+    const documentId = req.params.documentId;
+
+    const result = await StoreService.deleteDocument(storeId, documentId);
+
+    res.status(200).json(result);
+  });
+
+  static updateDocumentStatus = catchAsync(async (req: Request, res: Response) => {
+    const storeId = req.params.id;
+    const documentId = req.params.documentId;
+    const data = req.body as UpdateDocumentStatusDTO;
+
+    const result = await StoreService.updateDocumentStatus(storeId, documentId, data);
+
+    res.status(200).json(result);
+  });
+
+  static updateBillingStatus = catchAsync(async (req: Request, res: Response) => {
+    const storeId = req.params.id;
+    const data = req.body as UpdateBillingStatusDTO;
+
+    const billing = await StoreService.updateBillingStatus(storeId, data);
+
+    res.status(200).json(billing);
   });
 }

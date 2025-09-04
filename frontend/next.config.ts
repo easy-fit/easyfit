@@ -13,6 +13,11 @@ const nextConfig: NextConfig = {
         hostname: 'pub-a23f8529a61b48398a1afa5a6649a848.r2.dev',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'pub-99848b43c2384e82a8504e4d58867f71.r2.dev',
+        pathname: '/**',
+      },
     ],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],

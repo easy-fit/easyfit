@@ -1,6 +1,20 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
-import { CreateStoreDTO, GetStoresResponse, UpdateStoreDTO, StoreCommonResponse, StoreOrderAnalyticsResponse, StoreOrdersResponse } from '@/types/store';
+import { 
+  CreateStoreDTO, 
+  GetStoresResponse, 
+  UpdateStoreDTO, 
+  StoreCommonResponse, 
+  StoreOrderAnalyticsResponse, 
+  StoreOrdersResponse,
+  StoreBillingResponse,
+  UpdateBillingDTO,
+  UploadTaxDocumentDTO,
+  TaxDocumentUploadResponse,
+  UpdateDocumentStatusDTO,
+  UpdateBillingStatusDTO,
+  BillingStatusResponse,
+} from '@/types/store';
 import { StoreAnalyticsApiResponse, DateRangeFilter, OrderTypeFilter } from '@/types/analytics';
 import { useAuth } from '@/hooks/use-auth';
 
@@ -247,5 +261,88 @@ export const useStoreProducts = (
     queryFn: () => api.stores.getStoreProducts(storeId, filters),
     staleTime: 30000, // 30 seconds for product list
     enabled: !!storeId,
+  });
+};
+
+// Billing Management Hooks
+export const useStoreBilling = (storeId: string) => {
+  return useQuery<StoreBillingResponse>({
+    queryKey: ['stores', storeId, 'billing'],
+    queryFn: () => api.stores.getStoreBilling(storeId),
+    staleTime: 30000, // 30 seconds
+    enabled: !!storeId,
+  });
+};
+
+export const useUpdateStoreBilling = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ storeId, data }: { storeId: string; data: UpdateBillingDTO }) =>
+      api.stores.updateStoreBilling(storeId, data),
+    onSuccess: (data, variables) => {
+      // Invalidate billing query
+      queryClient.invalidateQueries({ queryKey: ['stores', variables.storeId, 'billing'] });
+      // Invalidate store query to update status if billing affects it
+      queryClient.invalidateQueries({ queryKey: ['store', variables.storeId] });
+    },
+  });
+};
+
+export const useUploadTaxDocument = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ storeId, data }: { storeId: string; data: UploadTaxDocumentDTO }) =>
+      api.stores.uploadTaxDocument(storeId, data),
+    onSuccess: (data, variables) => {
+      // Invalidate billing query to show new document
+      queryClient.invalidateQueries({ queryKey: ['stores', variables.storeId, 'billing'] });
+    },
+  });
+};
+
+export const useDeleteTaxDocument = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ storeId, documentId }: { storeId: string; documentId: string }) =>
+      api.stores.deleteTaxDocument(storeId, documentId),
+    onSuccess: (data, variables) => {
+      // Invalidate billing query to remove deleted document
+      queryClient.invalidateQueries({ queryKey: ['stores', variables.storeId, 'billing'] });
+    },
+  });
+};
+
+export const useUpdateDocumentStatus = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ 
+      storeId, 
+      documentId, 
+      data 
+    }: { 
+      storeId: string; 
+      documentId: string; 
+      data: UpdateDocumentStatusDTO;
+    }) => api.stores.updateDocumentStatus(storeId, documentId, data),
+    onSuccess: (data, variables) => {
+      // Invalidate billing query to show updated document status
+      queryClient.invalidateQueries({ queryKey: ['stores', variables.storeId, 'billing'] });
+    },
+  });
+};
+
+export const useUpdateBillingStatus = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ storeId, data }: { storeId: string; data: UpdateBillingStatusDTO }) =>
+      api.stores.updateBillingStatus(storeId, data),
+    onSuccess: (data, variables) => {
+      // Invalidate billing query
+      queryClient.invalidateQueries({ queryKey: ['stores', variables.storeId, 'billing'] });
+      // Invalidate store query to update status
+      queryClient.invalidateQueries({ queryKey: ['store', variables.storeId] });
+      // Invalidate stores list to update status
+      queryClient.invalidateQueries({ queryKey: ['stores'] });
+    },
   });
 };
