@@ -24,14 +24,16 @@ import { StoreAddressSection } from '@/components/settings/store-address-section
 import { StoreHoursSection } from '@/components/settings/store-hours-section';
 import { StoreTagsSection } from '@/components/settings/store-tags-section';
 import { StoreCustomizationSection } from '@/components/settings/store-customization-section';
-import { Save, Store, Truck, Loader2 } from 'lucide-react';
+import { Save, Store, Truck, Loader2, AlertTriangle, Trash2 } from 'lucide-react';
 import { Form } from '@/components/ui/form';
+import { DeleteStoreDialog } from '@/components/stores/delete-store-dialog';
 
 export default function StoreSettingsPage() {
   const { id } = useParams() as { id: string };
   const { store, storeName, logoUrl, isLoading: storeLoading, canManageStore, accessType } = useCurrentStore();
   const toast = useEasyFitToast();
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   // API mutations
   const updateStoreMutation = useUpdateStore();
@@ -271,6 +273,50 @@ export default function StoreSettingsPage() {
                   </div>
                 </CardContent>
               </Card>
+              
+              {/* Danger Zone - Only for store owners */}
+              {canManageStore && (
+                <Card className="shadow-sm border-0 bg-white border-l-4 border-l-red-500">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center gap-3 text-red-600 text-xl">
+                      <div className="p-2 bg-red-50 rounded-lg">
+                        <AlertTriangle className="h-5 w-5 text-red-600" />
+                      </div>
+                      Zona Peligrosa
+                    </CardTitle>
+                    <CardDescription className="text-red-700">
+                      Acciones irreversibles que eliminarán permanentemente tu tienda
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-red-900 mb-2">Eliminar Tienda</h4>
+                          <p className="text-red-700 text-sm mb-3">
+                            Una vez eliminada, la tienda no se puede recuperar. Toda la información, 
+                            configuraciones y datos asociados se perderán permanentemente.
+                          </p>
+                          <div className="text-red-600 text-xs space-y-1">
+                            <p>• Debes eliminar todos los productos antes de continuar</p>
+                            <p>• Esta acción no se puede deshacer</p>
+                            <p>• Se perderán todas las configuraciones personalizadas</p>
+                          </div>
+                        </div>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => setIsDeleteDialogOpen(true)}
+                          className="bg-red-600 hover:bg-red-700 text-white ml-4"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Eliminar
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </form>
           </Form>
         </main>
@@ -283,6 +329,14 @@ export default function StoreSettingsPage() {
         currentLocation={`${form.watch('address')?.formatted?.street || store.address?.formatted?.street || ''} ${
           form.watch('address')?.formatted?.streetNumber || store.address?.formatted?.streetNumber || ''
         }, ${form.watch('address')?.formatted?.city || store.address?.formatted?.city || ''}`}
+      />
+      
+      <DeleteStoreDialog
+        isOpen={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        storeId={id}
+        storeName={store?.name || 'Tienda'}
+        redirectAfterDelete={true}
       />
     </SidebarProvider>
   );

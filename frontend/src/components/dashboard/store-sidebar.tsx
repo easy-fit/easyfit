@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Home, BarChart3, Boxes, Settings, Users, CreditCard } from 'lucide-react';
+import { Home, BarChart3, Boxes, Settings, Users, CreditCard, ClipboardList } from 'lucide-react';
 import { buildStoreAssetUrl } from '@/lib/utils/image-url';
 
 import {
@@ -30,6 +30,7 @@ const baseItems: NavItem[] = [
   { title: 'Inicio', icon: Home, key: 'home', url: '/' }, // stays here
   { title: 'Estadísticas', icon: BarChart3, key: 'analytics', url: '/analytics' },
   { title: 'Productos', icon: Boxes, key: 'stock', url: '/products' },
+  { title: 'Pedidos', icon: ClipboardList, key: 'orders', url: '/orders' },
   { title: 'Facturación', icon: CreditCard, key: 'billing', url: '/billing' },
   { title: 'Equipo', icon: Users, key: 'managers', url: '/managers' },
   { title: 'Configuración', icon: Settings, key: 'settings', url: '/settings' },

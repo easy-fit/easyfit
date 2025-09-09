@@ -9,7 +9,7 @@ import {
   useDeleteTaxDocument,
 } from '@/hooks/api/use-stores';
 import { useCurrentStore } from '@/contexts/store-context';
-import { toast } from 'sonner';
+import { useEasyFitToast } from '@/hooks/use-toast';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { StoreSidebar } from '@/components/dashboard/store-sidebar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -68,6 +68,7 @@ export default function BillingPage() {
   const { data: billingResponse, isLoading: billingLoading, refetch: refetchBilling } = useStoreBilling(storeId);
   const updateBillingMutation = useUpdateStoreBilling();
   const deleteDocumentMutation = useDeleteTaxDocument();
+  const toast = useEasyFitToast();
 
   const [formData, setFormData] = useState<{
     fiscalInfo: Partial<FiscalInfo>;
@@ -100,7 +101,7 @@ export default function BillingPage() {
       });
       toast.success('Información de facturación actualizada correctamente');
     } catch (error) {
-      toast.error('Error al actualizar la información de facturación');
+      toast.smartError(error, 'Error al actualizar la información de facturación');
     }
   };
 
@@ -123,7 +124,7 @@ export default function BillingPage() {
       await deleteDocumentMutation.mutateAsync({ storeId, documentId });
       toast.success('Documento eliminado correctamente');
     } catch (error) {
-      toast.error('Error al eliminar el documento');
+      toast.smartError(error, 'Error al eliminar el documento');
     }
   };
 

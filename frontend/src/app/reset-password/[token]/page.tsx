@@ -54,12 +54,12 @@ export default function ResetPasswordPage() {
     e.preventDefault();
 
     if (password !== confirmPassword) {
-      toast.error('Las contraseñas no coinciden');
+      toast.validationError('contraseñas', 'Las contraseñas no coinciden');
       return;
     }
 
     if (password.length < 8) {
-      toast.error('La contraseña debe tener al menos 8 caracteres');
+      toast.validationError('contraseña', 'La contraseña debe tener al menos 8 caracteres');
       return;
     }
 
@@ -82,8 +82,7 @@ export default function ResetPasswordPage() {
       }
       
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || error?.message || 'Error al actualizar la contraseña';
-      toast.error(errorMessage);
+      toast.smartError(error, 'Error al actualizar la contraseña');
 
       // If the error indicates invalid token, update the state
       if (

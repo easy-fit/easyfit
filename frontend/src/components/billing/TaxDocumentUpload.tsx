@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { useTaxDocumentUpload, TaxDocumentFile } from '@/hooks/use-tax-document-upload';
 import { TaxDocumentUploadService } from '@/lib/services/tax-document-upload.service';
 import { DocumentType } from '@/types/store';
-import { toast } from 'sonner';
+import { useEasyFitToast } from '@/hooks/use-toast';
 
 interface TaxDocumentUploadProps {
   storeId: string;
@@ -38,6 +38,7 @@ export function TaxDocumentUpload({
   const [selectedFiles, setSelectedFiles] = useState<FileWithType[]>([]);
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const toast = useEasyFitToast();
 
   const {
     uploadStates,
@@ -56,12 +57,12 @@ export function TaxDocumentUpload({
         resetStates();
         onUploadSuccess?.();
       } else {
-        toast.error(`Error: ${result.failedCount} documento(s) fallaron al subir`);
+        toast.uploadError({ message: `${result.failedCount} documento(s) fallaron al subir` });
         onUploadError?.(`${result.failedCount} files failed to upload`);
       }
     },
     onUploadError: (error) => {
-      toast.error(`Error al subir documentos: ${error}`);
+      toast.uploadError({ message: error });
       onUploadError?.(error);
     },
   });
@@ -96,7 +97,7 @@ export function TaxDocumentUpload({
     // Validate files
     const validation = validateFiles(files);
     if (!validation.valid) {
-      toast.error(validation.errors[0]);
+      toast.validationError('archivo', validation.errors[0]);
       return;
     }
 
@@ -132,7 +133,7 @@ export function TaxDocumentUpload({
 
   const handleUpload = useCallback(async () => {
     if (selectedFiles.length === 0) {
-      toast.error('Por favor selecciona al menos un archivo');
+      toast.validationError('archivo', 'Por favor selecciona al menos un archivo');
       return;
     }
 

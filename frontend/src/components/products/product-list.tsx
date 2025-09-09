@@ -41,6 +41,7 @@ interface ProductListProps {
   onEditProduct: (productId: string) => void;
   onDeleteProduct: (productId: string) => void;
   onViewProduct: (productId: string) => void;
+  onAddProduct?: () => void;
   isLoading?: boolean;
   pagination?: {
     current: number;
@@ -124,6 +125,7 @@ export function ProductList({
   onEditProduct,
   onDeleteProduct,
   onViewProduct,
+  onAddProduct,
   isLoading = false,
   pagination,
   onPageChange,
@@ -253,7 +255,10 @@ export function ProductList({
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">No hay productos</h3>
             <p className="text-gray-600 mb-4">Comenzá agregando tu primer producto a la tienda.</p>
-            <Button className="bg-[#9EE493] hover:bg-[#8BD480] text-[#20313A]">
+            <Button 
+              className="bg-[#9EE493] hover:bg-[#8BD480] text-[#20313A]"
+              onClick={onAddProduct}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Agregar Producto
             </Button>

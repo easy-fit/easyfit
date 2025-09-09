@@ -38,12 +38,16 @@ export class StoreService {
   }
 
   static async setStoreStatus(storeId: string, status: 'active' | 'inactive') {
-    const store = await StoreModel.findByIdAndUpdate(storeId, { status }, { new: true, runValidators: true });
+    const store = await StoreModel.findById(storeId);
+    // Check if store can be activated
     if (status === 'active' && store?.billing.status !== 'accepted') {
       throw new AppError('Store cannot be activated. Billing must be approved first.', 400);
     }
-
-    this.ensureStoreExists(store);
+    // update store status
+    if (store) {
+      store.status = status;
+      await store.save();
+    }
     return store;
   }
 
@@ -118,6 +122,21 @@ export class StoreService {
       const isValidDeliveryLocation = isDeliveryLocationValid(storeCoordinates);
       if (!isValidDeliveryLocation) {
         throw new AppError('Invalid delivery address', 400);
+      }
+    }
+
+    // Check billing requirements when trying to open store
+    if (data.isOpen === true) {
+      const currentStore = await StoreModel.findById(storeId);
+      if (!currentStore) {
+        throw new AppError('Store not found', 404);
+      }
+
+      if (currentStore.billing?.status !== 'accepted') {
+        throw new AppError(
+          'Store cannot be opened. Billing information must be approved first. Please complete your billing profile and wait for approval.',
+          400,
+        );
       }
     }
 
@@ -740,6 +759,29 @@ export class StoreService {
   }
 
   // Billing Management Methods
+  private static isBillingComplete(billing: any): boolean {
+    if (!billing) return false;
+
+    // Check fiscal info completeness
+    const fiscalComplete =
+      billing.fiscalInfo && billing.fiscalInfo.cuit && billing.fiscalInfo.businessName && billing.fiscalInfo.taxStatus;
+
+    // Check banking info completeness
+    const bankingComplete =
+      billing.bankingInfo &&
+      billing.bankingInfo.bankName &&
+      billing.bankingInfo.accountHolder &&
+      billing.bankingInfo.cbu;
+
+    // Check if at least one tax document exists and is approved
+    const docsComplete =
+      billing.taxDocuments &&
+      billing.taxDocuments.length > 0 &&
+      billing.taxDocuments.some((doc: any) => doc.status === 'approved');
+
+    return !!(fiscalComplete && bankingComplete && docsComplete);
+  }
+
   static async getStoreBilling(storeId: string): Promise<BillingResponse> {
     if (!Types.ObjectId.isValid(storeId)) {
       throw new AppError('Invalid store ID', 400);
@@ -783,6 +825,26 @@ export class StoreService {
       throw new AppError('Store not found', 404);
     }
 
+    // Check if billing is now complete and auto-approve if so
+    if (store.billing.status === 'pending' && this.isBillingComplete(store.billing)) {
+      const autoApprovalUpdate = {
+        'billing.status': 'accepted',
+        'billing.completedAt': new Date(),
+        'billing.lastUpdatedAt': new Date(),
+      };
+
+      const updatedStore = await StoreModel.findByIdAndUpdate(storeId, autoApprovalUpdate, {
+        new: true,
+        runValidators: false,
+      });
+      if (updatedStore) {
+        return {
+          status: 'success',
+          data: updatedStore.billing,
+        };
+      }
+    }
+
     return {
       status: 'success',
       data: store.billing,
@@ -791,7 +853,7 @@ export class StoreService {
 
   static async uploadTaxDocument(
     storeId: string,
-    documentData: { fileName: string; type: DocumentType }
+    documentData: { fileName: string; type: DocumentType },
   ): Promise<{ status: string; data: { billing: StoreBilling; uploadInfo: { key: string; url: string } } }> {
     const result = await StoreTaxDocumentService.uploadTaxDocument(storeId, documentData);
 
@@ -801,7 +863,10 @@ export class StoreService {
     };
   }
 
-  static async deleteDocument(storeId: string, documentId: string): Promise<{ status: string; data: { billing: StoreBilling } }> {
+  static async deleteDocument(
+    storeId: string,
+    documentId: string,
+  ): Promise<{ status: string; data: { billing: StoreBilling } }> {
     const result = await StoreTaxDocumentService.deleteTaxDocument(storeId, documentId);
 
     return {
@@ -813,7 +878,7 @@ export class StoreService {
   static async updateDocumentStatus(
     storeId: string,
     documentId: string,
-    data: UpdateDocumentStatusDTO
+    data: UpdateDocumentStatusDTO,
   ): Promise<{ status: string; data: { billing: StoreBilling } }> {
     const result = await StoreTaxDocumentService.updateDocumentStatus(storeId, documentId, data);
 

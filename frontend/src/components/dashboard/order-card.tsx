@@ -18,11 +18,19 @@ export function OrderCard({
   acceptingEnabled = true,
   onAccept,
   onReject,
+  showActions = true,
+  showFullStatus = false,
+  clickable = false,
+  onOrderClick,
 }: {
   order: Order;
   acceptingEnabled?: boolean;
   onAccept?: (id: string) => void;
   onReject?: (id: string) => void;
+  showActions?: boolean;
+  showFullStatus?: boolean;
+  clickable?: boolean;
+  onOrderClick?: (orderId: string) => void;
 }) {
   const [open, setOpen] = React.useState(false);
 
@@ -117,8 +125,20 @@ export function OrderCard({
 
   const statusEl = getStatusDisplay(order.status);
 
+  const handleCardClick = () => {
+    if (clickable && onOrderClick) {
+      onOrderClick(order.id);
+    }
+  };
+
   return (
-    <div className="rounded-md border bg-white p-3">
+    <div 
+      className={cn(
+        "rounded-md border bg-white p-3",
+        clickable && "cursor-pointer hover:shadow-md transition-shadow"
+      )}
+      onClick={clickable ? handleCardClick : undefined}
+    >
       <div className="flex flex-col md:flex-row md:items-center gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <div className="h-9 w-9 rounded-md bg-gray-100 flex items-center justify-center">
@@ -141,7 +161,7 @@ export function OrderCard({
           <Badge variant="secondary">{order.total}</Badge>
           <span className="text-xs text-muted-foreground">{order.placedAt}</span>
 
-          {order.status === 'order_placed' ? (
+          {showActions && order.status === 'order_placed' ? (
             <div className="flex items-center gap-2">
               <Button
                 size="sm"
@@ -156,7 +176,19 @@ export function OrderCard({
               </Button>
             </div>
           ) : (
-            statusEl
+            <div className="flex items-center gap-2">
+              {statusEl}
+              {showFullStatus && (
+                <div className="text-xs text-gray-500">
+                  {new Date(order.createdAt).toLocaleDateString('es-AR', {
+                    day: '2-digit',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </div>
+              )}
+            </div>
           )}
 
           <button

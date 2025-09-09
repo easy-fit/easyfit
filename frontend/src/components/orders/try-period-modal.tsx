@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Check, X, RotateCcw, Info, Truck } from 'lucide-react';
 import type { CompleteOrder, TryPeriodInfo } from '@/types/order';
 import { OrdersClient } from '@/lib/api/orders-client';
-import { toast } from 'sonner';
+import { useEasyFitToast } from '@/hooks/use-toast';
 import { CircularTimer } from './circular-timer';
 import { TryPeriodProductCard } from './try-period-product-card';
 import { useTryPeriodTimer } from '@/hooks/use-try-period-timer';
@@ -25,6 +25,7 @@ export function TryPeriodModal({ isOpen, onClose, order, tryPeriod, onDecisionsS
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const toast = useEasyFitToast();
 
   // Use actual orderItems from backend (each is now an individual physical item)
   const orderItems = order.orderItems;
@@ -71,7 +72,7 @@ export function TryPeriodModal({ isOpen, onClose, order, tryPeriod, onDecisionsS
   // Submit decisions for order items
   const handleSubmit = useCallback(async () => {
     if (!allItemDecisionsMade) {
-      toast.error('Please make a decision for all items');
+      toast.validationError('decisiones', 'Por favor tomá una decisión para todos los productos');
       return;
     }
 
@@ -79,12 +80,12 @@ export function TryPeriodModal({ isOpen, onClose, order, tryPeriod, onDecisionsS
     try {
       const items = transformDecisionsForAPI(orderItems, decisions);
       await ordersClient().saveDecisions(order._id, items);
-      toast.success('Decisions saved successfully!');
+      toast.success('¡Decisiones guardadas exitosamente!');
       onDecisionsSubmitted?.();
       onClose();
     } catch (error) {
       console.error('Failed to save decisions:', error);
-      toast.error('Failed to save decisions. Please try again.');
+      toast.smartError(error, 'Error al guardar las decisiones. Intentá nuevamente.');
     } finally {
       setIsSubmitting(false);
     }

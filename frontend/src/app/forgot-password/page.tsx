@@ -30,8 +30,7 @@ export default function ForgotPasswordPage() {
       setIsEmailSent(true);
       toast.success('¡Email enviado exitosamente!');
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || error?.message || 'Error al enviar el email';
-      toast.error(errorMessage);
+      toast.smartError(error, 'Error al enviar el email');
     }
   };
 

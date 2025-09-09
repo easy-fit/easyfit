@@ -176,6 +176,7 @@ export const useStoreOrders = (
   storeId: string, 
   filters?: {
     status?: string;
+    search?: string;
     limit?: number;
     page?: number;
     sortBy?: string;
