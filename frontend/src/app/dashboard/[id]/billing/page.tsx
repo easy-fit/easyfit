@@ -73,7 +73,21 @@ export default function BillingPage() {
   const [formData, setFormData] = useState<{
     fiscalInfo: Partial<FiscalInfo>;
     bankingInfo: Partial<BankingInfo>;
-  }>({ fiscalInfo: {}, bankingInfo: {} });
+  }>({ 
+    fiscalInfo: {
+      cuit: '',
+      businessName: '',
+      taxStatus: 'monotributista',
+      taxCategory: ''
+    }, 
+    bankingInfo: {
+      accountType: 'cbu',
+      cbu: '',
+      bankName: '',
+      accountHolder: '',
+      alias: ''
+    } 
+  });
 
   const [documentViewer, setDocumentViewer] = useState<{
     isOpen: boolean;
@@ -87,8 +101,19 @@ export default function BillingPage() {
   useEffect(() => {
     if (billingData) {
       setFormData({
-        fiscalInfo: billingData.fiscalInfo,
-        bankingInfo: billingData.bankingInfo,
+        fiscalInfo: {
+          cuit: billingData.fiscalInfo?.cuit || '',
+          businessName: billingData.fiscalInfo?.businessName || '',
+          taxStatus: billingData.fiscalInfo?.taxStatus || 'monotributista',
+          taxCategory: billingData.fiscalInfo?.taxCategory || ''
+        },
+        bankingInfo: {
+          accountType: billingData.bankingInfo?.accountType || 'cbu',
+          cbu: billingData.bankingInfo?.cbu || '',
+          bankName: billingData.bankingInfo?.bankName || '',
+          accountHolder: billingData.bankingInfo?.accountHolder || '',
+          alias: billingData.bankingInfo?.alias || ''
+        },
       });
     }
   }, [billingData]);
@@ -336,7 +361,8 @@ export default function BillingPage() {
               {/* Document List */}
               <div className="space-y-4">
                 <h4 className="text-sm font-medium text-[#20313A]">Documentos Subidos</h4>
-                {billingData?.taxDocuments?.map((doc) => (
+                {billingData?.taxDocuments && billingData.taxDocuments.length > 0 ? (
+                  billingData.taxDocuments.map((doc) => (
                   <div
                     key={doc.id}
                     className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100"
@@ -385,7 +411,14 @@ export default function BillingPage() {
                       </div>
                     </div>
                   </div>
-                ))}
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <FileText className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                    <p className="text-sm">No hay documentos subidos aún</p>
+                    <p className="text-xs text-gray-400">Subí tus documentos fiscales para completar la validación</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
