@@ -92,7 +92,7 @@ function CartPageContent() {
       });
       toast.success('Cantidad actualizada');
     } catch (error) {
-      toast.error('Error al actualizar la cantidad');
+      toast.quantityUpdateError(error);
     }
   };
 
@@ -101,20 +101,19 @@ function CartPageContent() {
       await deleteCartItemMutation.mutateAsync(itemId);
       toast.success('Producto eliminado del carrito');
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || error?.message || 'Error al eliminar el producto';
-      toast.error(errorMessage);
+      toast.smartError(error, 'Error al eliminar el producto');
     }
   };
 
   const handleCheckout = async () => {
     if (!isAuthenticated) {
-      toast.error('Debes iniciar sesión para continuar');
+      toast.authError({ message: 'Debes iniciar sesión para continuar' });
       router.push('/login');
       return;
     }
 
     if (cartItems.length === 0) {
-      toast.error('Tu carrito está vacío');
+      toast.validationError('carrito', 'Tu carrito está vacío');
       return;
     }
 
@@ -134,8 +133,7 @@ function CartPageContent() {
       }
     } catch (error: any) {
       console.error('Checkout error:', error);
-      const errorMessage = error?.response?.data?.message || error?.message || 'Error al crear la sesión de checkout';
-      toast.error(errorMessage);
+      toast.smartError(error, 'Error al crear la sesión de checkout');
     }
   };
 

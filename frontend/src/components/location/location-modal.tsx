@@ -131,8 +131,7 @@ export function LocationModal({ isOpen, onClose, onLocationSelect, currentLocati
       toast.addressSaved();
     } catch (error: any) {
       console.error('Error updating address:', error);
-      const errorMessage = error?.response?.data?.message || error?.message || 'Error al actualizar la dirección';
-      toast.error(errorMessage);
+      toast.smartError(error, 'Error al actualizar la dirección');
     }
   };
 
@@ -219,8 +218,7 @@ export function LocationModal({ isOpen, onClose, onLocationSelect, currentLocati
       toast.addressSaved();
     } catch (error: any) {
       console.error('Error updating address:', error);
-      const errorMessage = error?.response?.data?.message || error?.message || 'Error al actualizar la dirección';
-      toast.error(errorMessage);
+      toast.smartError(error, 'Error al actualizar la dirección');
     }
   };
 

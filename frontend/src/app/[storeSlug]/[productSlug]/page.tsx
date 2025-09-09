@@ -164,12 +164,12 @@ export default function ProductPage() {
 
   const handleAddToCart = async () => {
     if (!selectedVariant) {
-      toast.error('Por favor seleccioná una variante');
+      toast.validationError('variante', 'Por favor seleccioná una variante');
       return;
     }
 
     if (selectedVariant.stock === 0) {
-      toast.error('Este producto no tiene stock disponible');
+      toast.quantityUpdateError({ message: 'Este producto no tiene stock disponible' });
       return;
     }
 
@@ -185,7 +185,7 @@ export default function ProductPage() {
       });
     } catch (error: any) {
       console.error('Error adding to cart:', error);
-      toast.error(error?.message || 'Error al agregar al carrito');
+      toast.smartError(error, 'Error al agregar al carrito');
     }
   };
 

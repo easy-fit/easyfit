@@ -5,7 +5,7 @@ export interface FileItem {
 
 export interface SignUrlsRequest {
   bucket: string;
-  typePrefix: 'products' | 'returns' | 'assets';
+  typePrefix: 'products' | 'returns' | 'assets' | 'tax-documents';
   files: FileItem[];
 }
 

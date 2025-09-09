@@ -3,6 +3,11 @@ import { Address } from './global';
 
 export type StoreStatus = 'active' | 'inactive' | 'disabled';
 export type StoreType = 'physical' | 'online';
+export type BillingStatus = 'pending' | 'rejected' | 'accepted';
+export type TaxStatus = 'monotributista' | 'responsable_inscripto' | 'exento';
+export type DocumentType = 'afip_certificate' | 'monotributo_receipt' | 'other';
+export type DocumentStatus = 'pending' | 'approved' | 'rejected';
+export type AccountType = 'cbu' | 'alias';
 
 export interface StoreFilterOptions {
   search?: string;
@@ -50,16 +55,51 @@ export interface StoreCustomization {
   };
 }
 
+export interface FiscalInfo {
+  cuit: string;
+  businessName: string;
+  taxStatus: TaxStatus;
+  taxCategory?: string;
+}
+
+export interface TaxDocument {
+  id: string;
+  name: string;
+  type: DocumentType;
+  fileKey: string;
+  uploadedAt: Date;
+  status: DocumentStatus;
+  size: number;
+  rejectionReason?: string;
+}
+
+export interface BankingInfo {
+  accountType: AccountType;
+  cbu: string;
+  bankName: string;
+  accountHolder: string;
+  alias?: string;
+}
+
+export interface StoreBilling {
+  status: BillingStatus;
+  fiscalInfo: FiscalInfo;
+  taxDocuments: TaxDocument[];
+  bankingInfo: BankingInfo;
+  completedAt?: Date;
+  lastUpdatedAt: Date;
+}
+
 export interface Store {
   merchantId: Types.ObjectId;
   name: string;
   address: Address;
-  cuit?: string;
   pickupHours: PickupHours;
   options: StoreOptions;
   contactEmail: string;
   contactPhone?: string;
   status: StoreStatus;
+  billing: StoreBilling;
   ratingCount: number;
   ratingSum: number;
   averageRating: number;
@@ -74,7 +114,6 @@ export interface Store {
 export interface CreateStoreDTO {
   name: string;
   address: Address;
-  cuit?: string;
   pickupHours: PickupHours;
   options: StoreOptions;
   contactEmail: string;
@@ -87,7 +126,6 @@ export interface CreateStoreDTO {
 
 export interface UpdateStoreDTO {
   address?: Address;
-  cuit?: string;
   pickupHours?: PickupHours;
   options?: StoreOptions;
   contactEmail?: string;
@@ -96,4 +134,29 @@ export interface UpdateStoreDTO {
   tags?: string[];
   customization?: StoreCustomization;
   isOpen?: boolean;
+}
+
+// Billing-specific DTOs
+export interface UpdateBillingDTO {
+  fiscalInfo?: Partial<FiscalInfo>;
+  bankingInfo?: Partial<BankingInfo>;
+}
+
+export interface UploadTaxDocumentDTO {
+  fileName: string;
+  type: DocumentType;
+}
+
+export interface UpdateDocumentStatusDTO {
+  status: DocumentStatus;
+  rejectionReason?: string;
+}
+
+export interface UpdateBillingStatusDTO {
+  status: BillingStatus;
+}
+
+export interface BillingResponse {
+  status: 'success';
+  data: StoreBilling;
 }

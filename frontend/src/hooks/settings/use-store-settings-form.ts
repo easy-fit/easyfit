@@ -14,7 +14,6 @@ export function useStoreSettingsForm({ store }: UseStoreSettingsFormProps) {
     defaultValues: {
       contactEmail: '',
       contactPhone: '',
-      cuit: '',
       isOpen: false,
       tags: [],
       pickupHours: defaultPickupHours,
@@ -33,7 +32,6 @@ export function useStoreSettingsForm({ store }: UseStoreSettingsFormProps) {
       form.reset({
         contactEmail: store.contactEmail || '',
         contactPhone: store.contactPhone || '',
-        cuit: store.cuit || '',
         isOpen: store.isOpen || false,
         tags: store.tags || [],
         pickupHours: store.pickupHours || defaultPickupHours,

@@ -65,7 +65,7 @@ export default function RegisterPage() {
     e.preventDefault();
 
     if (formData.password !== formData.confirmPassword) {
-      toast.error('Las contraseñas no coinciden');
+      toast.validationError('contraseñas', 'Las contraseñas no coinciden');
       return;
     }
 
@@ -111,8 +111,7 @@ export default function RegisterPage() {
       router.push('/verify-email');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || error?.message || 'Error al crear la cuenta';
-      toast.error(errorMessage);
+      toast.smartError(error, 'Error al crear la cuenta');
     } finally {
       setIsLoading(false);
     }

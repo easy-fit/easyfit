@@ -178,12 +178,13 @@ export default function CheckoutPage() {
           router.push(`/orders/${response.data.order._id}`);
           resolve(response);
         } else {
-          toast.error('Error al procesar el pago. Intentá nuevamente.');
+          // Use smart error translation to get the actual backend error
+          toast.paymentError(response);
           reject(new Error('Payment failed'));
         }
       } catch (error) {
         console.error('Payment processing error:', error);
-        toast.error('Error al procesar el pago. Intentá nuevamente.');
+        toast.paymentError(error);
         reject(error);
       } finally {
         setIsProcessingPayment(false);

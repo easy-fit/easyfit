@@ -4,10 +4,23 @@ import { OrderModel } from '../../models/order.model';
 import { OrderItemModel } from '../../models/orderItem.model';
 import { ProductModel } from '../../models/product.model';
 import { VariantModel } from '../../models/variant.model';
-import { CreateStoreDTO, UpdateStoreDTO, StoreFilterOptions } from '../../types/store.types';
+import {
+  CreateStoreDTO,
+  UpdateStoreDTO,
+  StoreFilterOptions,
+  UpdateBillingDTO,
+  UploadTaxDocumentDTO,
+  UpdateDocumentStatusDTO,
+  UpdateBillingStatusDTO,
+  StoreBilling,
+  BillingResponse,
+  DocumentType,
+  TaxDocument,
+} from '../../types/store.types';
 import { AppError } from '../../utils/appError';
 import { STORE_TAGS_VALUES } from '../../types/store.constants';
 import { StoreAssetService } from './storeAsset.service';
+import { StoreTaxDocumentService } from './storeTaxDocument.service';
 import { StoreFilterService } from './storeFilter.service';
 import { isDeliveryLocationValid } from '../../utils/distance';
 import { CategoryUtils } from '../../utils/categoryUtils';
@@ -25,9 +38,16 @@ export class StoreService {
   }
 
   static async setStoreStatus(storeId: string, status: 'active' | 'inactive') {
-    const store = await StoreModel.findByIdAndUpdate(storeId, { status }, { new: true, runValidators: true });
-
-    this.ensureStoreExists(store);
+    const store = await StoreModel.findById(storeId);
+    // Check if store can be activated
+    if (status === 'active' && store?.billing.status !== 'accepted') {
+      throw new AppError('Store cannot be activated. Billing must be approved first.', 400);
+    }
+    // update store status
+    if (store) {
+      store.status = status;
+      await store.save();
+    }
     return store;
   }
 
@@ -102,6 +122,21 @@ export class StoreService {
       const isValidDeliveryLocation = isDeliveryLocationValid(storeCoordinates);
       if (!isValidDeliveryLocation) {
         throw new AppError('Invalid delivery address', 400);
+      }
+    }
+
+    // Check billing requirements when trying to open store
+    if (data.isOpen === true) {
+      const currentStore = await StoreModel.findById(storeId);
+      if (!currentStore) {
+        throw new AppError('Store not found', 404);
+      }
+
+      if (currentStore.billing?.status !== 'accepted') {
+        throw new AppError(
+          'Store cannot be opened. Billing information must be approved first. Please complete your billing profile and wait for approval.',
+          400,
+        );
       }
     }
 
@@ -722,4 +757,185 @@ export class StoreService {
       throw new AppError('Error retrieving store products', 500);
     }
   }
+
+  // Billing Management Methods
+  private static isBillingComplete(billing: any): boolean {
+    if (!billing) return false;
+
+    // Check fiscal info completeness
+    const fiscalComplete =
+      billing.fiscalInfo && billing.fiscalInfo.cuit && billing.fiscalInfo.businessName && billing.fiscalInfo.taxStatus;
+
+    // Check banking info completeness
+    const bankingComplete =
+      billing.bankingInfo &&
+      billing.bankingInfo.bankName &&
+      billing.bankingInfo.accountHolder &&
+      billing.bankingInfo.cbu;
+
+    // Check if at least one tax document exists and is approved
+    const docsComplete =
+      billing.taxDocuments &&
+      billing.taxDocuments.length > 0 &&
+      billing.taxDocuments.some((doc: any) => doc.status === 'approved');
+
+    return !!(fiscalComplete && bankingComplete && docsComplete);
+  }
+
+  static async getStoreBilling(storeId: string): Promise<BillingResponse> {
+    if (!Types.ObjectId.isValid(storeId)) {
+      throw new AppError('Invalid store ID', 400);
+    }
+
+    const store = await StoreModel.findById(storeId);
+    if (!store) {
+      throw new AppError('Store not found', 404);
+    }
+
+    return {
+      status: 'success',
+      data: store.billing,
+    };
+  }
+
+  static async updateStoreBilling(storeId: string, data: UpdateBillingDTO): Promise<BillingResponse> {
+    if (!Types.ObjectId.isValid(storeId)) {
+      throw new AppError('Invalid store ID', 400);
+    }
+
+    const updateData: any = {
+      'billing.lastUpdatedAt': new Date(),
+    };
+
+    if (data.fiscalInfo) {
+      Object.keys(data.fiscalInfo).forEach((key) => {
+        updateData[`billing.fiscalInfo.${key}`] = data.fiscalInfo![key as keyof typeof data.fiscalInfo];
+      });
+    }
+
+    if (data.bankingInfo) {
+      Object.keys(data.bankingInfo).forEach((key) => {
+        updateData[`billing.bankingInfo.${key}`] = data.bankingInfo![key as keyof typeof data.bankingInfo];
+      });
+    }
+
+    const store = await StoreModel.findByIdAndUpdate(storeId, updateData, { new: true, runValidators: false });
+
+    if (!store) {
+      throw new AppError('Store not found', 404);
+    }
+
+    // Check if billing is now complete and auto-approve if so
+    if (store.billing.status === 'pending' && this.isBillingComplete(store.billing)) {
+      const autoApprovalUpdate = {
+        'billing.status': 'accepted',
+        'billing.completedAt': new Date(),
+        'billing.lastUpdatedAt': new Date(),
+      };
+
+      const updatedStore = await StoreModel.findByIdAndUpdate(storeId, autoApprovalUpdate, {
+        new: true,
+        runValidators: false,
+      });
+      if (updatedStore) {
+        return {
+          status: 'success',
+          data: updatedStore.billing,
+        };
+      }
+    }
+
+    return {
+      status: 'success',
+      data: store.billing,
+    };
+  }
+
+  static async uploadTaxDocument(
+    storeId: string,
+    documentData: { fileName: string; type: DocumentType },
+  ): Promise<{ status: string; data: { billing: StoreBilling; uploadInfo: { key: string; url: string } } }> {
+    const result = await StoreTaxDocumentService.uploadTaxDocument(storeId, documentData);
+
+    return {
+      status: 'success',
+      data: result,
+    };
+  }
+
+  static async deleteDocument(
+    storeId: string,
+    documentId: string,
+  ): Promise<{ status: string; data: { billing: StoreBilling } }> {
+    const result = await StoreTaxDocumentService.deleteTaxDocument(storeId, documentId);
+
+    return {
+      status: 'success',
+      data: result,
+    };
+  }
+
+  static async updateDocumentStatus(
+    storeId: string,
+    documentId: string,
+    data: UpdateDocumentStatusDTO,
+  ): Promise<{ status: string; data: { billing: StoreBilling } }> {
+    const result = await StoreTaxDocumentService.updateDocumentStatus(storeId, documentId, data);
+
+    return {
+      status: 'success',
+      data: result,
+    };
+  }
+
+  static async updateBillingStatus(storeId: string, data: UpdateBillingStatusDTO): Promise<BillingResponse> {
+    if (!Types.ObjectId.isValid(storeId)) {
+      throw new AppError('Invalid store ID', 400);
+    }
+
+    const updateData: any = {
+      'billing.status': data.status,
+      'billing.lastUpdatedAt': new Date(),
+    };
+
+    if (data.status === 'accepted') {
+      updateData['billing.completedAt'] = new Date();
+    }
+
+    const updatedStore = await StoreModel.findByIdAndUpdate(storeId, updateData, { new: true });
+
+    if (!updatedStore) {
+      throw new AppError('Store not found', 404);
+    }
+
+    return {
+      status: 'success',
+      data: updatedStore.billing,
+    };
+  }
+
+  // Override setStoreStatus to check billing requirements
+  // static async setStoreStatus(storeId: string, status: 'active' | 'inactive') {
+  //   if (!Types.ObjectId.isValid(storeId)) {
+  //     throw new AppError('Invalid store ID', 400);
+  //   }
+
+  //   const store = await StoreModel.findById(storeId);
+  //   if (!store) {
+  //     throw new AppError('Store not found', 404);
+  //   }
+
+  //   // Check if store can be activated
+  //   if (status === 'active' && store.billing.status !== 'accepted') {
+  //     throw new AppError('Store cannot be activated. Billing must be approved first.', 400);
+  //   }
+
+  //   const updatedStore = await StoreModel.findByIdAndUpdate(
+  //     storeId,
+  //     { status },
+  //     { new: true }
+  //   );
+
+  //   return updatedStore;
+  // }
 }

@@ -43,6 +43,7 @@ export const R2 = {
   BUCKET_PRODUCTS: process.env.R2_BUCKET_PRODUCTS!,
   BUCKET_RETURNS: process.env.R2_BUCKET_RETURNS!,
   BUCKET_ASSETS: process.env.R2_BUCKET_ASSETS!,
+  BUCKET_STORE_TAX: process.env.R2_BUCKET_STORES_TAX!,
 };
 
 export const MERCADO_PAGO = {

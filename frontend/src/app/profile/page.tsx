@@ -75,8 +75,7 @@ export default function ProfilePage() {
       });
       setIsEditing(false);
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || error?.message || 'Error al actualizar el perfil';
-      toast.error(errorMessage);
+      toast.smartError(error, 'Error al actualizar el perfil');
     }
   };
 

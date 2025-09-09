@@ -208,6 +208,7 @@ export default function ProductsPage({ params }: { params: Promise<{ id: string 
               onEditProduct={handleEditProduct}
               onDeleteProduct={handleDeleteProduct}
               onViewProduct={handleViewProduct}
+              onAddProduct={handleAddProduct}
               isLoading={productsLoading}
               pagination={pagination}
               onPageChange={setPage}

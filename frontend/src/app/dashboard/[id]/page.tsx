@@ -29,11 +29,14 @@ import { useStoreEvents, useWebSocket } from '@/hooks/use-websocket';
 import type { OrderNewEvent, ReturnInspectItemsEvent } from '@/types/websockets';
 import type { OrderStatus } from '@/types/order';
 import { useCurrentStore } from '@/contexts/store-context';
+import { useStoreBilling } from '@/hooks/api/use-stores';
+import Link from 'next/link';
 
 export default function StoreDashboardPage() {
   const { id } = useParams() as { id: string };
   const { storeName, logoUrl, isActive, canManageStore, canOperateStore, accessType } = useCurrentStore();
   const { data: analyticsData, isLoading: analyticsLoading } = useStoreOrderAnalytics(id);
+  const { data: billingData, isLoading: billingLoading } = useStoreBilling(id);
   const {
     data: activeOrdersData,
     isLoading: activeOrdersLoading,
@@ -387,6 +390,29 @@ export default function StoreDashboardPage() {
           </header>
 
           <main className="p-4 md:p-6 space-y-6">
+            {/* Billing Status Alert */}
+            {!billingLoading && billingData?.data?.status !== 'accepted' && (
+              <Card className="border-yellow-200 bg-yellow-50">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-yellow-800">
+                    <AlertTriangle className="h-5 w-5" />
+                    Facturación Pendiente
+                  </CardTitle>
+                  <CardDescription className="text-yellow-700">
+                    Tu tienda no puede recibir órdenes hasta que la información de facturación sea aprobada.
+                    {billingData?.data?.status === 'rejected' && ' Tu solicitud fue rechazada, por favor revisa y actualiza la información.'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Link href={`/dashboard/${id}/billing`}>
+                    <Button className="bg-yellow-600 hover:bg-yellow-700 text-white">
+                      Completar Facturación
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            )}
+
             {/* KPIs */}
             <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
               <Card>
@@ -514,7 +540,12 @@ export default function StoreDashboardPage() {
                   <Badge variant="outline" className="text-green-600">
                     {activeOrders.length} activas
                   </Badge>
-                  <Button variant="outline" size="sm" className="hidden md:inline-flex bg-transparent">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="hidden md:inline-flex bg-transparent"
+                    onClick={() => router.push(`/dashboard/${id}/orders`)}
+                  >
                     Ver todas
                     <ChevronRight className="h-4 w-4 ml-1" />
                   </Button>

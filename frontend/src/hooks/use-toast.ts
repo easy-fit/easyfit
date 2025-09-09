@@ -4,6 +4,7 @@ import React from 'react';
 
 import { toast as sonnerToast } from 'sonner';
 import { CheckCircle, XCircle, AlertCircle, Info, Loader2 } from 'lucide-react';
+import { translateError, translateAndExtractError, extractErrorMessage } from '@/lib/error-translations';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info' | 'loading';
 
@@ -183,6 +184,29 @@ export const useToast = () => {
         ...options,
       });
     },
+
+    // ==========================================
+    // SMART ERROR TRANSLATION METHODS
+    // ==========================================
+
+    /**
+     * Smart error handler that automatically extracts and translates backend error messages
+     * @param error - Error object from API calls, can be various formats
+     * @param fallbackMessage - Optional Spanish fallback message if no translation found
+     */
+    smartError: (error: any, fallbackMessage?: string) => {
+      const translatedMessage = translateAndExtractError(error, fallbackMessage);
+      showToast('error', translatedMessage);
+    },
+
+    /**
+     * Translates a raw English error message to Spanish
+     * @param englishMessage - Raw English error message from backend
+     */
+    translateError: (englishMessage: string) => {
+      const translatedMessage = translateError(englishMessage);
+      showToast('error', translatedMessage);
+    },
   };
 };
 
@@ -218,21 +242,6 @@ export const useEasyFitToast = () => {
         duration: 5000,
       }),
 
-    networkError: () =>
-      toast.error('Error de conexión', {
-        description: 'Verificá tu conexión a internet',
-        action: {
-          label: 'Reintentar',
-          onClick: () => window.location.reload(),
-        },
-      }),
-
-    validationError: (field: string) =>
-      toast.warning(`El campo "${field}" es requerido`, {
-        description: 'Por favor completá todos los campos obligatorios',
-        duration: 1500,
-      }),
-
     addressSaved: () =>
       toast.success('Dirección guardada', {
         description: 'Tu dirección se actualizó correctamente',
@@ -244,5 +253,124 @@ export const useEasyFitToast = () => {
         description: 'Tu cuenta está ahora completamente activada',
         duration: 2000,
       }),
+
+    // ==========================================
+    // CONTEXT-SPECIFIC ERROR METHODS
+    // ==========================================
+
+    /**
+     * Smart cart/inventory error handler - detects stock/quantity issues
+     */
+    quantityUpdateError: (error: any) => {
+      const englishMessage = extractErrorMessage(error);
+
+      // Check for stock-related errors
+      if (
+        englishMessage?.toLowerCase().includes('stock') ||
+        englishMessage?.toLowerCase().includes('inventory') ||
+        englishMessage?.toLowerCase().includes('quantity') ||
+        englishMessage?.toLowerCase().includes('not enough')
+      ) {
+        toast.error('Stock insuficiente para esta cantidad');
+      } else {
+        // Use smart translation for other errors
+        const translatedMessage = translateAndExtractError(error, 'Error al actualizar la cantidad');
+        toast.error(translatedMessage);
+      }
+    },
+
+    /**
+     * Smart payment error handler - handles MercadoPago and payment issues
+     */
+    paymentError: (error: any) => {
+      const englishMessage = extractErrorMessage(error);
+
+      // Check for stock-related errors during payment
+      if (
+        englishMessage?.toLowerCase().includes('stock') ||
+        englishMessage?.toLowerCase().includes('inventory') ||
+        englishMessage?.toLowerCase().includes('not enough') ||
+        englishMessage?.toLowerCase().includes('out of stock')
+      ) {
+        toast.error('Uno o más productos no tienen stock suficiente');
+      } else if (englishMessage?.includes('MercadoPago')) {
+        toast.error('Error en el procesamiento del pago. Verificá tus datos.');
+      } else if (englishMessage?.toLowerCase().includes('card declined')) {
+        toast.error('Tarjeta rechazada. Verificá los datos o usá otra tarjeta.');
+      } else if (englishMessage?.toLowerCase().includes('insufficient funds')) {
+        toast.error('Fondos insuficientes en tu cuenta.');
+      } else {
+        const translatedMessage = translateAndExtractError(error, 'Error al procesar el pago');
+        toast.error(translatedMessage);
+      }
+    },
+
+    /**
+     * Smart authentication error handler
+     */
+    authError: (error: any) => {
+      const englishMessage = extractErrorMessage(error);
+
+      if (englishMessage?.includes('token expired')) {
+        toast.error('Tu sesión expiró. Iniciá sesión nuevamente.');
+      } else if (
+        englishMessage?.includes('invalid credentials') ||
+        englishMessage?.includes('Invalid email or password')
+      ) {
+        toast.error('Email o contraseña inválidos.');
+      } else {
+        const translatedMessage = translateAndExtractError(error, 'Error de autenticación');
+        toast.error(translatedMessage);
+      }
+    },
+
+    /**
+     * Smart file upload error handler
+     */
+    uploadError: (error: any) => {
+      const englishMessage = extractErrorMessage(error);
+
+      if (englishMessage?.includes('file too large')) {
+        toast.error('El archivo es demasiado grande. Máximo permitido.');
+      } else if (
+        englishMessage?.includes('invalid file format') ||
+        englishMessage?.includes('Only PDF, JPG, and PNG')
+      ) {
+        toast.error('Formato de archivo no válido. Solo se permiten PDF, JPG y PNG.');
+      } else {
+        const translatedMessage = translateAndExtractError(error, 'Error al subir el archivo');
+        toast.error(translatedMessage);
+      }
+    },
+
+    /**
+     * Network/connection error handler
+     */
+    networkError: (error?: any) => {
+      toast.error('Error de conexión', {
+        description: 'Verificá tu conexión a internet',
+        action: {
+          label: 'Reintentar',
+          onClick: () => window.location.reload(),
+        },
+      });
+    },
+
+    /**
+     * Generic form validation error
+     */
+    validationError: (field: string, customMessage?: string) => {
+      if (customMessage) {
+        toast.warning(customMessage, {
+          description: 'Por favor verificá la información ingresada',
+          duration: 1500,
+        });
+      } else {
+        toast.warning(`El campo "${field}" es inválido`, {
+          description: 'Por favor completá todos los campos correctamente',
+          duration: 1500,
+        });
+      }
+    },
   };
 };

@@ -3,12 +3,12 @@ import { Store } from '../types/store.types';
 import { getNextSequenceValue } from '../utils/counter';
 import { AddressSchema } from '../schemas/common/address.schema';
 import { PickupHoursEntrySchema, ShippingOptionSchema, StoreCustomizationSchema } from '../schemas/store/store.schemas';
+import { BillingSchema } from '../schemas/store/billing.schemas';
 import { STORE_TAGS_VALUES } from '../types/store.constants';
 
 const StoreSchema = new Schema<Store>(
   {
     merchantId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    cuit: { type: String },
     name: { type: String, required: true },
     address: { type: AddressSchema, required: true },
     pickupHours: { type: [PickupHoursEntrySchema], required: true },
@@ -21,6 +21,10 @@ const StoreSchema = new Schema<Store>(
       type: String,
       enum: ['active', 'inactive', 'disabled'],
       default: 'inactive',
+    },
+    billing: { 
+      type: BillingSchema, 
+      default: {}
     },
     ratingCount: { type: Number, default: 0 },
     ratingSum: { type: Number, default: 0 },
@@ -44,8 +48,9 @@ const StoreSchema = new Schema<Store>(
 );
 
 StoreSchema.pre('validate', async function (next) {
-  if (this.isNew && !this.storeInternalId) {
-    this.storeInternalId = await getNextSequenceValue('stores');
+  const store = this as any;
+  if (store.isNew && !store.storeInternalId) {
+    store.storeInternalId = await getNextSequenceValue('stores');
   }
   next();
 });
