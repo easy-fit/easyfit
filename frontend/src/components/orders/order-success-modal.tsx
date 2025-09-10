@@ -22,26 +22,43 @@ export function OrderSuccessModal({ isOpen, onClose, order }: OrderSuccessModalP
     return `$${price.toLocaleString('es-AR')}`;
   };
 
-  // Utility functions for calculating charged items
+  // Utility functions for calculating different item categories
+  const getKeptItems = () => {
+    return order.orderItems.filter(item => item.returnStatus === 'kept');
+  };
+
+  const getReturnedItems = () => {
+    return order.orderItems.filter(item => item.returnStatus === 'returned');
+  };
+
+  const getDamagedItems = () => {
+    return order.orderItems.filter(item => item.returnStatus === 'returned_damaged');
+  };
+
   const getChargedItems = () => {
     return order.orderItems.filter(item => 
       item.returnStatus === 'kept' || item.returnStatus === 'returned_damaged'
     );
   };
 
-  const calculateChargedItemsTotal = () => {
-    const chargedItems = getChargedItems();
-    return chargedItems.reduce((total, item) => {
+  const calculateItemsTotal = (items: typeof order.orderItems) => {
+    return items.reduce((total, item) => {
       return total + (item.unitPrice * item.quantity);
     }, 0);
   };
 
-  const getChargedItemsCount = () => {
-    return getChargedItems().length;
+  const calculateChargedItemsTotal = () => {
+    const chargedItems = getChargedItems();
+    return calculateItemsTotal(chargedItems);
   };
 
-  // Calculate totals
-  const chargedItemsCount = getChargedItemsCount();
+  // Calculate totals for different categories
+  const keptItems = getKeptItems();
+  const returnedItems = getReturnedItems();
+  const damagedItems = getDamagedItems();
+  
+  const keptItemsTotal = calculateItemsTotal(keptItems);
+  const damagedItemsTotal = calculateItemsTotal(damagedItems);
   const chargedItemsTotal = calculateChargedItemsTotal();
   const finalChargedAmount = chargedItemsTotal + order.shipping.cost;
 
@@ -96,12 +113,36 @@ export function OrderSuccessModal({ isOpen, onClose, order }: OrderSuccessModalP
             </div>
 
             <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">
-                  {chargedItemsCount} {chargedItemsCount === 1 ? 'producto' : 'productos'} comprados
-                </span>
-                <span className="font-medium text-[#20313A]">{formatPrice(chargedItemsTotal)}</span>
-              </div>
+              {/* Show kept items */}
+              {keptItems.length > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">
+                    {keptItems.length} {keptItems.length === 1 ? 'producto comprado' : 'productos comprados'}
+                  </span>
+                  <span className="font-medium text-[#20313A]">{formatPrice(keptItemsTotal)}</span>
+                </div>
+              )}
+
+              {/* Show returned items (no charge) */}
+              {returnedItems.length > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">
+                    {returnedItems.length} {returnedItems.length === 1 ? 'producto devuelto' : 'productos devueltos'}
+                  </span>
+                  <span className="font-medium text-green-600">$0</span>
+                </div>
+              )}
+
+              {/* Show damaged items (charged) */}
+              {damagedItems.length > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600 flex items-center gap-1">
+                    {damagedItems.length} {damagedItems.length === 1 ? 'producto devuelto' : 'productos devueltos'} (dañado{damagedItems.length === 1 ? '' : 's'}) 
+                    <span className="text-amber-500">⚠️</span>
+                  </span>
+                  <span className="font-medium text-[#20313A]">{formatPrice(damagedItemsTotal)}</span>
+                </div>
+              )}
 
               {order.shipping.cost > 0 && (
                 <div className="flex justify-between text-sm">
