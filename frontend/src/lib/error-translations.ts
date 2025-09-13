@@ -41,6 +41,7 @@ export const ERROR_TRANSLATIONS: Record<string, string> = {
   "Password is required": "La contraseña es requerida",
   "Email is required": "El email es requerido",
   "Invalid delivery address": "Dirección de entrega inválida",
+  "User address is required for checkout": "Necesitás configurar tu dirección para continuar con la compra",
   "Invalid document type": "Tipo de documento inválido",
   "Invalid store ID format": "Formato de ID de tienda inválido",
   "Invalid manager ID format": "Formato de ID de manager inválido",
@@ -138,7 +139,7 @@ export const ERROR_TRANSLATIONS: Record<string, string> = {
   "Processing failed": "Error en el procesamiento",
 
   // ==========================================
-  // PAYMENT & EXTERNAL SERVICE ERRORS (10 messages)
+  // PAYMENT & EXTERNAL SERVICE ERRORS (30+ messages)
   // ==========================================
   "MercadoPago payment creation failed": "Error al crear pago en MercadoPago",
   "MercadoPago payment processing failed": "Error al procesar pago en MercadoPago",
@@ -150,6 +151,39 @@ export const ERROR_TRANSLATIONS: Record<string, string> = {
   "Failed to generate Web SDK link. Please try again later.": "Error al generar enlace Web SDK. Intentá más tarde.",
   "External service unavailable": "Servicio externo no disponible",
   "API rate limit exceeded": "Límite de API excedido",
+
+  // ==========================================
+  // MERCADOPAGO STATUS DETAIL CODES
+  // ==========================================
+  
+  // Card rejection codes
+  "cc_rejected_other_reason": "Pago rechazado por tu banco. Intentá con otra tarjeta o contactá a tu banco.",
+  "cc_rejected_insufficient_amount": "Fondos insuficientes. Verificá el saldo de tu tarjeta.",
+  "cc_rejected_bad_filled_security_code": "Código de seguridad incorrecto. Verificá el CVV de tu tarjeta.",
+  "cc_rejected_bad_filled_date": "Fecha de vencimiento incorrecta. Verificá los datos de tu tarjeta.",
+  "cc_rejected_bad_filled_other": "Datos de tarjeta incorrectos. Verificá la información ingresada.",
+  "cc_rejected_duplicated_payment": "Ya existe un pago con estos datos. Esperá unos minutos antes de intentar nuevamente.",
+  "cc_rejected_high_risk": "Pago rechazado por seguridad. Intentá con otra tarjeta o método de pago.",
+  "cc_rejected_max_attempts": "Has superado el límite de intentos. Intentá más tarde o con otra tarjeta.",
+  "cc_rejected_call_for_authorize": "Tu banco requiere autorización. Contactá a tu banco para autorizar el pago.",
+  "cc_rejected_card_disabled": "Tu tarjeta está deshabilitada. Contactá a tu banco.",
+  "cc_rejected_invalid_installments": "Número de cuotas no válido para esta tarjeta.",
+  "cc_rejected_blacklist": "Pago no autorizado. Contactá a tu banco.",
+  
+  // General payment status codes
+  "rejected": "Pago rechazado. Verificá los datos o intentá con otro método de pago.",
+  "cancelled": "Pago cancelado.",
+  "pending": "Pago pendiente de aprobación.",
+  "in_process": "Pago en proceso. Te notificaremos cuando se confirme.",
+  "authorized": "Pago autorizado exitosamente.",
+  "approved": "Pago aprobado exitosamente.",
+  
+  // Payment method specific
+  "pending_waiting_payment": "Esperando el pago. Seguí las instrucciones recibidas.",
+  "pending_waiting_transfer": "Esperando la transferencia bancaria.",
+  "pending_review_manual": "Pago en revisión manual. Te notificaremos cuando se resuelva.",
+  "rejected_by_bank": "Pago rechazado por el banco. Intentá con otra tarjeta.",
+  "rejected_by_regulations": "Pago rechazado por regulaciones. Contactá al soporte.",
 
   // ==========================================
   // SUCCESS MESSAGES (8 messages)
@@ -329,6 +363,54 @@ export function extractErrorMessage(error: any, fallback?: string): string {
     fallback ||
     "Error inesperado"
   );
+}
+
+/**
+ * Extracts MercadoPago status codes from complex error messages
+ * Handles patterns like:
+ * - "Payment processing failed: Payment failed: rejected: cc_rejected_other_reason"
+ * - "Payment failed: rejected: cc_rejected_insufficient_amount"
+ * - "rejected: cc_rejected_bad_filled_security_code"
+ */
+export function extractMercadoPagoStatusCode(errorMessage: string): string | null {
+  if (!errorMessage) return null;
+  
+  // Pattern 1: "Payment processing failed: Payment failed: rejected: cc_rejected_other_reason"
+  const complexPattern = /Payment processing failed: Payment failed: rejected: ([a-z_]+)/i;
+  const complexMatch = errorMessage.match(complexPattern);
+  if (complexMatch && complexMatch[1]) {
+    return complexMatch[1];
+  }
+  
+  // Pattern 2: "Payment failed: rejected: cc_rejected_insufficient_amount"
+  const paymentFailedPattern = /Payment failed: rejected: ([a-z_]+)/i;
+  const paymentFailedMatch = errorMessage.match(paymentFailedPattern);
+  if (paymentFailedMatch && paymentFailedMatch[1]) {
+    return paymentFailedMatch[1];
+  }
+  
+  // Pattern 3: "Payment failed: status: status_detail"
+  const statusDetailPattern = /Payment failed: ([a-z_]+): ([a-z_]+)/i;
+  const statusDetailMatch = errorMessage.match(statusDetailPattern);
+  if (statusDetailMatch && statusDetailMatch[2]) {
+    return statusDetailMatch[2]; // Return the status_detail part
+  }
+  
+  // Pattern 4: "rejected: cc_rejected_other_reason"
+  const simplePattern = /rejected: ([a-z_]+)/i;
+  const simpleMatch = errorMessage.match(simplePattern);
+  if (simpleMatch && simpleMatch[1]) {
+    return simpleMatch[1];
+  }
+  
+  // Pattern 5: Direct status code in message (cc_rejected_*, pending_*, approved, etc.)
+  const directCodePattern = /(cc_rejected_[a-z_]+|pending_[a-z_]+|approved|rejected|cancelled|in_process|authorized)/i;
+  const directMatch = errorMessage.match(directCodePattern);
+  if (directMatch && directMatch[1]) {
+    return directMatch[1];
+  }
+  
+  return null;
 }
 
 /**
