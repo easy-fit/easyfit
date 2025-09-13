@@ -17,6 +17,7 @@ import { useCreateCartItem } from '@/hooks/api/use-cart';
 import { ArrowLeft, Heart, Share2, ShoppingCart, Store, Package } from 'lucide-react';
 import Link from 'next/link';
 import { useEasyFitToast } from '@/hooks/use-toast';
+import { CategoryUtils } from '@/lib/utils/categoryUtils';
 import type { Variant } from '@/types/variant';
 
 export default function ProductPage() {
@@ -189,6 +190,14 @@ export default function ProductPage() {
     }
   };
 
+  // Helper function to get category display name
+  const getCategoryDisplayName = (category: string) => {
+    if (CategoryUtils.isValidCategory(category)) {
+      return CategoryUtils.getCategoryDisplayName(category);
+    }
+    return category;
+  };
+
   const currentImages = selectedVariant?.images || [];
 
   return (
@@ -244,7 +253,7 @@ export default function ProductPage() {
               </div>
 
               <Badge variant="outline" className="text-xs">
-                {product.category}
+                {getCategoryDisplayName(product.category)}
               </Badge>
             </div>
 

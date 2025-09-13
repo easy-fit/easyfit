@@ -19,6 +19,32 @@ export const productRoutes = Router();
 productRoutes.route('/').get(ProductController.getProducts);
 
 productRoutes.route('/id/:id').get(ProductController.getProductById);
+
+// Bulk operations - placed before dynamic routes to avoid conflicts
+productRoutes
+  .route('/variants/bulk')
+  .get(
+    protect, 
+    restrictTo('admin', 'merchant', 'manager'), 
+    isKYCVerified,
+    VariantController.getBulkVariants
+  )
+  .patch(
+    protect, 
+    restrictTo('admin', 'merchant', 'manager'), 
+    isKYCVerified,
+    VariantController.bulkUpdateVariants
+  );
+
+productRoutes
+  .route('/variants/by-products')
+  .get(
+    protect, 
+    restrictTo('admin', 'merchant', 'manager'), 
+    isKYCVerified,
+    VariantController.getVariantsByProducts
+  );
+
 productRoutes.route('/:storeSlug/products').get(ProductController.getProductsByStore);
 productRoutes.route('/:storeSlug/:slug').get(ProductController.getProductBySlug);
 

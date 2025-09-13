@@ -44,7 +44,7 @@ const shippingOptions: ShippingOption[] = [
     id: 'advanced',
     name: 'Envío Avanzado',
     description: 'El rider espera mientras probás',
-    price: 1000,
+    price: 1500,
     tryOnTime: '10 minutos para probar',
     icon: User,
     features: ['Rider espera afuera', '10 minutos de prueba', 'Devolución inmediata'],
@@ -53,7 +53,7 @@ const shippingOptions: ShippingOption[] = [
     id: 'premium',
     name: 'Envío Premium',
     description: 'Más tiempo para decidir con tranquilidad',
-    price: 1500,
+    price: 2500,
     tryOnTime: '17 minutos para probar',
     icon: Zap,
     features: ['Rider espera afuera', '17 minutos de prueba', 'Devolución inmediata', 'Servicio prioritario'],
@@ -306,7 +306,9 @@ function CartPageContent() {
                                 >
                                   <Minus className="h-3 w-3 sm:h-4 sm:w-4" />
                                 </Button>
-                                <span className="w-10 sm:w-12 text-center font-semibold text-[#20313A] text-sm sm:text-base">{item.quantity}</span>
+                                <span className="w-10 sm:w-12 text-center font-semibold text-[#20313A] text-sm sm:text-base">
+                                  {item.quantity}
+                                </span>
                                 <Button
                                   variant="ghost"
                                   size="icon"
