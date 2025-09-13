@@ -15,6 +15,7 @@ import { StoreSidebar } from '@/components/dashboard/store-sidebar';
 import { ProductMetricsCards } from '@/components/products/product-metrics-cards';
 import { ProductFilters } from '@/components/products/product-filters';
 import { ProductList } from '@/components/products/product-list';
+import { BulkVariantEditModal } from '@/components/products/bulk-variant-edit-modal';
 import { Loader2 } from 'lucide-react';
 
 export default function ProductsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -32,6 +33,10 @@ export default function ProductsPage({ params }: { params: Promise<{ id: string 
 
   // Selection states
   const [selectedProducts, setSelectedProducts] = React.useState<string[]>([]);
+  
+  // Bulk variant edit modal state
+  const [bulkEditModalOpen, setBulkEditModalOpen] = React.useState(false);
+  const [bulkEditProductNames, setBulkEditProductNames] = React.useState<Record<string, string>>({});
 
   // Delete states
   const [productToDelete, setProductToDelete] = React.useState<{ id: string; title: string } | null>(null);
@@ -109,6 +114,18 @@ export default function ProductsPage({ params }: { params: Promise<{ id: string 
       // Navigate to public product page
       router.push(`/${storeName?.toLowerCase()}/${product.slug}`);
     }
+  };
+
+  const handleBulkEditVariants = (productIds: string[], productNames: Record<string, string>) => {
+    setBulkEditProductNames(productNames);
+    setBulkEditModalOpen(true);
+  };
+
+  const closeBulkEditModal = () => {
+    setBulkEditModalOpen(false);
+    setBulkEditProductNames({});
+    // Clear selection after bulk edit
+    setSelectedProducts([]);
   };
 
   // Reset page when filters change
@@ -209,6 +226,7 @@ export default function ProductsPage({ params }: { params: Promise<{ id: string 
               onDeleteProduct={handleDeleteProduct}
               onViewProduct={handleViewProduct}
               onAddProduct={handleAddProduct}
+              onBulkEditVariants={handleBulkEditVariants}
               isLoading={productsLoading}
               pagination={pagination}
               onPageChange={setPage}
@@ -216,6 +234,14 @@ export default function ProductsPage({ params }: { params: Promise<{ id: string 
           </main>
         </SidebarInset>
       </SidebarProvider>
+
+      {/* Bulk Variant Edit Modal */}
+      <BulkVariantEditModal
+        open={bulkEditModalOpen}
+        onClose={closeBulkEditModal}
+        selectedProductIds={selectedProducts}
+        productNames={bulkEditProductNames}
+      />
 
       {/* Delete Confirmation Dialog */}
       {productToDelete && (

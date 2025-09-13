@@ -1,6 +1,6 @@
 'use client';
 
-import { MoreHorizontal, Edit, Trash2, Copy, Eye, Package, Plus } from 'lucide-react';
+import { MoreHorizontal, Edit, Trash2, Copy, Eye, Package, Plus, Settings } from 'lucide-react';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { buildImageUrl } from '@/lib/utils/image-url';
+import { CategoryUtils } from '@/lib/utils/categoryUtils';
 
 interface Product {
   id: string;
@@ -42,6 +43,7 @@ interface ProductListProps {
   onDeleteProduct: (productId: string) => void;
   onViewProduct: (productId: string) => void;
   onAddProduct?: () => void;
+  onBulkEditVariants?: (productIds: string[], productNames: Record<string, string>) => void;
   isLoading?: boolean;
   pagination?: {
     current: number;
@@ -80,15 +82,15 @@ const getStatusColor = (status: string) => {
 };
 
 const getCategoryName = (category: string) => {
-  // The category display name should come from the backend now
-  // If it's already a display name, return as is
-  // Otherwise, try to get display name from hierarchical category
-  if (category && category.includes('.')) {
-    // This would be a hierarchical category key like "hombre.blazers"
-    // But the backend should already return the display name
-    return category;
+  if (!category) return 'Sin categoría';
+
+  // Check if it's a valid category key from our configuration
+  if (CategoryUtils.isValidCategory(category)) {
+    return CategoryUtils.getCategoryDisplayName(category);
   }
-  return category || 'Sin categoría';
+
+  // If it's not a valid category key, return as is (fallback)
+  return category;
 };
 
 const getStockStatusText = (status: string) => {
@@ -110,7 +112,7 @@ const getStatusText = (status: string) => {
       return 'Publicado';
     case 'draft':
       return 'Borrador';
-    case 'draft':
+    case 'deleted':
       return 'Archivado';
     default:
       return status;
@@ -126,12 +128,27 @@ export function ProductList({
   onDeleteProduct,
   onViewProduct,
   onAddProduct,
+  onBulkEditVariants,
   isLoading = false,
   pagination,
   onPageChange,
 }: ProductListProps) {
   const allSelected = products.length > 0 && selectedProducts.length === products.length;
   const someSelected = selectedProducts.length > 0 && selectedProducts.length < products.length;
+
+  const handleBulkEditVariants = () => {
+    if (!onBulkEditVariants || selectedProducts.length === 0) return;
+
+    const productNames = selectedProducts.reduce((acc, productId) => {
+      const product = products.find((p) => p.id === productId);
+      if (product) {
+        acc[productId] = product.name;
+      }
+      return acc;
+    }, {} as Record<string, string>);
+
+    onBulkEditVariants(selectedProducts, productNames);
+  };
 
   return (
     <Card>
@@ -153,8 +170,14 @@ export function ProductList({
             </div>
             {selectedProducts.length > 0 && (
               <div className="flex items-center gap-2">
+                {onBulkEditVariants && (
+                  <Button variant="outline" size="sm" onClick={handleBulkEditVariants}>
+                    <Settings className="h-4 w-4 mr-2" />
+                    Editar variantes
+                  </Button>
+                )}
                 <Button variant="outline" size="sm">
-                  Acciones en lote
+                  Más acciones
                 </Button>
               </div>
             )}
@@ -189,7 +212,7 @@ export function ProductList({
                     <div className="min-w-0 flex-1">
                       <h3 className="font-medium text-[#20313A] truncate">{product.name}</h3>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-sm text-gray-600">{product.category}</span>
+                        <span className="text-sm text-gray-600">{getCategoryName(product.category)}</span>
                         <span className="text-gray-300">•</span>
                         <span className="text-sm text-gray-600">{product.variants} variantes</span>
                       </div>
@@ -255,10 +278,7 @@ export function ProductList({
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">No hay productos</h3>
             <p className="text-gray-600 mb-4">Comenzá agregando tu primer producto a la tienda.</p>
-            <Button 
-              className="bg-[#9EE493] hover:bg-[#8BD480] text-[#20313A]"
-              onClick={onAddProduct}
-            >
+            <Button className="bg-[#9EE493] hover:bg-[#8BD480] text-[#20313A]" onClick={onAddProduct}>
               <Plus className="h-4 w-4 mr-2" />
               Agregar Producto
             </Button>

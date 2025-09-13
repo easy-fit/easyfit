@@ -44,3 +44,51 @@ export interface createVariantResponse {
     signedUrls: { key_img: string; url: string }[];
   };
 }
+
+// Bulk operations types
+export interface BulkVariantUpdateItem {
+  variantId: string;
+  stock?: number;
+  price?: number;
+  sku?: string;
+}
+
+export interface BulkVariantUpdateDTO {
+  updates: BulkVariantUpdateItem[];
+  productIds?: string[];
+}
+
+export interface BulkVariantUpdateResponse {
+  successful: number;
+  failed: number;
+  errors: Array<{
+    variantId: string;
+    error: string;
+  }>;
+  updatedVariants: Variant[];
+}
+
+export interface BulkVariantRetrievalQuery {
+  productIds: string[];
+  colors?: string[];
+  sizes?: string[];
+  search?: string;
+  minStock?: number;
+  maxStock?: number;
+  minPrice?: number;
+  maxPrice?: number;
+}
+
+export interface VariantWithProduct extends Variant {
+  productId: {
+    _id: string;
+    title: string;
+    slug: string;
+    category: string;
+    storeId?: {
+      _id: string;
+      name: string;
+      slug: string;
+    };
+  };
+}

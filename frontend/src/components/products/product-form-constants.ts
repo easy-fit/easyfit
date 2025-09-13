@@ -1,7 +1,7 @@
 export const statusOptions = [
   { value: 'draft', label: 'Borrador' },
   { value: 'published', label: 'Publicado' },
-  { value: 'archived', label: 'Archivado' },
+  { value: 'deleted', label: 'Archivado' },
 ];
 
 export const commonColors = [

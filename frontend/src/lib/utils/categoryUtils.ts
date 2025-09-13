@@ -9,6 +9,7 @@ export const CATEGORY_CONFIG: Record<ProductCategory, CategoryDisplayInfo> = {
   'hombre.buzos': { key: 'hombre.buzos', displayName: 'Buzos', gender: 'hombre', level: 'subcategory' },
   'hombre.camisetas': { key: 'hombre.camisetas', displayName: 'Camisetas', gender: 'hombre', level: 'subcategory' },
   'hombre.camisas': { key: 'hombre.camisas', displayName: 'Camisas', gender: 'hombre', level: 'subcategory' },
+  'hombre.deportivo': { key: 'hombre.deportivo', displayName: 'Deportivo', gender: 'hombre', level: 'subcategory' },
   'hombre.jeans': { key: 'hombre.jeans', displayName: 'Jeans', gender: 'hombre', level: 'subcategory' },
   'hombre.mochilas-bolsos': {
     key: 'hombre.mochilas-bolsos',
@@ -41,6 +42,7 @@ export const CATEGORY_CONFIG: Record<ProductCategory, CategoryDisplayInfo> = {
   'mujer.abrigos': { key: 'mujer.abrigos', displayName: 'Abrigos', gender: 'mujer', level: 'subcategory' },
   'mujer.blazers': { key: 'mujer.blazers', displayName: 'Blazers', gender: 'mujer', level: 'subcategory' },
   'mujer.buzos': { key: 'mujer.buzos', displayName: 'Buzos', gender: 'mujer', level: 'subcategory' },
+  'mujer.calzas': { key: 'mujer.calzas', displayName: 'Calzas', gender: 'mujer', level: 'subcategory' },
   'mujer.camisetas-remeras': {
     key: 'mujer.camisetas-remeras',
     displayName: 'Camisetas / Remeras',
@@ -53,7 +55,15 @@ export const CATEGORY_CONFIG: Record<ProductCategory, CategoryDisplayInfo> = {
     gender: 'mujer',
     level: 'subcategory',
   },
+  'mujer.corseteria': {
+    key: 'mujer.corseteria',
+    displayName: 'Corsetería',
+    gender: 'mujer',
+    level: 'subcategory',
+  },
+  'mujer.deportivo': { key: 'mujer.deportivo', displayName: 'Deportivo', gender: 'mujer', level: 'subcategory' },
   'mujer.jeans': { key: 'mujer.jeans', displayName: 'Jeans', gender: 'mujer', level: 'subcategory' },
+  'mujer.mallas': { key: 'mujer.mallas', displayName: 'Mallas', gender: 'mujer', level: 'subcategory' },
   'mujer.mochilas-bolsos-carteras': {
     key: 'mujer.mochilas-bolsos-carteras',
     displayName: 'Mochilas & Bolsos / Carteras',

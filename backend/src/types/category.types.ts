@@ -19,6 +19,7 @@ export type HombreCategoryKeys =
   | 'buzos'
   | 'camisetas'
   | 'camisas'
+  | 'deportivo'
   | 'jeans'
   | 'mochilas-bolsos'
   | 'pantalones'
@@ -37,9 +38,13 @@ export type MujerCategoryKeys =
   | 'abrigos'
   | 'blazers'
   | 'buzos'
+  | 'calzas'
   | 'camisetas-remeras'
   | 'camisas-blusas'
+  | 'corseteria'
+  | 'deportivo'
   | 'jeans'
+  | 'mallas'
   | 'mochilas-bolsos-carteras'
   | 'pantalones'
   | 'polleras-faldas'
@@ -154,13 +159,13 @@ export interface CategoryDisplayInfo {
 export const PRODUCT_CATEGORY_VALUES: ProductCategory[] = [
   // Hombre categories
   'hombre.ver-todo', 'hombre.abrigos', 'hombre.blazers', 'hombre.buzos', 'hombre.camisetas',
-  'hombre.camisas', 'hombre.jeans', 'hombre.mochilas-bolsos', 'hombre.pantalones', 'hombre.polos',
+  'hombre.camisas', 'hombre.deportivo', 'hombre.jeans', 'hombre.mochilas-bolsos', 'hombre.pantalones', 'hombre.polos',
   'hombre.bermudas', 'hombre.sobrecamisas', 'hombre.sweaters-cardigans', 'hombre.trajes',
   'hombre.zapatillas', 'hombre.zapatos', 'hombre.accesorios',
   
   // Mujer categories
-  'mujer.ver-todo', 'mujer.abrigos', 'mujer.blazers', 'mujer.buzos', 'mujer.camisetas-remeras',
-  'mujer.camisas-blusas', 'mujer.jeans', 'mujer.mochilas-bolsos-carteras', 'mujer.pantalones',
+  'mujer.ver-todo', 'mujer.abrigos', 'mujer.blazers', 'mujer.buzos', 'mujer.calzas', 'mujer.camisetas-remeras',
+  'mujer.camisas-blusas', 'mujer.corseteria', 'mujer.deportivo', 'mujer.jeans', 'mujer.mallas', 'mujer.mochilas-bolsos-carteras', 'mujer.pantalones',
   'mujer.polleras-faldas', 'mujer.shorts-bermudas', 'mujer.sweaters-tejidos', 'mujer.tops-bodies',
   'mujer.vestidos-monos', 'mujer.trajes', 'mujer.zapatillas', 'mujer.zapatos', 'mujer.accesorios',
   

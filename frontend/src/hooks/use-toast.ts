@@ -4,7 +4,7 @@ import React from 'react';
 
 import { toast as sonnerToast } from 'sonner';
 import { CheckCircle, XCircle, AlertCircle, Info, Loader2 } from 'lucide-react';
-import { translateError, translateAndExtractError, extractErrorMessage } from '@/lib/error-translations';
+import { translateError, translateAndExtractError, extractErrorMessage, extractMercadoPagoStatusCode } from '@/lib/error-translations';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info' | 'loading';
 
@@ -280,12 +280,12 @@ export const useEasyFitToast = () => {
     },
 
     /**
-     * Smart payment error handler - handles MercadoPago and payment issues
+     * Enhanced smart payment error handler - handles MercadoPago status codes and payment issues
      */
     paymentError: (error: any) => {
       const englishMessage = extractErrorMessage(error);
 
-      // Check for stock-related errors during payment
+      // First, check for stock-related errors during payment (highest priority)
       if (
         englishMessage?.toLowerCase().includes('stock') ||
         englishMessage?.toLowerCase().includes('inventory') ||
@@ -293,13 +293,32 @@ export const useEasyFitToast = () => {
         englishMessage?.toLowerCase().includes('out of stock')
       ) {
         toast.error('Uno o más productos no tienen stock suficiente');
-      } else if (englishMessage?.includes('MercadoPago')) {
-        toast.error('Error en el procesamiento del pago. Verificá tus datos.');
-      } else if (englishMessage?.toLowerCase().includes('card declined')) {
+        return;
+      }
+
+      // Try to extract MercadoPago status code from complex error messages
+      const statusCode = extractMercadoPagoStatusCode(englishMessage || '');
+      
+      if (statusCode) {
+        // Check if we have a specific translation for this status code
+        const translatedStatusMessage = translateError(statusCode);
+        
+        // If translation exists and is different from the original, use it
+        if (translatedStatusMessage && translatedStatusMessage !== statusCode) {
+          toast.error(translatedStatusMessage);
+          return;
+        }
+      }
+
+      // Fallback to legacy pattern matching for specific payment scenarios
+      if (englishMessage?.toLowerCase().includes('card declined')) {
         toast.error('Tarjeta rechazada. Verificá los datos o usá otra tarjeta.');
       } else if (englishMessage?.toLowerCase().includes('insufficient funds')) {
         toast.error('Fondos insuficientes en tu cuenta.');
+      } else if (englishMessage?.includes('MercadoPago')) {
+        toast.error('Error en el procesamiento del pago. Verificá tus datos.');
       } else {
+        // Use smart translation as final fallback
         const translatedMessage = translateAndExtractError(error, 'Error al procesar el pago');
         toast.error(translatedMessage);
       }

@@ -76,12 +76,16 @@ export class TryPeriodManager {
     await Promise.all(
       items.map((item) => {
         const returnStatus = item.decision === 'keep' ? 'kept' : 'returned';
-        
+
         // Use orderItemId if provided (for individual items), otherwise fall back to variantId (legacy)
         if (item.orderItemId) {
           return OrderItemModel.findByIdAndUpdate(item.orderItemId, { returnStatus }, { new: true });
         } else {
-          return OrderItemModel.findOneAndUpdate({ orderId, variantId: item.variantId }, { returnStatus }, { new: true });
+          return OrderItemModel.findOneAndUpdate(
+            { orderId, variantId: item.variantId },
+            { returnStatus },
+            { new: true },
+          );
         }
       }),
     );
@@ -146,7 +150,9 @@ export class TryPeriodManager {
       const returnCount = items.filter((item) => item.decision === 'return').length;
 
       const itemsWithDecisions = orderItems.map((orderItem: any) => {
-        const decision = items.find((item) => item.variantId === orderItem.variantId._id.toString());
+        const decision = items.find((item) => 
+          item.orderItemId ? item.orderItemId === orderItem._id.toString() : item.variantId === orderItem.variantId._id.toString()
+        );
         const product = orderItem.variantId.productId;
         const variant = orderItem.variantId;
 
@@ -171,7 +177,13 @@ export class TryPeriodManager {
             : null,
         };
       });
-
+      console.log('Notifying rider with items:', itemsWithDecisions);
+      console.log('summary:', {
+        keepCount,
+        returnCount,
+        totalItems: items.length,
+        status: 'completed',
+      });
       WebSocketService.getIO()
         .to(`rider:${assignment.riderId}`)
         .emit('customer:decisions_completed', {
