@@ -44,7 +44,7 @@ const shippingOptions: ShippingOption[] = [
     id: 'advanced',
     name: 'Envío Avanzado',
     description: 'El rider espera mientras probás',
-    price: 1500,
+    price: 2000,
     tryOnTime: '10 minutos para probar',
     icon: User,
     features: ['Rider espera afuera', '10 minutos de prueba', 'Devolución inmediata'],
@@ -53,7 +53,7 @@ const shippingOptions: ShippingOption[] = [
     id: 'premium',
     name: 'Envío Premium',
     description: 'Más tiempo para decidir con tranquilidad',
-    price: 2500,
+    price: 3000,
     tryOnTime: '17 minutos para probar',
     icon: Zap,
     features: ['Rider espera afuera', '17 minutos de prueba', 'Devolución inmediata', 'Servicio prioritario'],
@@ -138,7 +138,10 @@ function CartPageContent() {
   };
 
   // Calculations
-  const subtotal = cartItems.reduce((sum, item) => sum + item.variantId.price * item.quantity, 0);
+  const subtotal = cartItems.reduce((sum, item) => {
+    if (!item.variantId?.price) return sum;
+    return sum + item.variantId.price * item.quantity;
+  }, 0);
   const selectedShippingOption = shippingOptions.find((option) => option.id === selectedShipping)!;
   const shippingCost = selectedShippingOption.price;
   const total = subtotal + shippingCost;
@@ -226,6 +229,9 @@ function CartPageContent() {
             {/* Cart Items */}
             <div className="lg:col-span-2 space-y-4">
               {cartItems.map((item: CartItem) => {
+                // Skip items with null/undefined variantId
+                if (!item.variantId) return null;
+
                 const primaryImage = item.variantId.images.find((img) => img.order === 1) || item.variantId.images[0];
                 const imageUrl = primaryImage ? `/${primaryImage.key}` : '/placeholder.svg';
 
@@ -284,9 +290,9 @@ function CartPageContent() {
                             {/* Price */}
                             <div className="text-right sm:mb-3">
                               <p className="text-lg sm:text-xl font-bold text-[#20313A] font-helvetica">
-                                ${(item.variantId.price * item.quantity).toLocaleString('es-AR')}
+                                ${item.variantId.price ? (item.variantId.price * item.quantity).toLocaleString('es-AR') : '0'}
                               </p>
-                              {item.quantity > 1 && (
+                              {item.quantity > 1 && item.variantId.price && (
                                 <p className="text-xs sm:text-sm text-gray-500">
                                   ${item.variantId.price.toLocaleString('es-AR')} por unidad
                                 </p>

@@ -5,6 +5,7 @@ import { MercadoPagoService } from './payment/mercadoPago.service';
 import { ErrorHandlingService } from './errorHandling.service';
 import { AppError } from '../utils/appError';
 import { TRY_PERIOD_PENALTY_BY_SECOND } from '../config/tryPeriod';
+import { EmailService } from './email.service';
 
 export interface PaymentSettlementData {
   orderId: string;
@@ -92,6 +93,24 @@ export class PaymentSettlementService {
       };
     } catch (error: any) {
       console.error('Full purchase settlement failed:', error);
+
+      // Send critical email alert for settlement failures
+      try {
+        await EmailService.sendCriticalPaymentAlert({
+          orderId: order._id.toString(),
+          operation: 'payment_settlement_full_purchase',
+          error: error,
+          severity: 'critical',
+          metadata: {
+            settlementType: 'full_capture',
+            orderTotal: order.total,
+            paymentType: payment.type
+          },
+        });
+      } catch (emailError) {
+        console.error('Failed to send settlement failure alert email:', emailError);
+      }
+
       return {
         success: false,
         settlementType: 'full_capture',
@@ -191,6 +210,24 @@ export class PaymentSettlementService {
       };
     } catch (error: any) {
       console.error('Item-based settlement failed:', error);
+
+      // Send critical email alert for item-based settlement failures
+      try {
+        await EmailService.sendCriticalPaymentAlert({
+          orderId: order._id.toString(),
+          operation: 'payment_settlement_item_based',
+          error: error,
+          severity: 'critical',
+          metadata: {
+            settlementType: 'partial_capture',
+            orderTotal: order.total,
+            paymentType: payment.type
+          },
+        });
+      } catch (emailError) {
+        console.error('Failed to send item-based settlement failure alert email:', emailError);
+      }
+
       return {
         success: false,
         settlementType: 'partial_capture',
@@ -224,6 +261,24 @@ export class PaymentSettlementService {
       };
     } catch (error: any) {
       console.error('Stolen order settlement failed:', error);
+
+      // Send critical email alert for stolen order settlement failures
+      try {
+        await EmailService.sendCriticalPaymentAlert({
+          orderId: order._id.toString(),
+          operation: 'payment_settlement_stolen_order',
+          error: error,
+          severity: 'critical',
+          metadata: {
+            settlementType: 'penalty_applied',
+            orderTotal: order.total,
+            paymentType: payment.type
+          },
+        });
+      } catch (emailError) {
+        console.error('Failed to send stolen order settlement failure alert email:', emailError);
+      }
+
       return {
         success: false,
         settlementType: 'penalty_applied',

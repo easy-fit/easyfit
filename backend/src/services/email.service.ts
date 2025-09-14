@@ -5,18 +5,33 @@ interface EmailPayload {
   to: string;
   subject: string;
   dynamic_template_data?: Record<string, any>;
-  templateId: string;
+  templateId?: string;
+  html?: string;
+}
+
+interface CriticalAlertContext {
+  orderId?: string;
+  operation: string;
+  error: Error;
+  metadata?: any;
+  severity?: 'critical' | 'high';
+  timestamp?: Date;
 }
 
 export class EmailService {
-  static async sendEmail({ to, subject, dynamic_template_data, templateId }: EmailPayload) {
-    const msg = {
+  static async sendEmail({ to, subject, dynamic_template_data, templateId, html }: EmailPayload) {
+    const msg: any = {
       to,
       from: SENDGRID_CONFIG.FROM_EMAIL,
       subject,
-      templateId: templateId,
-      dynamic_template_data: dynamic_template_data,
     };
+
+    if (html) {
+      msg.html = html;
+    } else if (templateId) {
+      msg.templateId = templateId;
+      msg.dynamic_template_data = dynamic_template_data;
+    }
 
     await sgMail.send(msg);
   }
@@ -74,5 +89,415 @@ export class EmailService {
         loginTime,
       },
     });
+  }
+
+  // Critical Alert Methods
+  static async sendCriticalPaymentAlert(context: CriticalAlertContext) {
+    const adminEmails = this.getAdminEmails();
+    const alertKey = `payment-${context.orderId}-${context.operation}`;
+
+    if (!this.shouldSendEmail(alertKey)) {
+      console.log(`Throttled payment alert for ${alertKey}`);
+      return;
+    }
+
+    const timestamp = context.timestamp || new Date();
+    const timestampStr = timestamp.toLocaleString('es-AR', {
+      timeZone: 'America/Argentina/Buenos_Aires',
+      hour12: false,
+    });
+
+    const html = this.generatePaymentAlertHTML({
+      orderId: context.orderId || 'N/A',
+      operation: context.operation,
+      errorMessage: context.error.message,
+      errorStack: context.error.stack?.substring(0, 500),
+      severity: context.severity || 'critical',
+      timestamp: timestampStr,
+      metadata: context.metadata,
+    });
+
+    const promises = adminEmails.map(email =>
+      this.sendEmail({
+        to: email,
+        subject: `🚨 EasyFit Payment Issue - Order ${context.orderId || 'Unknown'}`,
+        html,
+      })
+    );
+
+    await Promise.allSettled(promises);
+  }
+
+  static async sendRiderAssignmentAlert(context: CriticalAlertContext & { attempts?: number; strategies?: string[] }) {
+    const adminEmails = this.getAdminEmails();
+    const alertKey = `rider-${context.orderId}-${context.operation}`;
+
+    if (!this.shouldSendEmail(alertKey)) {
+      console.log(`Throttled rider assignment alert for ${alertKey}`);
+      return;
+    }
+
+    const timestamp = context.timestamp || new Date();
+    const timestampStr = timestamp.toLocaleString('es-AR', {
+      timeZone: 'America/Argentina/Buenos_Aires',
+      hour12: false,
+    });
+
+    const html = this.generateRiderAlertHTML({
+      orderId: context.orderId || 'N/A',
+      operation: context.operation,
+      errorMessage: context.error.message,
+      attempts: context.attempts || 0,
+      strategiesAttempted: context.strategies?.join(', ') || 'Standard assignment',
+      severity: context.severity || 'critical',
+      timestamp: timestampStr,
+      metadata: context.metadata,
+    });
+
+    const promises = adminEmails.map(email =>
+      this.sendEmail({
+        to: email,
+        subject: `🚨 EasyFit Rider Assignment Failed - Order ${context.orderId || 'Unknown'}`,
+        html,
+      })
+    );
+
+    await Promise.allSettled(promises);
+  }
+
+  static async sendOrderManagementAlert(context: CriticalAlertContext) {
+    const adminEmails = this.getAdminEmails();
+    const alertKey = `order-${context.orderId}-${context.operation}`;
+
+    if (!this.shouldSendEmail(alertKey)) {
+      console.log(`Throttled order management alert for ${alertKey}`);
+      return;
+    }
+
+    const timestamp = context.timestamp || new Date();
+    const timestampStr = timestamp.toLocaleString('es-AR', {
+      timeZone: 'America/Argentina/Buenos_Aires',
+      hour12: false,
+    });
+
+    const html = this.generateOrderAlertHTML({
+      orderId: context.orderId || 'N/A',
+      operation: context.operation,
+      errorMessage: context.error.message,
+      errorStack: context.error.stack?.substring(0, 500),
+      severity: context.severity || 'critical',
+      timestamp: timestampStr,
+      metadata: context.metadata,
+    });
+
+    const promises = adminEmails.map(email =>
+      this.sendEmail({
+        to: email,
+        subject: `🚨 EasyFit Order Issue - Order ${context.orderId || 'Unknown'}`,
+        html,
+      })
+    );
+
+    await Promise.allSettled(promises);
+  }
+
+  static async sendCriticalSystemAlert(context: CriticalAlertContext) {
+    const adminEmails = this.getAdminEmails();
+    const alertKey = `system-${context.operation}`;
+
+    if (!this.shouldSendEmail(alertKey)) {
+      console.log(`Throttled system alert for ${alertKey}`);
+      return;
+    }
+
+    const timestamp = context.timestamp || new Date();
+    const timestampStr = timestamp.toLocaleString('es-AR', {
+      timeZone: 'America/Argentina/Buenos_Aires',
+      hour12: false,
+    });
+
+    const html = this.generateSystemAlertHTML({
+      operation: context.operation,
+      errorMessage: context.error.message,
+      errorStack: context.error.stack?.substring(0, 500),
+      severity: context.severity || 'critical',
+      timestamp: timestampStr,
+      orderId: context.orderId || 'System-wide',
+      metadata: context.metadata,
+    });
+
+    const promises = adminEmails.map(email =>
+      this.sendEmail({
+        to: email,
+        subject: `🚨 EasyFit System Alert - ${context.operation}`,
+        html,
+      })
+    );
+
+    await Promise.allSettled(promises);
+  }
+
+  // Helper method to get admin emails
+  private static getAdminEmails(): string[] {
+    const adminEmailsString = process.env.ADMIN_ALERT_EMAILS || '';
+    if (!adminEmailsString) {
+      console.warn('No admin emails configured for critical alerts. Set ADMIN_ALERT_EMAILS environment variable.');
+      return [];
+    }
+    return adminEmailsString.split(',').map(email => email.trim()).filter(email => email.length > 0);
+  }
+
+  // Email throttling mechanism to prevent spam
+  private static emailThrottleCache = new Map<string, number>();
+  private static readonly THROTTLE_DURATION_MS = 10 * 60 * 1000; // 10 minutes
+
+  static shouldSendEmail(alertKey: string): boolean {
+    const now = Date.now();
+    const lastSent = this.emailThrottleCache.get(alertKey);
+
+    if (!lastSent || (now - lastSent) > this.THROTTLE_DURATION_MS) {
+      this.emailThrottleCache.set(alertKey, now);
+      return true;
+    }
+
+    return false;
+  }
+
+  // HTML Generation Methods
+  private static generatePaymentAlertHTML(data: any): string {
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #dc3545; color: white; padding: 15px; border-radius: 5px 5px 0 0; }
+            .content { background: #f8f9fa; padding: 20px; border: 1px solid #ddd; }
+            .footer { background: #6c757d; color: white; padding: 10px; text-align: center; border-radius: 0 0 5px 5px; }
+            .field { margin-bottom: 10px; }
+            .label { font-weight: bold; color: #495057; }
+            .error-stack { background: #f1f1f1; padding: 10px; font-family: monospace; font-size: 12px; overflow-x: auto; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h2>🚨 EasyFit Payment Critical Alert</h2>
+            </div>
+            <div class="content">
+              <div class="field">
+                <span class="label">Order ID:</span> ${data.orderId}
+              </div>
+              <div class="field">
+                <span class="label">Operation:</span> ${data.operation}
+              </div>
+              <div class="field">
+                <span class="label">Severity:</span> <strong>${data.severity.toUpperCase()}</strong>
+              </div>
+              <div class="field">
+                <span class="label">Timestamp:</span> ${data.timestamp}
+              </div>
+              <div class="field">
+                <span class="label">Error Message:</span><br>
+                <strong style="color: #dc3545;">${data.errorMessage}</strong>
+              </div>
+              ${data.errorStack ? `
+              <div class="field">
+                <span class="label">Error Details:</span>
+                <pre class="error-stack">${data.errorStack}</pre>
+              </div>` : ''}
+              ${data.metadata ? `
+              <div class="field">
+                <span class="label">Metadata:</span>
+                <pre class="error-stack">${JSON.stringify(data.metadata, null, 2)}</pre>
+              </div>` : ''}
+            </div>
+            <div class="footer">
+              <p>Immediate action required. Check payment systems and resolve issue.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+  }
+
+  private static generateRiderAlertHTML(data: any): string {
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #fd7e14; color: white; padding: 15px; border-radius: 5px 5px 0 0; }
+            .content { background: #f8f9fa; padding: 20px; border: 1px solid #ddd; }
+            .footer { background: #6c757d; color: white; padding: 10px; text-align: center; border-radius: 0 0 5px 5px; }
+            .field { margin-bottom: 10px; }
+            .label { font-weight: bold; color: #495057; }
+            .error-stack { background: #f1f1f1; padding: 10px; font-family: monospace; font-size: 12px; overflow-x: auto; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h2>🚨 EasyFit Rider Assignment Failed</h2>
+            </div>
+            <div class="content">
+              <div class="field">
+                <span class="label">Order ID:</span> ${data.orderId}
+              </div>
+              <div class="field">
+                <span class="label">Operation:</span> ${data.operation}
+              </div>
+              <div class="field">
+                <span class="label">Assignment Attempts:</span> ${data.attempts}
+              </div>
+              <div class="field">
+                <span class="label">Strategies Tried:</span> ${data.strategiesAttempted}
+              </div>
+              <div class="field">
+                <span class="label">Severity:</span> <strong>${data.severity.toUpperCase()}</strong>
+              </div>
+              <div class="field">
+                <span class="label">Timestamp:</span> ${data.timestamp}
+              </div>
+              <div class="field">
+                <span class="label">Error Message:</span><br>
+                <strong style="color: #fd7e14;">${data.errorMessage}</strong>
+              </div>
+              ${data.metadata ? `
+              <div class="field">
+                <span class="label">Metadata:</span>
+                <pre class="error-stack">${JSON.stringify(data.metadata, null, 2)}</pre>
+              </div>` : ''}
+            </div>
+            <div class="footer">
+              <p>Manual rider assignment required. Check available riders and assign manually.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+  }
+
+  private static generateOrderAlertHTML(data: any): string {
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #6f42c1; color: white; padding: 15px; border-radius: 5px 5px 0 0; }
+            .content { background: #f8f9fa; padding: 20px; border: 1px solid #ddd; }
+            .footer { background: #6c757d; color: white; padding: 10px; text-align: center; border-radius: 0 0 5px 5px; }
+            .field { margin-bottom: 10px; }
+            .label { font-weight: bold; color: #495057; }
+            .error-stack { background: #f1f1f1; padding: 10px; font-family: monospace; font-size: 12px; overflow-x: auto; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h2>🚨 EasyFit Order Management Alert</h2>
+            </div>
+            <div class="content">
+              <div class="field">
+                <span class="label">Order ID:</span> ${data.orderId}
+              </div>
+              <div class="field">
+                <span class="label">Operation:</span> ${data.operation}
+              </div>
+              <div class="field">
+                <span class="label">Severity:</span> <strong>${data.severity.toUpperCase()}</strong>
+              </div>
+              <div class="field">
+                <span class="label">Timestamp:</span> ${data.timestamp}
+              </div>
+              <div class="field">
+                <span class="label">Error Message:</span><br>
+                <strong style="color: #6f42c1;">${data.errorMessage}</strong>
+              </div>
+              ${data.errorStack ? `
+              <div class="field">
+                <span class="label">Error Details:</span>
+                <pre class="error-stack">${data.errorStack}</pre>
+              </div>` : ''}
+              ${data.metadata ? `
+              <div class="field">
+                <span class="label">Metadata:</span>
+                <pre class="error-stack">${JSON.stringify(data.metadata, null, 2)}</pre>
+              </div>` : ''}
+            </div>
+            <div class="footer">
+              <p>Order management issue detected. Review order status and resolve promptly.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+  }
+
+  private static generateSystemAlertHTML(data: any): string {
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #198754; color: white; padding: 15px; border-radius: 5px 5px 0 0; }
+            .content { background: #f8f9fa; padding: 20px; border: 1px solid #ddd; }
+            .footer { background: #6c757d; color: white; padding: 10px; text-align: center; border-radius: 0 0 5px 5px; }
+            .field { margin-bottom: 10px; }
+            .label { font-weight: bold; color: #495057; }
+            .error-stack { background: #f1f1f1; padding: 10px; font-family: monospace; font-size: 12px; overflow-x: auto; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h2>🚨 EasyFit System Alert</h2>
+            </div>
+            <div class="content">
+              <div class="field">
+                <span class="label">Operation:</span> ${data.operation}
+              </div>
+              <div class="field">
+                <span class="label">Order ID:</span> ${data.orderId}
+              </div>
+              <div class="field">
+                <span class="label">Severity:</span> <strong>${data.severity.toUpperCase()}</strong>
+              </div>
+              <div class="field">
+                <span class="label">Timestamp:</span> ${data.timestamp}
+              </div>
+              <div class="field">
+                <span class="label">Error Message:</span><br>
+                <strong style="color: #198754;">${data.errorMessage}</strong>
+              </div>
+              ${data.errorStack ? `
+              <div class="field">
+                <span class="label">Error Details:</span>
+                <pre class="error-stack">${data.errorStack}</pre>
+              </div>` : ''}
+              ${data.metadata ? `
+              <div class="field">
+                <span class="label">Metadata:</span>
+                <pre class="error-stack">${JSON.stringify(data.metadata, null, 2)}</pre>
+              </div>` : ''}
+            </div>
+            <div class="footer">
+              <p>System-level issue detected. Monitor system health and resolve if necessary.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
   }
 }
