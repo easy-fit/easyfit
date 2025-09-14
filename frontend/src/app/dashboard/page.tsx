@@ -3,7 +3,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Package, Store, MapPin, Star, Plus } from 'lucide-react';
+import { Package, Store, MapPin, Star, Plus, Trash2, MoreVertical } from 'lucide-react';
 
 import { MerchantNavbar } from '@/components/dashboard/merchant-navbar';
 import { AuthGuard } from '@/components/auth/auth-guard';
@@ -13,6 +13,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuth } from '@/hooks/use-auth';
 import { useRoleBasedDashboard } from '@/hooks/api/use-stores';
 import { CreateStoreDialog } from '@/components/dashboard/create-store-dialog';
+import { DeleteStoreDialog } from '@/components/stores/delete-store-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 function Stars({ rating }: { rating: number }) {
   const full = Math.floor(rating);
@@ -30,6 +37,11 @@ export default function DashboardPage() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [deleteDialog, setDeleteDialog] = useState<{ isOpen: boolean; storeId: string; storeName: string }>({ 
+    isOpen: false, 
+    storeId: '', 
+    storeName: '' 
+  });
   const { data, isLoading, error: isError, userRole, isManager, isMerchant } = useRoleBasedDashboard();
 
   // Derive handy objects
@@ -195,8 +207,35 @@ export default function DashboardPage() {
                 {stores.map((store: any) => (
                   <Card key={store.id || store._id} className="hover:shadow-lg transition-shadow">
                     <CardHeader>
-                      <CardTitle className="text-lg">{store.name}</CardTitle>
-                      <CardDescription className="sr-only">Sin descripción</CardDescription>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <CardTitle className="text-lg">{store.name}</CardTitle>
+                          <CardDescription className="sr-only">Sin descripción</CardDescription>
+                        </div>
+                        {!isManager && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-8 w-8 p-0">
+                                <span className="sr-only">Abrir menú</span>
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => setDeleteDialog({ 
+                                  isOpen: true, 
+                                  storeId: store.id || store._id, 
+                                  storeName: store.name 
+                                })}
+                                className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Eliminar tienda
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
+                      </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       {/* Only show metrics for merchants, simplified for managers */}
@@ -284,6 +323,13 @@ export default function DashboardPage() {
               // Optionally navigate to the new store dashboard
               // router.push(`/dashboard/${id}`);
             }}
+          />
+          
+          <DeleteStoreDialog
+            isOpen={deleteDialog.isOpen}
+            onOpenChange={(open) => setDeleteDialog(prev => ({ ...prev, isOpen: open }))}
+            storeId={deleteDialog.storeId}
+            storeName={deleteDialog.storeName}
           />
         </main>
       </div>

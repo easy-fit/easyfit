@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
-import { UpdateOrderDTO, OrderCommonResponse, GetMyOrdersResponse } from '@/types/order';
+import { UpdateOrderDTO, OrderCommonResponse, GetMyOrdersResponse, SingleOrderResponse } from '@/types/order';
 import { ItemDecision } from '@/types/tryPeriod';
 
 export const useOrders = (filters?: Record<string, unknown>) => {
@@ -19,7 +19,7 @@ export const useMyOrders = (enabled: boolean = true) => {
 };
 
 export const useOrder = (id: string) => {
-  return useQuery<OrderCommonResponse>({
+  return useQuery<SingleOrderResponse>({
     queryKey: ['orders', id],
     queryFn: () => api.orders.getOrder(id),
     enabled: !!id,

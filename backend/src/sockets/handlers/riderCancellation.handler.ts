@@ -30,7 +30,7 @@ export class RiderCancellationHandler {
 
     try {
       // Get order details for notifications
-      const order = await OrderService.getOrderById(cancellation.orderId);
+      const order = await OrderService.getOrderByIdInternal(cancellation.orderId);
       if (!order) {
         socket.emit('error', {
           message: 'Order not found',

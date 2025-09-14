@@ -1,11 +1,14 @@
 import { UseFormReturn } from 'react-hook-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Building, Store, Hash, Mail, Phone, Instagram, Facebook, Twitter } from 'lucide-react';
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import { Building, Store, Mail, Phone, Instagram, Facebook, Twitter, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import { StoreSettingsFormValues } from '@/constants/store-settings';
 import type { Store as StoreType } from '@/types/store';
 
@@ -15,6 +18,38 @@ interface StoreBasicInfoProps {
 }
 
 export function StoreBasicInfo({ form, store }: StoreBasicInfoProps) {
+  const params = useParams();
+  const storeId = params.id as string;
+  
+  const billingStatus = store.billing?.status || 'pending';
+  const canOpenStore = billingStatus === 'accepted';
+  
+  const getBillingStatusBadge = () => {
+    switch (billingStatus) {
+      case 'accepted':
+        return (
+          <Badge className="bg-green-100 text-green-800 border-green-200">
+            <CheckCircle className="h-3 w-3 mr-1" />
+            Aprobado
+          </Badge>
+        );
+      case 'rejected':
+        return (
+          <Badge className="bg-red-100 text-red-800 border-red-200">
+            <AlertCircle className="h-3 w-3 mr-1" />
+            Rechazado
+          </Badge>
+        );
+      default:
+        return (
+          <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
+            <Clock className="h-3 w-3 mr-1" />
+            Pendiente
+          </Badge>
+        );
+    }
+  };
+
   return (
     <Card className="shadow-sm border-0 bg-white">
       <CardHeader className="pb-4">
@@ -24,9 +59,7 @@ export function StoreBasicInfo({ form, store }: StoreBasicInfoProps) {
           </div>
           Información Básica
         </CardTitle>
-        <CardDescription className="text-gray-600">
-          Configura los datos principales de tu tienda
-        </CardDescription>
+        <CardDescription className="text-gray-600">Configura los datos principales de tu tienda</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -42,26 +75,6 @@ export function StoreBasicInfo({ form, store }: StoreBasicInfoProps) {
               className="h-11 border-gray-200 bg-gray-50 text-gray-600 cursor-not-allowed"
             />
           </div>
-          <FormField
-            control={form.control}
-            name="cuit"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-sm font-medium text-[#20313A] flex items-center gap-2">
-                  <Hash className="h-4 w-4" />
-                  CUIT
-                </FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="20-12345678-9"
-                    className="h-11 border-gray-200 focus:border-[#9EE493] focus:ring-[#9EE493]"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
           <FormField
             control={form.control}
             name="contactEmail"
@@ -120,18 +133,32 @@ export function StoreBasicInfo({ form, store }: StoreBasicInfoProps) {
               <FormItem className="flex items-center space-x-3 pt-8">
                 <FormControl>
                   <Switch
-                    checked={field.value}
+                    checked={field.value && canOpenStore}
                     disabled
                     className="data-[state=checked]:bg-[#9EE493] data-[state=unchecked]:bg-gray-200 opacity-75"
                   />
                 </FormControl>
-                <div className="flex flex-col">
-                  <FormLabel className="text-sm font-medium text-[#20313A]">
-                    Tienda Abierta (Automático)
-                  </FormLabel>
-                  <p className="text-xs text-gray-600">
-                    El estado se actualiza automáticamente según los horarios de retiro
+                <div className="flex flex-col flex-1">
+                  <div className="flex items-center gap-3 mb-1">
+                    <FormLabel className="text-sm font-medium text-[#20313A]">
+                      {canOpenStore ? 'Tienda Abierta (Automático)' : 'Tienda Cerrada'}
+                    </FormLabel>
+                    {getBillingStatusBadge()}
+                  </div>
+                  <p className="text-xs text-gray-600 mb-2">
+                    {canOpenStore 
+                      ? 'El estado se actualiza automáticamente según los horarios de retiro'
+                      : 'La tienda no puede abrirse hasta que la información de facturación sea aprobada'
+                    }
                   </p>
+                  {!canOpenStore && (
+                    <Link href={`/dashboard/${storeId}/billing`}>
+                      <Button variant="outline" size="sm" className="w-fit">
+                        <AlertCircle className="h-4 w-4 mr-2" />
+                        Completar Facturación
+                      </Button>
+                    </Link>
+                  )}
                 </div>
               </FormItem>
             )}

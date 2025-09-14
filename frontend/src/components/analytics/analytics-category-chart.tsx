@@ -3,21 +3,40 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { CategoryUtils } from '@/lib/utils/categoryUtils';
 import type { CategoryData } from '@/types/analytics';
 
 interface AnalyticsCategoryChartProps {
   categoryData: CategoryData[];
 }
 
-// Category color mapping
+// Category display and color mapping
 const getCategoryDisplay = (category: string) => {
-  const categoryMap = {
-    clothing: { name: 'Ropa', color: '#9EE493' },
-    footwear: { name: 'Calzado', color: '#20313A' },
-    accessory: { name: 'Accesorios', color: '#DBF7DC' },
-    fragrance: { name: 'Fragancias', color: '#2F4858' },
+  const name = CategoryUtils.isValidCategory(category) 
+    ? CategoryUtils.getCategoryDisplayName(category)
+    : category;
+  
+  // Color mapping based on category type
+  const colorMap: Record<string, string> = {
+    // Main categories
+    hombre: '#20313A',
+    mujer: '#9EE493',
+    ninos: '#DBF7DC',
+    // Fallback colors
+    clothing: '#9EE493',
+    footwear: '#20313A',
+    accessory: '#DBF7DC',
+    fragrance: '#2F4858',
   };
-  return categoryMap[category as keyof typeof categoryMap] || { name: category, color: '#9EE493' };
+  
+  // Determine color based on category type
+  let color = '#9EE493'; // default
+  if (category.startsWith('hombre')) color = colorMap.hombre;
+  else if (category.startsWith('mujer')) color = colorMap.mujer;
+  else if (category.startsWith('ninos')) color = colorMap.ninos;
+  else color = colorMap[category] || '#9EE493';
+  
+  return { name, color };
 };
 
 export function AnalyticsCategoryChart({ categoryData }: AnalyticsCategoryChartProps) {

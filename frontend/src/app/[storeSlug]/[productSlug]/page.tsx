@@ -17,6 +17,7 @@ import { useCreateCartItem } from '@/hooks/api/use-cart';
 import { ArrowLeft, Heart, Share2, ShoppingCart, Store, Package } from 'lucide-react';
 import Link from 'next/link';
 import { useEasyFitToast } from '@/hooks/use-toast';
+import { CategoryUtils } from '@/lib/utils/categoryUtils';
 import type { Variant } from '@/types/variant';
 
 export default function ProductPage() {
@@ -164,12 +165,12 @@ export default function ProductPage() {
 
   const handleAddToCart = async () => {
     if (!selectedVariant) {
-      toast.error('Por favor seleccioná una variante');
+      toast.validationError('variante', 'Por favor seleccioná una variante');
       return;
     }
 
     if (selectedVariant.stock === 0) {
-      toast.error('Este producto no tiene stock disponible');
+      toast.quantityUpdateError({ message: 'Este producto no tiene stock disponible' });
       return;
     }
 
@@ -185,8 +186,16 @@ export default function ProductPage() {
       });
     } catch (error: any) {
       console.error('Error adding to cart:', error);
-      toast.error(error?.message || 'Error al agregar al carrito');
+      toast.smartError(error, 'Error al agregar al carrito');
     }
+  };
+
+  // Helper function to get category display name
+  const getCategoryDisplayName = (category: string) => {
+    if (CategoryUtils.isValidCategory(category)) {
+      return CategoryUtils.getCategoryDisplayName(category);
+    }
+    return category;
   };
 
   const currentImages = selectedVariant?.images || [];
@@ -244,7 +253,7 @@ export default function ProductPage() {
               </div>
 
               <Badge variant="outline" className="text-xs">
-                {product.category}
+                {getCategoryDisplayName(product.category)}
               </Badge>
             </div>
 

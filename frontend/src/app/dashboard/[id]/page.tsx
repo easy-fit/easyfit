@@ -2,8 +2,19 @@
 'use client';
 
 import * as React from 'react';
+import { useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Package, Clock4, CheckCircle2, XCircle, ChevronRight, Loader2, PauseCircle, ChevronLeft } from 'lucide-react';
+import {
+  Package,
+  Clock4,
+  CheckCircle2,
+  XCircle,
+  ChevronRight,
+  Loader2,
+  PauseCircle,
+  ChevronLeft,
+  AlertTriangle,
+} from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,17 +22,21 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { StoreSidebar } from '@/components/dashboard/store-sidebar';
-import { useStoreOrderAnalytics, useStoreOrders, useSetStoreStatus, usePendingOrders } from '@/hooks/api/use-stores';
+import { useStoreOrderAnalytics, useStoreOrders, useSetStoreStatus, usePendingOrders, usePendingInspections } from '@/hooks/api/use-stores';
 import { OrderCard, type Order } from '@/components/dashboard/order-card';
+import { InspectionModal } from '@/components/dashboard/inspection-modal';
 import { useStoreEvents, useWebSocket } from '@/hooks/use-websocket';
-import type { OrderNewEvent } from '@/types/websockets';
+import type { OrderNewEvent, ReturnInspectItemsEvent } from '@/types/websockets';
 import type { OrderStatus } from '@/types/order';
 import { useCurrentStore } from '@/contexts/store-context';
+import { useStoreBilling } from '@/hooks/api/use-stores';
+import Link from 'next/link';
 
 export default function StoreDashboardPage() {
   const { id } = useParams() as { id: string };
   const { storeName, logoUrl, isActive, canManageStore, canOperateStore, accessType } = useCurrentStore();
   const { data: analyticsData, isLoading: analyticsLoading } = useStoreOrderAnalytics(id);
+  const { data: billingData, isLoading: billingLoading } = useStoreBilling(id);
   const {
     data: activeOrdersData,
     isLoading: activeOrdersLoading,
@@ -39,7 +54,7 @@ export default function StoreDashboardPage() {
     ].join(','),
     limit: 20,
   });
-  const { respondToOrder, joinStoreChannel, leaveStoreChannel } = useStoreEvents();
+  const { respondToOrder, joinStoreChannel, leaveStoreChannel, completeReturnInspection } = useStoreEvents();
   const { on, off } = useWebSocket();
   const setStoreStatusMutation = useSetStoreStatus();
 
@@ -65,9 +80,15 @@ export default function StoreDashboardPage() {
   const [pendingOrders, setPendingOrders] = React.useState<Order[]>([]);
   const [activeOrders, setActiveOrders] = React.useState<Order[]>([]);
   const [lastFetchTime, setLastFetchTime] = React.useState<Date>();
+  const [pendingInspections, setPendingInspections] = React.useState<any[]>([]);
+  const [selectedInspection, setSelectedInspection] = React.useState<any | null>(null);
+  const [isInspectionModalOpen, setIsInspectionModalOpen] = React.useState(false);
 
   // Fetch pending orders from API to handle page reloads
   const { data: pendingOrdersData } = usePendingOrders(id);
+  
+  // Fetch pending inspections from API to handle page reloads
+  const { data: pendingInspectionsData } = usePendingInspections(id);
 
   // Initialize pending orders from API on page load
   React.useEffect(() => {
@@ -80,6 +101,41 @@ export default function StoreDashboardPage() {
       setLastFetchTime(new Date());
     }
   }, [pendingOrdersData]);
+
+  // Initialize pending inspections from API on page load
+  React.useEffect(() => {
+    if (pendingInspectionsData?.data?.orders) {
+      const apiInspections = pendingInspectionsData.data.orders.map((order: any) => ({
+        orderId: order.id,
+        returnedItems: order.items.map((item: any) => ({
+          _id: item.id,
+          variantId: item.variantId || {
+            _id: item.id,
+            size: item.variant?.split(' / ')[1] || 'Unknown',
+            color: item.variant?.split(' / ')[0] || 'Unknown',
+            images: [],
+          },
+          product: item.product || {
+            _id: item.id,
+            title: item.name,
+            category: 'clothing',
+          },
+          quantity: item.quantity,
+          unitPrice: item.unitPrice || parseFloat(item.price?.replace(/[$.,]/g, '') || '0'),
+          returnStatus: item.returnStatus || 'returned',
+        })),
+        message: `Order ${order.id?.slice(-4)} requires inspection`,
+        timestamp: new Date(order.createdAt),
+      }));
+      
+      setPendingInspections((prev) => {
+        // Merge API data with existing WebSocket data, avoiding duplicates
+        const existingIds = prev.map(i => i.orderId);
+        const newInspections = apiInspections.filter(i => !existingIds.includes(i.orderId));
+        return [...prev, ...newInspections];
+      });
+    }
+  }, [pendingInspectionsData]);
 
   // Update active orders when API data changes
   React.useEffect(() => {
@@ -195,16 +251,63 @@ export default function StoreDashboardPage() {
       });
     };
 
+    const handleReturnInspection = (data: ReturnInspectItemsEvent) => {
+      const inspectionData = data?.data || data;
+
+      if (!inspectionData?.orderId || !inspectionData?.returnedItems) {
+        return;
+      }
+
+      setPendingInspections((prev) => {
+        // Check if inspection already exists
+        const exists = prev.find((inspection) => inspection.orderId === inspectionData.orderId);
+        if (exists) return prev;
+
+        return [...prev, inspectionData];
+      });
+    };
+
     on('order:new', handleOrderNew);
-    return () => off('order:new', handleOrderNew);
+    on('return:inspect_items', handleReturnInspection);
+    console.log('listen to inspection events off');
+
+    return () => {
+      off('order:new', handleOrderNew);
+      off('return:inspect_items', handleReturnInspection);
+    };
   }, [isConnected, connect, on, off]);
+
+  const handleOpenInspection = useCallback((inspection: any) => {
+    setSelectedInspection(inspection);
+    setIsInspectionModalOpen(true);
+  }, []);
+
+  const handleInspectionComplete = useCallback(
+    (result: any) => {
+      // Send WebSocket event
+      completeReturnInspection(result);
+
+      // Remove completed inspection from pending list
+      setPendingInspections((prev) => prev.filter((inspection) => inspection.orderId !== result.orderId));
+
+      // Refresh active orders to reflect status change
+      setTimeout(() => refetchActiveOrders(), 1000);
+    },
+    [completeReturnInspection, refetchActiveOrders],
+  );
 
   const router = useRouter();
 
   return (
     <div className="min-h-screen bg-gray-50">
       <SidebarProvider>
-        <StoreSidebar storeName={storeName!} logoUrl={logoUrl} active="home" baseHref={`/dashboard/${id}`} userRole={accessType} />
+        <StoreSidebar
+          storeName={storeName!}
+          logoUrl={logoUrl}
+          active="home"
+          baseHref={`/dashboard/${id}`}
+          userRole={accessType}
+        />
         <SidebarInset>
           {/* Header with prominent intake control */}
           <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-white px-4">
@@ -271,9 +374,15 @@ export default function StoreDashboardPage() {
               ) : (
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <span>Estado:</span>
-                  <Badge variant={isActive ? "default" : "secondary"} 
-                         className={isActive ? "bg-green-100 text-green-800 border-green-200" : "bg-orange-100 text-orange-800 border-orange-200"}>
-                    {isActive ? "Aceptando pedidos" : "Pausado"}
+                  <Badge
+                    variant={isActive ? 'default' : 'secondary'}
+                    className={
+                      isActive
+                        ? 'bg-green-100 text-green-800 border-green-200'
+                        : 'bg-orange-100 text-orange-800 border-orange-200'
+                    }
+                  >
+                    {isActive ? 'Aceptando pedidos' : 'Pausado'}
                   </Badge>
                 </div>
               )}
@@ -281,6 +390,29 @@ export default function StoreDashboardPage() {
           </header>
 
           <main className="p-4 md:p-6 space-y-6">
+            {/* Billing Status Alert */}
+            {!billingLoading && billingData?.data?.status !== 'accepted' && (
+              <Card className="border-yellow-200 bg-yellow-50">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-yellow-800">
+                    <AlertTriangle className="h-5 w-5" />
+                    Facturación Pendiente
+                  </CardTitle>
+                  <CardDescription className="text-yellow-700">
+                    Tu tienda no puede recibir órdenes hasta que la información de facturación sea aprobada.
+                    {billingData?.data?.status === 'rejected' && ' Tu solicitud fue rechazada, por favor revisa y actualiza la información.'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Link href={`/dashboard/${id}/billing`}>
+                    <Button className="bg-yellow-600 hover:bg-yellow-700 text-white">
+                      Completar Facturación
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            )}
+
             {/* KPIs */}
             <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
               <Card>
@@ -355,6 +487,48 @@ export default function StoreDashboardPage() {
               </CardContent>
             </Card>
 
+            {/* Pending Inspections */}
+            {pendingInspections.length > 0 && (
+              <Card className="w-full border-orange-200 bg-orange-50">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle className="text-orange-800">Inspecciones Pendientes</CardTitle>
+                    <CardDescription className="text-orange-700">
+                      Productos devueltos esperando inspección
+                    </CardDescription>
+                  </div>
+                  <Badge variant="outline" className="text-orange-600 border-orange-600">
+                    {pendingInspections.length} pendientes
+                  </Badge>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {pendingInspections.map((inspection) => (
+                    <div
+                      key={inspection.orderId}
+                      className="p-4 bg-white rounded-lg border border-orange-200 flex items-center justify-between"
+                    >
+                      <div>
+                        <h4 className="font-semibold text-[#20313A]">Orden #{inspection.orderId.slice(-4)}</h4>
+                        <p className="text-sm text-gray-600">
+                          {inspection.returnedItems?.length || 0} items para inspeccionar
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Recibido: {new Date(inspection.timestamp).toLocaleString('es-AR')}
+                        </p>
+                      </div>
+                      <Button
+                        onClick={() => handleOpenInspection(inspection)}
+                        className="bg-orange-600 hover:bg-orange-700 text-white"
+                      >
+                        <AlertTriangle className="w-4 h-4 mr-2" />
+                        Inspeccionar
+                      </Button>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
             {/* Órdenes activas - accepted and in progress */}
             <Card className="w-full">
               <CardHeader className="flex flex-row items-center justify-between">
@@ -366,7 +540,12 @@ export default function StoreDashboardPage() {
                   <Badge variant="outline" className="text-green-600">
                     {activeOrders.length} activas
                   </Badge>
-                  <Button variant="outline" size="sm" className="hidden md:inline-flex bg-transparent">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="hidden md:inline-flex bg-transparent"
+                    onClick={() => router.push(`/dashboard/${id}/orders`)}
+                  >
                     Ver todas
                     <ChevronRight className="h-4 w-4 ml-1" />
                   </Button>
@@ -401,6 +580,18 @@ export default function StoreDashboardPage() {
           </main>
         </SidebarInset>
       </SidebarProvider>
+
+      {/* Inspection Modal */}
+      <InspectionModal
+        isOpen={isInspectionModalOpen}
+        onClose={() => {
+          setIsInspectionModalOpen(false);
+          setSelectedInspection(null);
+        }}
+        inspectionData={selectedInspection}
+        storeId={id}
+        onInspectionComplete={handleInspectionComplete}
+      />
     </div>
   );
 }

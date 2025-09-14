@@ -1,6 +1,5 @@
 import { BaseApiClient } from './base-client';
-import { Order, UpdateOrderDTO, OrderCommonResponse, GetMyOrdersResponse } from '@/types/order';
-import { ItemDecision } from '@/types/tryPeriod';
+import { Order, UpdateOrderDTO, OrderCommonResponse, GetMyOrdersResponse, SingleOrderResponse, ItemDecision } from '@/types/order';
 import { MessageResponse } from '@/types/global';
 
 export class OrdersClient extends BaseApiClient {
@@ -12,8 +11,8 @@ export class OrdersClient extends BaseApiClient {
     return this.fetchApi<GetMyOrdersResponse>('/orders/my-orders');
   }
 
-  public async getOrder(id: string): Promise<OrderCommonResponse> {
-    return this.fetchApi<OrderCommonResponse>(`/orders/${id}`);
+  public async getOrder(id: string): Promise<SingleOrderResponse> {
+    return this.fetchApi<SingleOrderResponse>(`/orders/${id}`);
   }
 
   public async updateOrder(id: string, order: UpdateOrderDTO): Promise<OrderCommonResponse> {
@@ -39,8 +38,8 @@ export class OrdersClient extends BaseApiClient {
   }
 
   public async saveDecisions(id: string, items: ItemDecision[]): Promise<MessageResponse> {
-    return this.fetchApi<MessageResponse>(`/orders/${id}/try-period/save-decisions`, {
-      method: 'POST',
+    return this.fetchApi<MessageResponse>(`/orders/try-period/${id}/save-decisions`, {
+      method: 'PATCH',
       body: JSON.stringify({ items }),
     });
   }

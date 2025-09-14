@@ -5,7 +5,7 @@ import { AppError } from '../utils/appError';
 import { OrderNotificationPayload } from '../types/websocket.types';
 
 export class OrderStoreService {
-  static async getCompleteOrderData(orderId: string): Promise<OrderNotificationPayload> {
+  static async getCompleteOrderData(orderId: string): Promise<any> {
     // Get order without population for performance
     const order = (await OrderModel.findById(orderId).lean()) as any;
     if (!order) {

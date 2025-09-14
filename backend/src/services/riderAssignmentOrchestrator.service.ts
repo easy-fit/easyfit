@@ -7,6 +7,7 @@ import { WebSocketService } from './websocket.service';
 import { ErrorHandlingService } from './errorHandling.service';
 import { AppError } from '../utils/appError';
 import { RiderOfferPayload } from '../types/websocket.types';
+import { EmailService } from './email.service';
 
 export class RiderAssignmentOrchestrator {
   static async assignRiderToOrder(orderId: string): Promise<string | null> {
@@ -51,7 +52,7 @@ export class RiderAssignmentOrchestrator {
   }
 
   static async executeRiderAssignment(orderId: string): Promise<string | null> {
-    const order = await OrderService.getOrderById(orderId);
+    const order = await OrderService.getOrderByIdInternal(orderId);
 
     if (order?.status !== 'order_accepted') {
       throw new AppError('Order must be accepted by store before rider assignment', 400);
@@ -129,6 +130,25 @@ export class RiderAssignmentOrchestrator {
 
     console.log(`No riders available for order ${orderId}. Implementing fallback strategy.`);
 
+    // Send critical email alert for immediate no riders available
+    try {
+      await EmailService.sendRiderAssignmentAlert({
+        orderId,
+        operation: 'no_riders_available',
+        error: new Error('No riders available for assignment after all strategies exhausted'),
+        severity: 'critical',
+        attempts: 3,
+        strategies: ['Standard assignment', 'Sequential offering', 'Retry with backoff'],
+        metadata: {
+          status: 'implementing_fallback_strategies',
+          nextRetry: '5 minutes',
+          adminNotification: '10 minutes',
+        },
+      });
+    } catch (emailError) {
+      console.error('Failed to send no riders available alert email:', emailError);
+    }
+
     await this.implementFallbackStrategies(orderId);
   }
 
@@ -136,7 +156,7 @@ export class RiderAssignmentOrchestrator {
     await this.retryWithExpandedRadius(orderId, 20);
 
     setTimeout(async () => {
-      const order = await OrderService.getOrderById(orderId);
+      const order = await OrderService.getOrderByIdInternal(orderId);
       if (order && order.status === 'pending_rider') {
         console.log(`Retrying rider assignment for order ${orderId} after 5 minutes`);
         await this.assignRiderToOrder(orderId);
@@ -144,7 +164,7 @@ export class RiderAssignmentOrchestrator {
     }, 5 * 60 * 1000);
 
     setTimeout(async () => {
-      const order = await OrderService.getOrderById(orderId);
+      const order = await OrderService.getOrderByIdInternal(orderId);
       if (order && order.status === 'pending_rider') {
         await this.notifyAdminOfAssignmentIssue(orderId);
       }
@@ -153,7 +173,7 @@ export class RiderAssignmentOrchestrator {
 
   static async retryWithExpandedRadius(orderId: string, radiusKm: number) {
     try {
-      const order = await OrderService.getOrderById(orderId);
+      const order = await OrderService.getOrderByIdInternal(orderId);
       const store = order?.storeId as any;
       const storeCoordinates: [number, number] = [
         store.address.location.coordinates[1],
@@ -190,6 +210,27 @@ export class RiderAssignmentOrchestrator {
         },
       });
 
+    // Send critical email alert for rider assignment timeout
+    try {
+      await EmailService.sendRiderAssignmentAlert({
+        orderId,
+        operation: 'rider_assignment_timeout',
+        error: new Error('Order has been waiting for rider assignment for over 10 minutes'),
+        severity: 'critical',
+        attempts: 0,
+        strategies: ['Standard assignment', 'Expanded radius', 'Retry after 5 minutes'],
+        metadata: {
+          order: orderData.order,
+          customer: orderData.customer?.name || 'Unknown',
+          duration: '10+ minutes',
+          storeId: orderData.order?.store,
+          shippingAddress: orderData.order?.shipping?.address?.formatted,
+        },
+      });
+    } catch (emailError) {
+      console.error('Failed to send rider assignment timeout alert email:', emailError);
+    }
+
     console.log(`URGENT: Order ${orderId} has been pending rider assignment for over 10 minutes`);
   }
 
@@ -204,7 +245,7 @@ export class RiderAssignmentOrchestrator {
 
     const orderData = await OrderStoreService.getCompleteOrderData(orderId);
     console.log(orderData.order.shipping);
-    const order = await OrderService.getOrderById(orderId);
+    const order = await OrderService.getOrderByIdInternal(orderId);
     const store = order?.storeId as any;
     const storeCoordinates: [number, number] = [
       store.address.location.coordinates[1],
@@ -244,8 +285,8 @@ export class RiderAssignmentOrchestrator {
                 streetNumber: store.address.formatted.streetNumber,
               },
               coordinates: {
-                latitude: storeCoordinates[1],
-                longitude: storeCoordinates[0],
+                latitude: storeCoordinates[0],
+                longitude: storeCoordinates[1],
               },
             },
           },

@@ -39,3 +39,36 @@ export interface UpdateVariantDTO {
   isDefault?: boolean;
   sku?: string;
 }
+
+export interface BulkVariantUpdateItem {
+  variantId: string;
+  stock?: number;
+  price?: number;
+  sku?: string;
+}
+
+export interface BulkVariantUpdateDTO {
+  updates: BulkVariantUpdateItem[];
+  productIds?: string[];
+}
+
+export interface BulkVariantUpdateResponse {
+  successful: number;
+  failed: number;
+  errors: Array<{
+    variantId: string;
+    error: string;
+  }>;
+  updatedVariants: Variant[];
+}
+
+export interface BulkVariantRetrievalQuery {
+  productIds: string[];
+  colors?: string[];
+  sizes?: string[];
+  search?: string;
+  minStock?: number;
+  maxStock?: number;
+  minPrice?: number;
+  maxPrice?: number;
+}

@@ -114,7 +114,7 @@ export class StoreAnalyticsService {
       {
         $match: {
           storeId,
-          status: { $in: ['purchased', 'returned_ok', 'returned_partial', 'returned_damaged'] },
+          status: { $in: ['purchased', 'return_completed'] },
           createdAt: { $gte: dateFilter.start, $lte: dateFilter.end },
         },
       },
@@ -394,7 +394,7 @@ export class StoreAnalyticsService {
       {
         $match: {
           storeId,
-          status: { $in: ['purchased', 'returned_ok', 'returned_partial', 'returned_damaged'] },
+          status: { $in: ['purchased', 'return_completed'] },
           createdAt: { $gte: dateFilter.start, $lte: dateFilter.end },
         },
       },
@@ -406,7 +406,7 @@ export class StoreAnalyticsService {
           returned: {
             $sum: {
               $cond: [
-                { $in: ['$status', ['returned_ok', 'returned_partial', 'returned_damaged']] },
+                { $eq: ['$status', 'return_completed'] },
                 1,
                 0,
               ],
@@ -433,9 +433,9 @@ export class StoreAnalyticsService {
 
     switch (orderType) {
       case 'completed':
-        return { ...baseQuery, status: { $in: ['purchased', 'returned_ok', 'returned_partial'] } };
+        return { ...baseQuery, status: { $in: ['purchased', 'return_completed'] } };
       case 'returned':
-        return { ...baseQuery, status: { $in: ['returned_ok', 'returned_partial', 'returned_damaged'] } };
+        return { ...baseQuery, status: 'return_completed' };
       case 'purchased':
         return { ...baseQuery, status: 'purchased' };
       default:

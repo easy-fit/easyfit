@@ -30,25 +30,28 @@ import { useState, useEffect } from 'react';
 
 const shippingTypeConfig = {
   simple: {
-    name: 'Envío Simple',
+    name: 'Simple',
     description: 'Delivery tradicional a tu casa',
     icon: Truck,
     tryOnTime: 'Sin tiempo de prueba',
     color: 'bg-blue-100 text-blue-800',
+    cost: 0,
   },
   advanced: {
-    name: 'Envío Avanzado',
+    name: 'Avanzado',
     description: 'El rider espera mientras probás',
     icon: User,
     tryOnTime: '10 minutos para probar',
     color: 'bg-purple-100 text-purple-800',
+    cost: 2000,
   },
   premium: {
-    name: 'Envío Premium',
+    name: 'Premium',
     description: 'Más tiempo para decidir con tranquilidad',
     icon: Zap,
     tryOnTime: '17 minutos para probar',
     color: 'bg-green-100 text-green-800',
+    cost: 3000,
   },
 };
 
@@ -124,11 +127,10 @@ export default function CheckoutPage() {
 
   const customization = {
     paymentMethods: {
-      ticket: 'all' as const,
       creditCard: 'all' as const,
       prepaidCard: 'all' as const,
       debitCard: 'all' as const,
-      mercadoPago: 'all' as const,
+      mercadoPago: 'wallet_purchase' as const,
     },
   };
 
@@ -178,12 +180,13 @@ export default function CheckoutPage() {
           router.push(`/orders/${response.data.order._id}`);
           resolve(response);
         } else {
-          toast.error('Error al procesar el pago. Intentá nuevamente.');
+          // Use smart error translation to get the actual backend error
+          toast.paymentError(response);
           reject(new Error('Payment failed'));
         }
       } catch (error) {
         console.error('Payment processing error:', error);
-        toast.error('Error al procesar el pago. Intentá nuevamente.');
+        toast.paymentError(error);
         reject(error);
       } finally {
         setIsProcessingPayment(false);
@@ -267,7 +270,7 @@ export default function CheckoutPage() {
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-semibold text-[#20313A]">{shippingConfig?.name}</h4>
+                      <h4 className="font-semibold text-[#20313A]">Envio {shippingConfig?.name}</h4>
                       <Badge className={shippingConfig?.color}>{checkoutSession.shipping.type.toUpperCase()}</Badge>
                     </div>
                     <p className="text-sm text-gray-600">{shippingConfig?.description}</p>
@@ -335,14 +338,31 @@ export default function CheckoutPage() {
                   <span className="text-gray-600">Subtotal ({checkoutSession.cartItems.length} productos)</span>
                   <span className="font-medium">${checkoutSession.subtotal.toLocaleString('es-AR')}</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Envío ({shippingConfig?.name})</span>
-                  <span className="font-medium">
-                    {checkoutSession.shipping.cost === 0
-                      ? 'GRATIS'
-                      : `$${checkoutSession.shipping.cost.toLocaleString('es-AR')}`}
-                  </span>
-                </div>
+
+                {/* Shipping Cost Breakdown */}
+                {(() => {
+                  const shippingTypeCost = shippingConfig?.cost || 0;
+                  const totalShippingCost = checkoutSession.shipping.cost;
+                  const distanceBasedCost = totalShippingCost - shippingTypeCost;
+
+                  return (
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Envío</span>
+                        <span className="font-medium">
+                          {distanceBasedCost === 0 ? 'GRATIS' : `$${distanceBasedCost.toLocaleString('es-AR')}`}
+                        </span>
+                      </div>
+
+                      {shippingTypeCost > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Tipo de envio: {shippingConfig?.name}</span>
+                          <span className="font-medium">${shippingTypeCost.toLocaleString('es-AR')}</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
                 <Separator />
                 <div className="flex justify-between text-lg font-semibold">
                   <span className="text-[#20313A]">Total</span>

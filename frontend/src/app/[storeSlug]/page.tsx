@@ -11,6 +11,7 @@ import { useStoreBySlug } from '@/hooks/api/use-stores';
 import { useProductsByStore } from '@/hooks/api/use-products';
 import { ProductCard } from '@/components/home/product-card';
 import { buildStoreAssetUrl } from '@/lib/utils/image-url';
+import { CategoryUtils } from '@/lib/utils/categoryUtils';
 import {
   ArrowLeft,
   Star,
@@ -125,6 +126,15 @@ export default function StorePage() {
       navigator.clipboard.writeText(window.location.href);
       toast.success('Enlace copiado al portapapeles');
     }
+  };
+
+  // Helper function to get category display name
+  const getCategoryDisplayName = (category: string) => {
+    if (category === 'all') return 'Todos';
+    if (CategoryUtils.isValidCategory(category)) {
+      return CategoryUtils.getCategoryDisplayName(category);
+    }
+    return category;
   };
 
   // Get unique categories from products
@@ -252,7 +262,7 @@ export default function StorePage() {
                               : 'border-gray-300 text-gray-600 hover:bg-gray-50 bg-transparent'
                           }`}
                         >
-                          {category === 'all' ? 'Todos' : category}
+                          {getCategoryDisplayName(category)}
                         </Button>
                       ))}
                     </div>

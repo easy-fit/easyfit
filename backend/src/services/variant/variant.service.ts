@@ -1,8 +1,9 @@
 import { VariantModel } from '../../models/variant.model';
 import { AppError } from '../../utils/appError';
-import { CreateVariantDTO, UpdateVariantDTO, VariantImage } from '../../types/variant.types';
+import { CreateVariantDTO, UpdateVariantDTO, VariantImage, BulkVariantUpdateDTO, BulkVariantUpdateResponse, BulkVariantRetrievalQuery } from '../../types/variant.types';
 import { VariantImageService } from './variantImage.service';
 import { VariantStockService } from './variantStock.service';
+import { ProductModel } from '../../models/product.model';
 
 export class VariantService {
   static async getVariants() {
@@ -123,6 +124,125 @@ export class VariantService {
 
   static async deleteVariantImage(variantId: string, key: string) {
     return VariantImageService.deleteVariantImage(variantId, key);
+  }
+
+  // Bulk operations
+  static async bulkUpdateVariants(data: BulkVariantUpdateDTO): Promise<BulkVariantUpdateResponse> {
+    const { updates } = data;
+    const response: BulkVariantUpdateResponse = {
+      successful: 0,
+      failed: 0,
+      errors: [],
+      updatedVariants: []
+    };
+
+    // Process updates in batches to avoid overwhelming the database
+    const batchSize = 10;
+    for (let i = 0; i < updates.length; i += batchSize) {
+      const batch = updates.slice(i, i + batchSize);
+      
+      await Promise.all(batch.map(async (update) => {
+        try {
+          // Validate stock if being updated
+          if (update.stock !== undefined) {
+            await VariantStockService.validateStockLevel(update.stock);
+          }
+
+          const variant = await VariantModel.findByIdAndUpdate(
+            update.variantId,
+            {
+              ...(update.stock !== undefined && { stock: update.stock }),
+              ...(update.price !== undefined && { price: update.price }),
+              ...(update.sku !== undefined && { sku: update.sku })
+            },
+            { new: true, runValidators: true }
+          );
+
+          if (!variant) {
+            response.failed++;
+            response.errors.push({
+              variantId: update.variantId,
+              error: 'Variant not found'
+            });
+            return;
+          }
+
+          response.successful++;
+          response.updatedVariants.push(variant.toObject());
+        } catch (error) {
+          response.failed++;
+          response.errors.push({
+            variantId: update.variantId,
+            error: error instanceof Error ? error.message : 'Unknown error'
+          });
+        }
+      }));
+    }
+
+    return response;
+  }
+
+  static async getBulkVariants(query: BulkVariantRetrievalQuery) {
+    const { productIds, colors, sizes, search, minStock, maxStock, minPrice, maxPrice } = query;
+
+    // Build the MongoDB filter
+    const filter: any = {};
+    
+    if (productIds && productIds.length > 0) {
+      filter.productId = { $in: productIds };
+    }
+
+    if (colors && colors.length > 0) {
+      filter.color = { $in: colors };
+    }
+
+    if (sizes && sizes.length > 0) {
+      filter.size = { $in: sizes };
+    }
+
+    if (search) {
+      filter.$or = [
+        { sku: { $regex: search, $options: 'i' } },
+        { color: { $regex: search, $options: 'i' } },
+        { size: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    if (minStock !== undefined || maxStock !== undefined) {
+      filter.stock = {};
+      if (minStock !== undefined) filter.stock.$gte = minStock;
+      if (maxStock !== undefined) filter.stock.$lte = maxStock;
+    }
+
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      filter.price = {};
+      if (minPrice !== undefined) filter.price.$gte = minPrice;
+      if (maxPrice !== undefined) filter.price.$lte = maxPrice;
+    }
+
+    // Populate product information
+    const variants = await VariantModel.find(filter)
+      .populate({
+        path: 'productId',
+        select: 'title slug category storeId',
+        populate: {
+          path: 'storeId',
+          select: 'name slug'
+        }
+      })
+      .sort({ productId: 1, color: 1, size: 1 })
+      .lean();
+
+    return variants;
+  }
+
+  static async getVariantsByProductIds(productIds: string[]) {
+    return VariantModel.find({ productId: { $in: productIds } })
+      .populate({
+        path: 'productId',
+        select: 'title slug category'
+      })
+      .sort({ productId: 1, isDefault: -1, color: 1, size: 1 });
   }
 
   private static ensureVariantExists(variant: any): void {

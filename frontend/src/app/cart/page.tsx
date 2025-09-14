@@ -44,7 +44,7 @@ const shippingOptions: ShippingOption[] = [
     id: 'advanced',
     name: 'Envío Avanzado',
     description: 'El rider espera mientras probás',
-    price: 1000,
+    price: 2000,
     tryOnTime: '10 minutos para probar',
     icon: User,
     features: ['Rider espera afuera', '10 minutos de prueba', 'Devolución inmediata'],
@@ -53,7 +53,7 @@ const shippingOptions: ShippingOption[] = [
     id: 'premium',
     name: 'Envío Premium',
     description: 'Más tiempo para decidir con tranquilidad',
-    price: 1500,
+    price: 3000,
     tryOnTime: '17 minutos para probar',
     icon: Zap,
     features: ['Rider espera afuera', '17 minutos de prueba', 'Devolución inmediata', 'Servicio prioritario'],
@@ -92,7 +92,7 @@ function CartPageContent() {
       });
       toast.success('Cantidad actualizada');
     } catch (error) {
-      toast.error('Error al actualizar la cantidad');
+      toast.quantityUpdateError(error);
     }
   };
 
@@ -101,20 +101,19 @@ function CartPageContent() {
       await deleteCartItemMutation.mutateAsync(itemId);
       toast.success('Producto eliminado del carrito');
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || error?.message || 'Error al eliminar el producto';
-      toast.error(errorMessage);
+      toast.smartError(error, 'Error al eliminar el producto');
     }
   };
 
   const handleCheckout = async () => {
     if (!isAuthenticated) {
-      toast.error('Debes iniciar sesión para continuar');
+      toast.authError({ message: 'Debes iniciar sesión para continuar' });
       router.push('/login');
       return;
     }
 
     if (cartItems.length === 0) {
-      toast.error('Tu carrito está vacío');
+      toast.validationError('carrito', 'Tu carrito está vacío');
       return;
     }
 
@@ -134,13 +133,15 @@ function CartPageContent() {
       }
     } catch (error: any) {
       console.error('Checkout error:', error);
-      const errorMessage = error?.response?.data?.message || error?.message || 'Error al crear la sesión de checkout';
-      toast.error(errorMessage);
+      toast.smartError(error, 'Error al crear la sesión de checkout');
     }
   };
 
   // Calculations
-  const subtotal = cartItems.reduce((sum, item) => sum + item.variantId.price * item.quantity, 0);
+  const subtotal = cartItems.reduce((sum, item) => {
+    if (!item.variantId?.price) return sum;
+    return sum + item.variantId.price * item.quantity;
+  }, 0);
   const selectedShippingOption = shippingOptions.find((option) => option.id === selectedShipping)!;
   const shippingCost = selectedShippingOption.price;
   const total = subtotal + shippingCost;
@@ -228,6 +229,9 @@ function CartPageContent() {
             {/* Cart Items */}
             <div className="lg:col-span-2 space-y-4">
               {cartItems.map((item: CartItem) => {
+                // Skip items with null/undefined variantId
+                if (!item.variantId) return null;
+
                 const primaryImage = item.variantId.images.find((img) => img.order === 1) || item.variantId.images[0];
                 const imageUrl = primaryImage ? `/${primaryImage.key}` : '/placeholder.svg';
 
@@ -286,9 +290,9 @@ function CartPageContent() {
                             {/* Price */}
                             <div className="text-right sm:mb-3">
                               <p className="text-lg sm:text-xl font-bold text-[#20313A] font-helvetica">
-                                ${(item.variantId.price * item.quantity).toLocaleString('es-AR')}
+                                ${item.variantId.price ? (item.variantId.price * item.quantity).toLocaleString('es-AR') : '0'}
                               </p>
-                              {item.quantity > 1 && (
+                              {item.quantity > 1 && item.variantId.price && (
                                 <p className="text-xs sm:text-sm text-gray-500">
                                   ${item.variantId.price.toLocaleString('es-AR')} por unidad
                                 </p>
@@ -308,7 +312,9 @@ function CartPageContent() {
                                 >
                                   <Minus className="h-3 w-3 sm:h-4 sm:w-4" />
                                 </Button>
-                                <span className="w-10 sm:w-12 text-center font-semibold text-[#20313A] text-sm sm:text-base">{item.quantity}</span>
+                                <span className="w-10 sm:w-12 text-center font-semibold text-[#20313A] text-sm sm:text-base">
+                                  {item.quantity}
+                                </span>
                                 <Button
                                   variant="ghost"
                                   size="icon"

@@ -9,6 +9,13 @@ import {
   getDashboardResponse,
   StoreOrderAnalyticsResponse,
   StoreOrdersResponse,
+  StoreBillingResponse,
+  UpdateBillingDTO,
+  UploadTaxDocumentDTO,
+  TaxDocumentUploadResponse,
+  UpdateDocumentStatusDTO,
+  UpdateBillingStatusDTO,
+  BillingStatusResponse,
 } from '@/types/store';
 import { StoreAnalyticsApiResponse, DateRangeFilter, OrderTypeFilter } from '@/types/analytics';
 import { buildQueryString } from '@/lib/utils';
@@ -178,5 +185,48 @@ export class StoresClient extends BaseApiClient {
     const url = `/stores/id/${storeId}/products${query ? `?${query}` : ''}`;
 
     return this.fetchApi<{ status: string; results: number; pagination: any; data: { products: any[] } }>(url);
+  }
+
+  // Billing Management Methods
+  public async getStoreBilling(storeId: string): Promise<StoreBillingResponse> {
+    return this.fetchApi<StoreBillingResponse>(`/stores/id/${storeId}/billing`);
+  }
+
+  public async updateStoreBilling(storeId: string, data: UpdateBillingDTO): Promise<StoreBillingResponse> {
+    return this.fetchApi<StoreBillingResponse>(`/stores/id/${storeId}/billing`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  public async uploadTaxDocument(storeId: string, data: UploadTaxDocumentDTO): Promise<TaxDocumentUploadResponse> {
+    return this.fetchApi<TaxDocumentUploadResponse>(`/stores/id/${storeId}/billing/documents`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  public async deleteTaxDocument(storeId: string, documentId: string): Promise<StoreBillingResponse> {
+    return this.fetchApi<StoreBillingResponse>(`/stores/id/${storeId}/billing/documents/${documentId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  public async updateDocumentStatus(
+    storeId: string,
+    documentId: string,
+    data: UpdateDocumentStatusDTO,
+  ): Promise<StoreBillingResponse> {
+    return this.fetchApi<StoreBillingResponse>(`/stores/id/${storeId}/billing/documents/${documentId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  public async updateBillingStatus(storeId: string, data: UpdateBillingStatusDTO): Promise<BillingStatusResponse> {
+    return this.fetchApi<BillingStatusResponse>(`/stores/id/${storeId}/billing/status`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
   }
 }

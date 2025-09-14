@@ -18,11 +18,19 @@ export function OrderCard({
   acceptingEnabled = true,
   onAccept,
   onReject,
+  showActions = true,
+  showFullStatus = false,
+  clickable = false,
+  onOrderClick,
 }: {
   order: Order;
   acceptingEnabled?: boolean;
   onAccept?: (id: string) => void;
   onReject?: (id: string) => void;
+  showActions?: boolean;
+  showFullStatus?: boolean;
+  clickable?: boolean;
+  onOrderClick?: (orderId: string) => void;
 }) {
   const [open, setOpen] = React.useState(false);
 
@@ -94,22 +102,10 @@ export function OrderCard({
             <CheckCircle2 className="h-4 w-4" /> Comprada
           </div>
         );
-      case 'returned_ok':
+      case 'return_completed':
         return (
-          <div className="flex items-center gap-1 text-blue-600 text-sm">
-            <Package className="h-4 w-4" /> Devuelta OK
-          </div>
-        );
-      case 'returned_partial':
-        return (
-          <div className="flex items-center gap-1 text-yellow-700 text-sm">
-            <Package className="h-4 w-4" /> Devuelta parcial
-          </div>
-        );
-      case 'returned_damaged':
-        return (
-          <div className="flex items-center gap-1 text-red-700 text-sm">
-            <XCircle className="h-4 w-4" /> Devuelta dañada
+          <div className="flex items-center gap-1 text-gray-700 text-sm">
+            <Package className="h-4 w-4" /> Devolución completada
           </div>
         );
       case 'stolen':
@@ -129,8 +125,20 @@ export function OrderCard({
 
   const statusEl = getStatusDisplay(order.status);
 
+  const handleCardClick = () => {
+    if (clickable && onOrderClick) {
+      onOrderClick(order.id);
+    }
+  };
+
   return (
-    <div className="rounded-md border bg-white p-3">
+    <div 
+      className={cn(
+        "rounded-md border bg-white p-3",
+        clickable && "cursor-pointer hover:shadow-md transition-shadow"
+      )}
+      onClick={clickable ? handleCardClick : undefined}
+    >
       <div className="flex flex-col md:flex-row md:items-center gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <div className="h-9 w-9 rounded-md bg-gray-100 flex items-center justify-center">
@@ -153,7 +161,7 @@ export function OrderCard({
           <Badge variant="secondary">{order.total}</Badge>
           <span className="text-xs text-muted-foreground">{order.placedAt}</span>
 
-          {order.status === 'order_placed' ? (
+          {showActions && order.status === 'order_placed' ? (
             <div className="flex items-center gap-2">
               <Button
                 size="sm"
@@ -168,7 +176,19 @@ export function OrderCard({
               </Button>
             </div>
           ) : (
-            statusEl
+            <div className="flex items-center gap-2">
+              {statusEl}
+              {showFullStatus && (
+                <div className="text-xs text-gray-500">
+                  {new Date(order.createdAt).toLocaleDateString('es-AR', {
+                    day: '2-digit',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </div>
+              )}
+            </div>
           )}
 
           <button
@@ -193,17 +213,38 @@ export function OrderCard({
         <div className="mt-3 rounded-md border bg-gray-50 p-3">
           <div className="text-xs font-medium text-gray-600 mb-2">Productos del pedido</div>
           <div className="space-y-3">
-            {order.items.map((item) => (
-              <div key={item.id} className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="text-sm text-[#20313A]">{item.name}</div>
-                  {item.variant && <div className="text-xs text-gray-600">Variante: {item.variant}</div>}
-                  <div className="text-xs text-gray-600">SKU: {item.sku}</div>
-                  <div className="text-xs text-gray-600">Cantidad: {item.quantity}</div>
+            {order.items.map((item) => {
+              const getReturnStatusDisplay = (status: string) => {
+                switch (status) {
+                  case 'kept':
+                    return <span className="text-green-600 text-xs font-medium">✓ Comprado</span>;
+                  case 'returned':
+                    return <span className="text-blue-600 text-xs font-medium">↩ Devuelto</span>;
+                  case 'returned_damaged':
+                    return <span className="text-orange-600 text-xs font-medium">⚠ Devuelto dañado</span>;
+                  case 'stolen':
+                    return <span className="text-red-600 text-xs font-medium">⚡ Robado</span>;
+                  case 'undecided':
+                  default:
+                    return <span className="text-gray-500 text-xs font-medium">⏳ Pendiente</span>;
+                }
+              };
+
+              return (
+                <div key={item.id} className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="text-sm text-[#20313A]">{item.name}</div>
+                      {(item as any).returnStatus && getReturnStatusDisplay((item as any).returnStatus)}
+                    </div>
+                    {item.variant && <div className="text-xs text-gray-600">Variante: {item.variant}</div>}
+                    <div className="text-xs text-gray-600">SKU: {item.sku}</div>
+                    <div className="text-xs text-gray-600">Cantidad: {item.quantity}</div>
+                  </div>
+                  <div className="text-sm font-medium text-[#20313A]">{item.price}</div>
                 </div>
-                <div className="text-sm font-medium text-[#20313A]">{item.price}</div>
-              </div>
-            ))}
+              );
+            })}
           </div>
           <Separator className="my-3" />
           <div className="flex items-center justify-between">

@@ -95,7 +95,7 @@ export class DeliveryTrackingHandler {
       if (update.location) {
         await RiderLocationService.updateLocation(update.riderId, {
           type: 'Point',
-          coordinates: [update.location.longitude, update.location.latitude], // [lng, lat]
+          coordinates: [update.location.latitude, update.location.longitude], // [lng, lat]
         });
       }
 

@@ -57,8 +57,7 @@ function LoginForm() {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || error?.message || 'Error al iniciar sesión';
-      toast.error(errorMessage);
+      toast.authError(error);
     } finally {
       setIsLoading(false);
     }

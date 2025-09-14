@@ -106,9 +106,22 @@ export function VariantFormFields({ control, variantIndex, watchedCategory }: Va
               <Input
                 type="number"
                 min="0"
-                placeholder="0"
+                placeholder="Ej: 10"
                 {...field}
-                onChange={(e) => field.onChange(Number.parseInt(e.target.value) || 0)}
+                value={field.value === 0 ? '' : field.value}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '') {
+                    field.onChange('');
+                  } else {
+                    field.onChange(Number.parseInt(value) || 0);
+                  }
+                }}
+                onBlur={(e) => {
+                  if (e.target.value === '') {
+                    field.onChange(0);
+                  }
+                }}
               />
             </FormControl>
             <FormMessage />
@@ -127,9 +140,22 @@ export function VariantFormFields({ control, variantIndex, watchedCategory }: Va
                 type="number"
                 min="0"
                 step="0.01"
-                placeholder="0.00"
+                placeholder="Ej: 25000"
                 {...field}
-                onChange={(e) => field.onChange(Number.parseFloat(e.target.value) || 0)}
+                value={field.value === 0 ? '' : field.value}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '') {
+                    field.onChange('');
+                  } else {
+                    field.onChange(Number.parseFloat(value) || 0);
+                  }
+                }}
+                onBlur={(e) => {
+                  if (e.target.value === '') {
+                    field.onChange(0);
+                  }
+                }}
               />
             </FormControl>
             <FormMessage />

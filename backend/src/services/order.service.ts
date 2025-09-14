@@ -28,10 +28,43 @@ export class OrderService {
       .sort({ createdAt: -1 });
   }
 
-  static async getOrderById(orderId: string) {
+  static async getOrderByIdInternal(orderId: string) {
     const order = await OrderModel.findById(orderId).populate('storeId');
     this.ensureOrderExists(order);
     return order;
+  }
+
+  static async getOrderById(orderId: string) {
+    const order = await OrderModel.findById(orderId)
+      .populate({
+        path: 'storeId',
+        select: 'name customization.logoUrl',
+      })
+      .lean();
+
+    this.ensureOrderExists(order);
+
+    // Get order items with product and variant details
+    const orderItems = await OrderItemService.getCompleteOrderData(orderId);
+
+    // Get rider assignment if exists
+    const { RiderAssignmentService } = await import('./riderAssignment.service');
+    const riderAssignment = await RiderAssignmentService.getAssignmentByOrderId(orderId);
+
+    let riderDetails = null;
+    if (riderAssignment) {
+      const { UserModel } = await import('../models/user.model');
+      riderDetails = await UserModel.findById(riderAssignment.riderId)
+        .select('name surname phone profilePictureUrl rating')
+        .lean();
+    }
+
+    return {
+      ...order,
+      orderItems,
+      riderAssignment,
+      riderDetails,
+    };
   }
 
   static async createOrder(

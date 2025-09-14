@@ -9,7 +9,7 @@ import {
   ProductCommonResponse,
   ProductsByStoreResponse,
 } from '@/types/product';
-import { CreateVariantDTO } from '@/types/variant';
+import { CreateVariantDTO, BulkVariantUpdateDTO, BulkVariantRetrievalQuery, VariantWithProduct } from '@/types/variant';
 
 export const useProducts = (filters?: ProductFilterOptions) => {
   return useQuery<GetProductsResponse>({
@@ -124,6 +124,43 @@ export const useDeleteVariant = (productId: string, variantId: string) => {
       queryClient.setQueryData(['products', productId, 'variants'], (oldVariants: any) =>
         oldVariants.filter((v: any) => v._id !== variantId),
       );
+    },
+  });
+};
+
+// Bulk variant operations
+export const useBulkVariants = (query: BulkVariantRetrievalQuery, enabled = false) => {
+  return useQuery<{ total: number; data: VariantWithProduct[] }>({
+    queryKey: ['variants', 'bulk', query],
+    queryFn: () => api.products.getBulkVariants(query),
+    enabled: enabled && query.productIds.length > 0,
+  });
+};
+
+export const useVariantsByProducts = (productIds: string[], enabled = false) => {
+  return useQuery<{ total: number; data: VariantWithProduct[] }>({
+    queryKey: ['variants', 'by-products', productIds],
+    queryFn: () => api.products.getVariantsByProducts(productIds),
+    enabled: enabled && productIds.length > 0,
+  });
+};
+
+export const useBulkUpdateVariants = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (updates: BulkVariantUpdateDTO) => api.products.bulkUpdateVariants(updates),
+    onSuccess: (result) => {
+      // Invalidate all variant-related queries to ensure fresh data
+      queryClient.invalidateQueries({ queryKey: ['variants'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      
+      // Update specific product queries if we know which products were affected
+      if (result.data.updatedVariants.length > 0) {
+        const affectedProductIds = [...new Set(result.data.updatedVariants.map(v => v.productId))];
+        affectedProductIds.forEach(productId => {
+          queryClient.invalidateQueries({ queryKey: ['products', productId] });
+        });
+      }
     },
   });
 };

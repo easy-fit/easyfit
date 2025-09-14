@@ -243,9 +243,7 @@ export class RiderService {
         // Check if the order is still in progress (not in final states)
         const isOrderActive = ![
           'purchased',
-          'returned_ok',
-          'returned_partial',
-          'returned_damaged',
+          'return_completed',
           'cancelled',
         ].includes(order.status);
         if (isOrderActive) {

@@ -10,45 +10,97 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useVerifyEmail, useResendVerificationCode } from '@/hooks/api/use-auth';
 import { useEasyFitToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function VerifyEmailPage() {
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const verificationAttemptRef = useRef<string | null>(null);
+  const isComponentMountedRef = useRef(true);
 
   const router = useRouter();
+  const { user } = useAuth();
   const verifyEmailMutation = useVerifyEmail();
   const resendCodeMutation = useResendVerificationCode();
   const toast = useEasyFitToast();
 
-  // Auto-verify when all 6 digits are entered
+  // Cleanup on unmount
+  useEffect(() => {
+    isComponentMountedRef.current = true;
+    return () => {
+      isComponentMountedRef.current = false;
+    };
+  }, []);
+
+  // Auto-verify when all 6 digits are entered with deduplication
   useEffect(() => {
     const verificationCode = code.join('');
-    if (verificationCode.length === 6 && !isVerifying) {
+    if (
+      verificationCode.length === 6 && 
+      !isVerifying && 
+      verificationAttemptRef.current !== verificationCode &&
+      isComponentMountedRef.current
+    ) {
+      verificationAttemptRef.current = verificationCode;
       handleVerify(verificationCode);
     }
   }, [code, isVerifying]);
 
   const handleVerify = async (verificationCode: string) => {
+    // Prevent multiple concurrent requests
+    if (isVerifying || !isComponentMountedRef.current) {
+      return;
+    }
+
     setIsVerifying(true);
 
     try {
       await verifyEmailMutation.mutateAsync(verificationCode);
-      toast.emailVerified();
-      router.push('/');
+      
+      // Only show success if component is still mounted
+      if (isComponentMountedRef.current) {
+        toast.emailVerified();
+        // Redirect merchants to dashboard, others to home
+        const redirectPath = user?.role === 'merchant' ? '/dashboard' : '/';
+        router.push(redirectPath);
+      }
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || error?.message || 'Código de verificación inválido';
-      toast.error(errorMessage);
-      // Clear the code on error
-      setCode(['', '', '', '', '', '']);
-      inputRefs.current[0]?.focus();
+      // Only handle errors if component is still mounted
+      if (isComponentMountedRef.current) {
+        const errorMessage = error?.response?.data?.message || error?.message || 'Código de verificación inválido';
+        
+        // Handle "already verified" case gracefully
+        if (errorMessage.includes('Invalid operation') || errorMessage.includes('already verified')) {
+          toast.emailVerified();
+          // Redirect merchants to dashboard, others to home
+          const redirectPath = user?.role === 'merchant' ? '/dashboard' : '/';
+          router.push(redirectPath);
+          return;
+        }
+
+        toast.error(errorMessage);
+        
+        // Reset verification attempt tracking on error
+        verificationAttemptRef.current = null;
+        
+        // Clear the code on error
+        setCode(['', '', '', '', '', '']);
+        inputRefs.current[0]?.focus();
+      }
     } finally {
-      setIsVerifying(false);
+      // Only update state if component is still mounted
+      if (isComponentMountedRef.current) {
+        setIsVerifying(false);
+      }
     }
   };
 
   const handleCodeChange = (index: number, value: string) => {
+    // Reset verification attempt tracking when user changes code
+    verificationAttemptRef.current = null;
+
     if (value.length > 1) {
       // Handle paste event
       const pastedCode = value.slice(0, 6).split('');
@@ -79,6 +131,9 @@ export default function VerifyEmailPage() {
   };
 
   const handlePaste = (e: React.ClipboardEvent) => {
+    // Reset verification attempt tracking when user pastes code
+    verificationAttemptRef.current = null;
+    
     const pastedData = e.clipboardData.getData('Text').slice(0, 6).replace(/\D/g, '');
     if (pastedData.length > 0) {
       const newCode = [...code];
@@ -111,6 +166,8 @@ export default function VerifyEmailPage() {
         description: 'Revisa tu bandeja de entrada',
       });
       setCode(['', '', '', '', '', '']); // Clear current code
+      // Reset verification attempt tracking when resending
+      verificationAttemptRef.current = null;
       inputRefs.current[0]?.focus();
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || error?.message || 'Error al reenviar el código';

@@ -2,8 +2,8 @@ import { ShippingType } from '../types/order.types';
 
 export const SHIPPING_BASE_COSTS: Record<ShippingType, number> = {
   simple: 0,
-  advanced: 1000,
-  premium: 1500,
+  advanced: 2000,
+  premium: 3000,
 };
 
 export const SHIPPING_CONFIG = {

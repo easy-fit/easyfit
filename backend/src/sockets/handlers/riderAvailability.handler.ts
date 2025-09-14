@@ -48,7 +48,7 @@ export class RiderAvailabilityHandler {
       if (toggle.isAvailable && toggle.location) {
         const geoPoint: GeoPoint = {
           type: 'Point',
-          coordinates: [toggle.location.longitude, toggle.location.latitude], // [lng, lat]
+          coordinates: [toggle.location.latitude, toggle.location.longitude], // [lng, lat]
         };
         await RiderLocationService.updateLocation(toggle.riderId, geoPoint);
       }
@@ -110,7 +110,7 @@ export class RiderAvailabilityHandler {
     try {
       const geoPoint: GeoPoint = {
         type: 'Point',
-        coordinates: [update.location.longitude, update.location.latitude], // [lng, lat]
+        coordinates: [update.location.latitude, update.location.longitude], // [lng, lat]
       };
 
       await RiderLocationService.updateLocation(update.riderId, geoPoint);

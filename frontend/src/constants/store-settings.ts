@@ -5,7 +5,6 @@ import { STORE_TAGS_VALUES } from './store-tags';
 export const storeSettingsSchema = z.object({
   contactEmail: z.string().email('Email inválido'),
   contactPhone: z.string().optional(),
-  cuit: z.string().optional(),
   isOpen: z.boolean(),
   tags: z.array(z.enum(STORE_TAGS_VALUES as [string, ...string[]])).max(5, 'Máximo 5 etiquetas permitidas'),
   pickupHours: z.array(

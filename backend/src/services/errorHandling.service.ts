@@ -1,4 +1,5 @@
 import { WebSocketService } from './websocket.service';
+import { EmailService } from './email.service';
 
 export interface ErrorContext {
   orderId?: string;
@@ -88,7 +89,7 @@ export class ErrorHandlingService {
   /**
    * Handle critical errors that need immediate admin attention
    */
-  static handleCriticalError(context: ErrorContext, error: Error): void {
+  static async handleCriticalError(context: ErrorContext, error: Error): Promise<void> {
     const isCritical = this.CRITICAL_OPERATIONS.includes(context.operation);
 
     const errorReport = {
@@ -121,9 +122,55 @@ export class ErrorHandlingService {
       console.error('Failed to notify admin via WebSocket:', wsError);
     }
 
-    // For critical operations, also log to error tracking service
+    // For critical operations, also log to error tracking service and send email alerts
     if (isCritical) {
       this.logToCriticalErrorsStore(errorReport);
+
+      // Send appropriate email alert based on operation type
+      try {
+        switch (context.operation) {
+          case 'payment_settlement':
+            await EmailService.sendCriticalPaymentAlert({
+              orderId: context.orderId,
+              operation: context.operation,
+              error: error,
+              severity: 'critical',
+              metadata: context.metadata,
+            });
+            break;
+          case 'rider_assignment':
+            await EmailService.sendRiderAssignmentAlert({
+              orderId: context.orderId,
+              operation: context.operation,
+              error: error,
+              severity: 'critical',
+              attempts: context.metadata?.attempts || 0,
+              strategies: context.metadata?.strategies || [],
+              metadata: context.metadata,
+            });
+            break;
+          case 'order_status_transition':
+          case 'try_period_finalization':
+            await EmailService.sendOrderManagementAlert({
+              orderId: context.orderId,
+              operation: context.operation,
+              error: error,
+              severity: 'critical',
+              metadata: context.metadata,
+            });
+            break;
+          default:
+            await EmailService.sendCriticalSystemAlert({
+              orderId: context.orderId,
+              operation: context.operation,
+              error: error,
+              severity: 'critical',
+              metadata: context.metadata,
+            });
+        }
+      } catch (emailError) {
+        console.error('Failed to send critical error email alert:', emailError);
+      }
     }
   }
 
@@ -156,8 +203,24 @@ export class ErrorHandlingService {
       }
     }
 
-    // If no recovery possible, handle as critical error
+    // If no recovery possible, handle as critical error and send email alert
     this.handleCriticalError(context, error);
+
+    // Also send direct order management email alert
+    try {
+      await EmailService.sendOrderManagementAlert({
+        orderId,
+        operation,
+        error: error,
+        severity: 'critical',
+        metadata: {
+          recoveryAttempted: !!recoveryStrategies,
+          recoveryCount: recoveryStrategies?.length || 0,
+        },
+      });
+    } catch (emailError) {
+      console.error('Failed to send order error email alert:', emailError);
+    }
   }
 
   /**

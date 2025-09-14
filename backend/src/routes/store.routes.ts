@@ -75,3 +75,50 @@ storeRoutes.get(
   verifyStoreAccess,
   StoreController.getStoreProducts,
 );
+
+// New Billing Management Routes
+storeRoutes.get(
+  '/id/:id/billing',
+  protect,
+  restrictTo('merchant', 'manager', 'admin'),
+  verifyStoreAccess,
+  StoreController.getStoreBilling,
+);
+
+storeRoutes.put(
+  '/id/:id/billing',
+  protect,
+  restrictTo('merchant', 'manager'),
+  verifyStoreAccess,
+  StoreController.updateStoreBilling,
+);
+
+storeRoutes.post(
+  '/id/:id/billing/documents',
+  protect,
+  restrictTo('merchant', 'manager'),
+  verifyStoreAccess,
+  StoreController.uploadTaxDocument,
+);
+
+storeRoutes.delete(
+  '/id/:id/billing/documents/:documentId',
+  protect,
+  restrictTo('merchant', 'manager', 'admin'),
+  verifyStoreAccess,
+  StoreController.deleteDocument,
+);
+
+storeRoutes.patch(
+  '/id/:id/billing/documents/:documentId/status',
+  protect,
+  restrictTo('admin'),
+  StoreController.updateDocumentStatus,
+);
+
+storeRoutes.patch(
+  '/id/:id/billing/status',
+  protect,
+  restrictTo('admin'),
+  StoreController.updateBillingStatus,
+);
