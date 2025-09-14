@@ -142,7 +142,7 @@ export class RiderAssignmentOrchestrator {
         metadata: {
           status: 'implementing_fallback_strategies',
           nextRetry: '5 minutes',
-          adminNotification: '10 minutes'
+          adminNotification: '10 minutes',
         },
       });
     } catch (emailError) {
@@ -223,8 +223,8 @@ export class RiderAssignmentOrchestrator {
           order: orderData.order,
           customer: orderData.customer?.name || 'Unknown',
           duration: '10+ minutes',
-          storeId: orderData.order?.storeId,
-          shippingAddress: orderData.order?.shipping?.address?.formatted
+          storeId: orderData.order?.store,
+          shippingAddress: orderData.order?.shipping?.address?.formatted,
         },
       });
     } catch (emailError) {

@@ -89,7 +89,7 @@ export class ErrorHandlingService {
   /**
    * Handle critical errors that need immediate admin attention
    */
-  static handleCriticalError(context: ErrorContext, error: Error): void {
+  static async handleCriticalError(context: ErrorContext, error: Error): Promise<void> {
     const isCritical = this.CRITICAL_OPERATIONS.includes(context.operation);
 
     const errorReport = {
@@ -215,7 +215,7 @@ export class ErrorHandlingService {
         severity: 'critical',
         metadata: {
           recoveryAttempted: !!recoveryStrategies,
-          recoveryCount: recoveryStrategies?.length || 0
+          recoveryCount: recoveryStrategies?.length || 0,
         },
       });
     } catch (emailError) {
