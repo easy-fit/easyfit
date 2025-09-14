@@ -24,7 +24,7 @@ app.use(cookieParser());
 
 app.use('/api/v1', apiRoutes);
 
-// Health check endpoint for Docker/ECS
+// Health check endpoint for Docker/ECS 
 app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({
     status: 'ok',
