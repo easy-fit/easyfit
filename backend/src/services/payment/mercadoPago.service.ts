@@ -4,6 +4,7 @@ import { MERCADO_PAGO, ENV } from '../../config/env';
 import { AppError } from '../../utils/appError';
 import { User } from '../../types/user.types';
 import { v4 as uuidv4 } from 'uuid';
+import { EmailService } from '../email.service';
 
 export class MercadoPagoService {
   static async createPayment(paymentData: CreatePaymentRequest) {
@@ -19,6 +20,24 @@ export class MercadoPagoService {
 
       return response;
     } catch (error: any) {
+      // Send critical email alert for payment creation failures
+      try {
+        await EmailService.sendCriticalPaymentAlert({
+          operation: 'payment_creation',
+          error: error,
+          severity: 'critical',
+          metadata: {
+            paymentData: {
+              transaction_amount: paymentData.transaction_amount,
+              payment_method_id: paymentData.payment_method_id,
+              issuer_id: paymentData.issuer_id
+            }
+          },
+        });
+      } catch (emailError) {
+        console.error('Failed to send payment creation alert email:', emailError);
+      }
+
       throw new AppError(`MercadoPago payment creation failed: ${error.message}`, 400);
     }
   }
@@ -98,6 +117,21 @@ export class MercadoPagoService {
       const response = await mercadoPagoClient.payment.capture(captureData);
       return response;
     } catch (error: any) {
+      // Send critical email alert for payment capture failures
+      try {
+        await EmailService.sendCriticalPaymentAlert({
+          operation: 'payment_capture',
+          error: error,
+          severity: 'critical',
+          metadata: {
+            paymentId,
+            captureAmount: amount
+          },
+        });
+      } catch (emailError) {
+        console.error('Failed to send payment capture alert email:', emailError);
+      }
+
       throw new AppError(`MercadoPago payment capture failed: ${error.message}`, 400);
     }
   }
@@ -115,6 +149,20 @@ export class MercadoPagoService {
 
       return response;
     } catch (error: any) {
+      // Send critical email alert for payment cancellation failures
+      try {
+        await EmailService.sendCriticalPaymentAlert({
+          operation: 'payment_cancellation',
+          error: error,
+          severity: 'critical',
+          metadata: {
+            paymentId
+          },
+        });
+      } catch (emailError) {
+        console.error('Failed to send payment cancellation alert email:', emailError);
+      }
+
       throw new AppError(`MercadoPago payment cancellation failed: ${error.message}`, 400);
     }
   }
@@ -137,6 +185,21 @@ export class MercadoPagoService {
       const response = await mercadoPagoClient.paymentRefund.create(refundData);
       return response;
     } catch (error: any) {
+      // Send critical email alert for payment refund failures
+      try {
+        await EmailService.sendCriticalPaymentAlert({
+          operation: 'payment_refund',
+          error: error,
+          severity: 'critical',
+          metadata: {
+            paymentId,
+            refundAmount: amount
+          },
+        });
+      } catch (emailError) {
+        console.error('Failed to send payment refund alert email:', emailError);
+      }
+
       throw new AppError(`MercadoPago payment refund failed: ${error.message}`, 400);
     }
   }

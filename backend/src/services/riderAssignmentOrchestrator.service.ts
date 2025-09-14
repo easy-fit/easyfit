@@ -7,6 +7,7 @@ import { WebSocketService } from './websocket.service';
 import { ErrorHandlingService } from './errorHandling.service';
 import { AppError } from '../utils/appError';
 import { RiderOfferPayload } from '../types/websocket.types';
+import { EmailService } from './email.service';
 
 export class RiderAssignmentOrchestrator {
   static async assignRiderToOrder(orderId: string): Promise<string | null> {
@@ -129,6 +130,25 @@ export class RiderAssignmentOrchestrator {
 
     console.log(`No riders available for order ${orderId}. Implementing fallback strategy.`);
 
+    // Send critical email alert for immediate no riders available
+    try {
+      await EmailService.sendRiderAssignmentAlert({
+        orderId,
+        operation: 'no_riders_available',
+        error: new Error('No riders available for assignment after all strategies exhausted'),
+        severity: 'critical',
+        attempts: 3,
+        strategies: ['Standard assignment', 'Sequential offering', 'Retry with backoff'],
+        metadata: {
+          status: 'implementing_fallback_strategies',
+          nextRetry: '5 minutes',
+          adminNotification: '10 minutes'
+        },
+      });
+    } catch (emailError) {
+      console.error('Failed to send no riders available alert email:', emailError);
+    }
+
     await this.implementFallbackStrategies(orderId);
   }
 
@@ -189,6 +209,27 @@ export class RiderAssignmentOrchestrator {
           timestamp: new Date(),
         },
       });
+
+    // Send critical email alert for rider assignment timeout
+    try {
+      await EmailService.sendRiderAssignmentAlert({
+        orderId,
+        operation: 'rider_assignment_timeout',
+        error: new Error('Order has been waiting for rider assignment for over 10 minutes'),
+        severity: 'critical',
+        attempts: 0,
+        strategies: ['Standard assignment', 'Expanded radius', 'Retry after 5 minutes'],
+        metadata: {
+          order: orderData.order,
+          customer: orderData.customer?.name || 'Unknown',
+          duration: '10+ minutes',
+          storeId: orderData.order?.storeId,
+          shippingAddress: orderData.order?.shipping?.address?.formatted
+        },
+      });
+    } catch (emailError) {
+      console.error('Failed to send rider assignment timeout alert email:', emailError);
+    }
 
     console.log(`URGENT: Order ${orderId} has been pending rider assignment for over 10 minutes`);
   }
