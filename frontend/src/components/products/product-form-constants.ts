@@ -20,17 +20,18 @@ export const commonColors = [
 ];
 
 export const getSizeOptions = (category: string) => {
-  // Clothing sizes for most categories
-  if (
-    (category?.includes('hombre.') || category?.includes('mujer.') || category?.includes('ninos.')) &&
-    !category?.includes('calzado') &&
-    !category?.includes('accesorios')
-  ) {
-    return ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+  // Jeans sizes for both hombre and mujer (waist-length format)
+  if (category?.includes('jeans')) {
+    return ['28-30', '30-30', '30-32', '32-30', '32-32', '34-32', '36-32', '38-32', '40-32'];
+  }
+
+  // Corsetería sizes (numeric format)
+  if (category?.includes('corseteria')) {
+    return ['80', '85', '90', '95', '100', '105', '110', '115', '120'];
   }
 
   // Shoe sizes for calzado categories
-  if (category?.includes('calzado')) {
+  if (category?.includes('calzado') || category?.includes('zapatillas') || category?.includes('zapatos')) {
     return ['35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45'];
   }
 
@@ -42,6 +43,17 @@ export const getSizeOptions = (category: string) => {
   // Baby sizes for baby categories
   if (category?.includes('bebe')) {
     return ['0-3m', '3-6m', '6-9m', '9-12m', '12-18m'];
+  }
+
+  // Standard clothing sizes for most other categories
+  if (
+    (category?.includes('hombre.') || category?.includes('mujer.') || category?.includes('ninos.')) &&
+    !category?.includes('calzado') &&
+    !category?.includes('zapatillas') &&
+    !category?.includes('zapatos') &&
+    !category?.includes('accesorios')
+  ) {
+    return ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
   }
 
   return [];
