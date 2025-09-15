@@ -214,6 +214,14 @@ export function Header({ onSearch, searchQuery = '' }: HeaderProps) {
                       <Package className="mr-2 h-4 w-4" />
                       <span>Mis Pedidos</span>
                     </DropdownMenuItem>
+                    {user.role === 'admin' && (
+                      <>
+                        <DropdownMenuItem onClick={() => router.push('/admin')}>
+                          <User className="mr-2 h-4 w-4" />
+                          <span>Panel de Administración</span>
+                        </DropdownMenuItem>
+                      </>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => router.push('/help')}>
                       <HelpCircle className="mr-2 h-4 w-4" />

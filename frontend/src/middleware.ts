@@ -8,7 +8,7 @@ const publicRoutes = ['/', '/login', '/register', '/register/merchant', '/verify
 const authRoutes = ['/login', '/register', '/register/merchant'];
 
 // Protected routes that require authentication
-const protectedRoutes = ['/profile', '/orders', '/checkout', '/dashboard'];
+const protectedRoutes = ['/profile', '/orders', '/checkout', '/dashboard', '/admin'];
 
 // Check if user has authentication cookies
 function isAuthenticated(request: NextRequest): boolean {
@@ -93,6 +93,23 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Handle admin route (admin only)
+  if (pathname === '/admin') {
+    if (!userIsAuthenticated) {
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    // Get user role for admin access check
+    const userRole = await getUserRole(request);
+    if (userRole !== 'admin') {
+      return NextResponse.redirect(new URL('/unauthorized', request.url));
+    }
+
+    return NextResponse.next();
+  }
+
   // All other routes (like /storeSlug/productSlug) are public
   return NextResponse.next();
 }
@@ -103,6 +120,7 @@ export const config = {
     '/orders/:path*',
     '/checkout/:path*',
     '/dashboard/:path*',
+    '/admin/:path*',
     '/login',
     '/register',
     '/register/customer',
