@@ -348,10 +348,10 @@ export default function AdminDashboard() {
                     return (
                       <div key={user._id} className="flex items-center justify-between p-3 rounded-lg border">
                         <div className="flex-1">
-                          <p className="font-medium">{user.name} {user.surname}</p>
-                          <p className="text-sm text-muted-foreground">{user.email}</p>
+                          <p className="font-medium">{user.name || 'N/A'} {user.surname || ''}</p>
+                          <p className="text-sm text-muted-foreground">{user.email || 'Sin email'}</p>
                           <p className="text-xs text-muted-foreground">
-                            {new Date(user.createdAt).toLocaleDateString('es-ES')}
+                            {user.createdAt ? new Date(user.createdAt).toLocaleDateString('es-ES') : 'Fecha no disponible'}
                           </p>
                         </div>
                         <Badge variant={roleInfo.color}>
@@ -376,10 +376,10 @@ export default function AdminDashboard() {
                     return (
                       <div key={order._id} className="flex items-center justify-between p-3 rounded-lg border">
                         <div className="flex-1">
-                          <p className="font-medium">Pedido #{order._id.slice(-8)}</p>
-                          <p className="text-sm text-muted-foreground">${order.total.toLocaleString()}</p>
+                          <p className="font-medium">Pedido #{order._id ? order._id.slice(-8) : 'N/A'}</p>
+                          <p className="text-sm text-muted-foreground">${order.total ? order.total.toLocaleString() : '0'}</p>
                           <p className="text-xs text-muted-foreground">
-                            {new Date(order.createdAt).toLocaleDateString('es-ES')}
+                            {order.createdAt ? new Date(order.createdAt).toLocaleDateString('es-ES') : 'Fecha no disponible'}
                           </p>
                         </div>
                         <Badge variant={statusInfo.color}>
@@ -404,8 +404,8 @@ export default function AdminDashboard() {
                   {checkoutSessions.slice(0, 6).map((session) => (
                     <div key={session._id} className="flex items-center justify-between p-3 rounded-lg border">
                       <div className="flex-1">
-                        <p className="font-medium">Sesión #{session._id.slice(-8)}</p>
-                        <p className="text-sm text-muted-foreground">${session.total.toLocaleString()}</p>
+                        <p className="font-medium">Sesión #{session._id ? session._id.slice(-8) : 'N/A'}</p>
+                        <p className="text-sm text-muted-foreground">${session.total ? session.total.toLocaleString() : '0'}</p>
                       </div>
                       <Badge variant="secondary">
                         Activo
@@ -457,10 +457,10 @@ export default function AdminDashboard() {
                     return (
                       <div key={user._id} className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50">
                         <div className="flex-1">
-                          <p className="font-medium">{user.name} {user.surname}</p>
-                          <p className="text-sm text-muted-foreground">{user.email}</p>
+                          <p className="font-medium">{user.name || 'N/A'} {user.surname || ''}</p>
+                          <p className="text-sm text-muted-foreground">{user.email || 'Sin email'}</p>
                           <p className="text-xs text-muted-foreground">
-                            Registrado: {new Date(user.createdAt).toLocaleDateString('es-ES')}
+                            Registrado: {user.createdAt ? new Date(user.createdAt).toLocaleDateString('es-ES') : 'Fecha no disponible'}
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
@@ -525,10 +525,10 @@ export default function AdminDashboard() {
                     return (
                       <div key={order._id} className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50">
                         <div className="flex-1">
-                          <p className="font-medium">Pedido #{order._id.slice(-8)}</p>
-                          <p className="text-sm text-muted-foreground">${order.total.toLocaleString()}</p>
+                          <p className="font-medium">Pedido #{order._id ? order._id.slice(-8) : 'N/A'}</p>
+                          <p className="text-sm text-muted-foreground">${order.total ? order.total.toLocaleString() : '0'}</p>
                           <p className="text-xs text-muted-foreground">
-                            {new Date(order.createdAt).toLocaleDateString('es-ES')} - {new Date(order.createdAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                            {order.createdAt ? `${new Date(order.createdAt).toLocaleDateString('es-ES')} - ${new Date(order.createdAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}` : 'Fecha no disponible'}
                           </p>
                         </div>
                         <Badge variant={statusInfo.color}>
@@ -619,7 +619,7 @@ export default function AdminDashboard() {
                   <div className="flex items-center justify-between p-3 rounded-lg border">
                     <span className="font-medium">Pedidos Completados</span>
                     <span className="text-lg font-bold text-green-600">
-                      {analytics.completedOrdersCount} ({((analytics.completedOrdersCount / analytics.totalOrders) * 100).toFixed(1)}%)
+                      {analytics.completedOrdersCount} ({analytics.totalOrders > 0 ? ((analytics.completedOrdersCount / analytics.totalOrders) * 100).toFixed(1) : '0'}%)
                     </span>
                   </div>
                 </div>
