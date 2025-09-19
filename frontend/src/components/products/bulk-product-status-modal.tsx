@@ -1,7 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,7 +31,7 @@ export function BulkProductStatusModal({
   open,
   onClose,
   selectedProductIds,
-  productNames
+  productNames,
 }: BulkProductStatusModalProps) {
   const toast = useEasyFitToast();
   const [selectedStatus, setSelectedStatus] = useState<ProductStatus>('published');
@@ -32,10 +39,10 @@ export function BulkProductStatusModal({
 
   const statusOptions = [
     { value: 'published', label: 'Publicado', color: 'bg-green-100 text-green-800' },
-    { value: 'draft', label: 'Borrador', color: 'bg-yellow-100 text-yellow-800' }
+    { value: 'draft', label: 'Borrador', color: 'bg-yellow-100 text-yellow-800' },
   ];
 
-  const selectedStatusOption = statusOptions.find(option => option.value === selectedStatus);
+  const selectedStatusOption = statusOptions.find((option) => option.value === selectedStatus);
 
   const handleSave = async () => {
     if (selectedProductIds.length === 0) {
@@ -46,17 +53,19 @@ export function BulkProductStatusModal({
     try {
       const result = await bulkUpdateMutation.mutateAsync({
         productIds: selectedProductIds,
-        updateData: { status: selectedStatus }
+        updateData: { status: selectedStatus },
       });
 
       toast.success('Estado actualizado', {
-        description: `${result.data.successful} productos actualizados correctamente${result.data.failed > 0 ? `, ${result.data.failed} fallidos` : ''}`
+        description: `${result.data.successful} productos actualizados correctamente${
+          result.data.failed > 0 ? `, ${result.data.failed} fallidos` : ''
+        }`,
       });
 
       onClose();
     } catch (error) {
       toast.error('Error', {
-        description: 'No se pudieron actualizar los productos. Intentá nuevamente.'
+        description: 'No se pudieron actualizar los productos. Intentá nuevamente.',
       });
     }
   };
@@ -72,7 +81,8 @@ export function BulkProductStatusModal({
             Cambiar Estado de Productos
           </DialogTitle>
           <DialogDescription>
-            Cambiá el estado de {selectedProductIds.length} producto{selectedProductIds.length !== 1 ? 's' : ''} seleccionado{selectedProductIds.length !== 1 ? 's' : ''}.
+            Cambiá el estado de {selectedProductIds.length} producto{selectedProductIds.length !== 1 ? 's' : ''}{' '}
+            seleccionado{selectedProductIds.length !== 1 ? 's' : ''}.
           </DialogDescription>
         </DialogHeader>
 
@@ -88,7 +98,7 @@ export function BulkProductStatusModal({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {statusOptions.map(option => (
+                  {statusOptions.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       <div className="flex items-center gap-2">
                         <Badge variant="secondary" className={option.color}>
@@ -118,7 +128,7 @@ export function BulkProductStatusModal({
             </CardHeader>
             <CardContent>
               <div className="max-h-48 overflow-y-auto space-y-2">
-                {selectedProductIds.map(productId => (
+                {selectedProductIds.map((productId) => (
                   <div key={productId} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                     <Package className="h-4 w-4 text-gray-400" />
                     <span className="text-sm font-medium text-gray-900">
@@ -134,16 +144,15 @@ export function BulkProductStatusModal({
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              Esta acción cambiará el estado de todos los productos seleccionados. Los productos con estado "Borrador" no serán visibles para los clientes.
+              Esta acción cambiará el estado de todos los productos seleccionados. Los productos con estado
+              &quot;Borrador&quot; no serán visibles para los clientes.
             </AlertDescription>
           </Alert>
         </div>
 
         <DialogFooter className="border-t pt-4">
           <div className="flex items-center justify-between w-full">
-            <div className="text-sm text-gray-600">
-              {selectedProductIds.length} productos serán actualizados
-            </div>
+            <div className="text-sm text-gray-600">{selectedProductIds.length} productos serán actualizados</div>
 
             <div className="flex items-center gap-2">
               <Button variant="outline" onClick={onClose} disabled={bulkUpdateMutation.isPending}>
