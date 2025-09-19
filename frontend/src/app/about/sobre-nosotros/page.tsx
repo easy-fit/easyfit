@@ -56,7 +56,7 @@ export default function AboutUsPage() {
             <div className="flex justify-center mb-6">
               <div className="relative">
                 <div className="w-20 h-20 bg-gradient-to-br from-[#9EE493] to-[#7BC87C] rounded-full flex items-center justify-center p-4">
-                  <Image src="/icon-1.png" alt="EasyFit Logo" width={42} height={42} className="object-contain" />
+                  <Image src="/Icon-1.png" alt="EasyFit Logo" width={42} height={42} className="object-contain" />
                 </div>
               </div>
             </div>
