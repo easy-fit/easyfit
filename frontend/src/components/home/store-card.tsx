@@ -16,6 +16,7 @@ interface StoreCardProps {
     tags: string[];
     approximateDeliveryTime?: number | null; // minutes
     approximateShippingCost?: number | null; // in thousands (pesos)
+    isOpen: boolean;
     customization?: {
       logoUrl?: string;
       bannerUrl?: string;
@@ -69,6 +70,22 @@ export function StoreCard({ store }: StoreCardProps) {
                   {tag}
                 </Badge>
               ))}
+            </div>
+
+            {/* Store Status */}
+            <div className="absolute top-1.5 right-1.5 md:top-2 md:right-2">
+              <div className="flex items-center gap-1 bg-white/90 backdrop-blur-sm rounded-full px-2 py-1">
+                <div
+                  className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${
+                    store.isOpen ? 'bg-green-500' : 'bg-red-500'
+                  }`}
+                />
+                <span className={`text-[9px] md:text-[10px] font-medium ${
+                  store.isOpen ? 'text-green-700' : 'text-red-700'
+                }`}>
+                  {store.isOpen ? 'Abierto' : 'Cerrado'}
+                </span>
+              </div>
             </div>
 
             {/* Store Logo - Made bigger */}

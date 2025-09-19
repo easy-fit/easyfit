@@ -1,4 +1,5 @@
 import { Address } from './global';
+import { ShippingType } from './order';
 
 export type StoreStatus = 'active' | 'inactive' | 'disabled';
 export type StoreType = 'physical' | 'online';
@@ -229,6 +230,7 @@ export interface StoreOrder {
   status: string;
   placedAt: string;
   createdAt: string;
+  deliveryType?: ShippingType;
 }
 
 export interface StoreOrdersPagination {

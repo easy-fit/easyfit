@@ -208,3 +208,15 @@ export interface ProductsByStoreResponse {
   total: number;
   data: Product[];
 }
+
+export interface BulkProductUpdateDTO {
+  productIds: string[];
+  updateData: UpdateProductDTO;
+}
+
+export interface BulkProductUpdateResponse {
+  successful: number;
+  failed: number;
+  total: number;
+  errors: string[];
+}

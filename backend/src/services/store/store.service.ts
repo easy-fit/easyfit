@@ -406,6 +406,7 @@ export class StoreService {
           status: order.status,
           placedAt,
           createdAt: orderCreatedAt,
+          deliveryType: (order as any).shipping?.type,
         };
       });
 

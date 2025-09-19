@@ -1,13 +1,13 @@
 'use client';
 
 import * as React from 'react';
-import { ChevronDown, CheckCircle2, XCircle, Package, Clock, Truck, MapPin, ShoppingBag } from 'lucide-react';
+import { ChevronDown, CheckCircle2, XCircle, Package, Clock, Truck, MapPin, ShoppingBag, Star, Timer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { StoreOrder, StoreOrderItem } from '@/types/store';
-import type { OrderStatus } from '@/types/order';
+import type { OrderStatus, ShippingType } from '@/types/order';
 
 // Use the real API types
 export type OrderItem = StoreOrderItem;
@@ -33,6 +33,36 @@ export function OrderCard({
   onOrderClick?: (orderId: string) => void;
 }) {
   const [open, setOpen] = React.useState(false);
+
+  const getDeliveryTypeDisplay = (deliveryType?: ShippingType) => {
+    if (!deliveryType) return null;
+
+    switch (deliveryType) {
+      case 'simple':
+        return (
+          <Badge variant="secondary" className="bg-gray-100 text-gray-700 text-xs px-2 py-1 flex items-center gap-1">
+            <Truck className="h-3 w-3" />
+            Simple
+          </Badge>
+        );
+      case 'premium':
+        return (
+          <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-xs px-2 py-1 flex items-center gap-1">
+            <Timer className="h-3 w-3" />
+            Premium
+          </Badge>
+        );
+      case 'advanced':
+        return (
+          <Badge variant="secondary" className="bg-purple-100 text-purple-700 text-xs px-2 py-1 flex items-center gap-1">
+            <Star className="h-3 w-3" />
+            Avanzado
+          </Badge>
+        );
+      default:
+        return null;
+    }
+  };
 
   const getStatusDisplay = (status: OrderStatus) => {
     switch (status) {
@@ -158,6 +188,7 @@ export function OrderCard({
         <div className="flex-1" />
 
         <div className="flex items-center gap-3">
+          {getDeliveryTypeDisplay(order.deliveryType)}
           <Badge variant="secondary">{order.total}</Badge>
           <span className="text-xs text-muted-foreground">{order.placedAt}</span>
 

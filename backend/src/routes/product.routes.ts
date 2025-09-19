@@ -22,16 +22,25 @@ productRoutes.route('/id/:id').get(ProductController.getProductById);
 
 // Bulk operations - placed before dynamic routes to avoid conflicts
 productRoutes
+  .route('/bulk')
+  .patch(
+    protect,
+    restrictTo('admin', 'merchant', 'manager'),
+    isKYCVerified,
+    ProductController.bulkUpdateProducts
+  );
+
+productRoutes
   .route('/variants/bulk')
   .get(
-    protect, 
-    restrictTo('admin', 'merchant', 'manager'), 
+    protect,
+    restrictTo('admin', 'merchant', 'manager'),
     isKYCVerified,
     VariantController.getBulkVariants
   )
   .patch(
-    protect, 
-    restrictTo('admin', 'merchant', 'manager'), 
+    protect,
+    restrictTo('admin', 'merchant', 'manager'),
     isKYCVerified,
     VariantController.bulkUpdateVariants
   );
@@ -39,8 +48,8 @@ productRoutes
 productRoutes
   .route('/variants/by-products')
   .get(
-    protect, 
-    restrictTo('admin', 'merchant', 'manager'), 
+    protect,
+    restrictTo('admin', 'merchant', 'manager'),
     isKYCVerified,
     VariantController.getVariantsByProducts
   );

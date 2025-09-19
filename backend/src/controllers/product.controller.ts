@@ -76,4 +76,34 @@ export class ProductController {
     await ProductService.deleteProduct(productId);
     res.status(204).json({ status: 'success' });
   });
+
+  static bulkUpdateProducts = catchAsync(async (req: Request, res: Response) => {
+    const { productIds, updateData } = req.body as {
+      productIds: string[];
+      updateData: UpdateProductDTO;
+    };
+
+    if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
+      res.status(400).json({
+        status: 'error',
+        message: 'productIds array is required and cannot be empty'
+      });
+      return;
+    }
+
+    if (!updateData || Object.keys(updateData).length === 0) {
+      res.status(400).json({
+        status: 'error',
+        message: 'updateData is required and cannot be empty'
+      });
+      return;
+    }
+
+    const result = await ProductService.bulkUpdateProducts(productIds, updateData);
+
+    res.status(200).json({
+      status: 'success',
+      data: result
+    });
+  });
 }

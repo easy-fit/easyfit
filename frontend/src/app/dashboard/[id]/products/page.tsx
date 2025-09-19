@@ -16,6 +16,7 @@ import { ProductMetricsCards } from '@/components/products/product-metrics-cards
 import { ProductFilters } from '@/components/products/product-filters';
 import { ProductList } from '@/components/products/product-list';
 import { BulkVariantEditModal } from '@/components/products/bulk-variant-edit-modal';
+import { BulkProductStatusModal } from '@/components/products/bulk-product-status-modal';
 import { Loader2 } from 'lucide-react';
 
 export default function ProductsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -33,10 +34,14 @@ export default function ProductsPage({ params }: { params: Promise<{ id: string 
 
   // Selection states
   const [selectedProducts, setSelectedProducts] = React.useState<string[]>([]);
-  
+
   // Bulk variant edit modal state
   const [bulkEditModalOpen, setBulkEditModalOpen] = React.useState(false);
   const [bulkEditProductNames, setBulkEditProductNames] = React.useState<Record<string, string>>({});
+
+  // Bulk status edit modal state
+  const [bulkStatusModalOpen, setBulkStatusModalOpen] = React.useState(false);
+  const [bulkStatusProductNames, setBulkStatusProductNames] = React.useState<Record<string, string>>({});
 
   // Delete states
   const [productToDelete, setProductToDelete] = React.useState<{ id: string; title: string } | null>(null);
@@ -92,7 +97,7 @@ export default function ProductsPage({ params }: { params: Promise<{ id: string 
     try {
       await deleteProductMutation.mutateAsync();
       toast.success('Producto eliminado', {
-        description: `"${productToDelete.title}" se eliminó correctamente`,
+        description: 'El producto se eliminó correctamente.',
       });
       setProductToDelete(null);
       // Remove from selected products if it was selected
@@ -128,6 +133,18 @@ export default function ProductsPage({ params }: { params: Promise<{ id: string 
     setSelectedProducts([]);
   };
 
+  const handleBulkEditStatus = (productIds: string[], productNames: Record<string, string>) => {
+    setBulkStatusProductNames(productNames);
+    setBulkStatusModalOpen(true);
+  };
+
+  const closeBulkStatusModal = () => {
+    setBulkStatusModalOpen(false);
+    setBulkStatusProductNames({});
+    // Clear selection after bulk edit
+    setSelectedProducts([]);
+  };
+
   // Reset page when filters change
   React.useEffect(() => {
     setPage(1);
@@ -138,7 +155,13 @@ export default function ProductsPage({ params }: { params: Promise<{ id: string 
     return (
       <div className="min-h-screen bg-gray-50">
         <SidebarProvider>
-          <StoreSidebar storeName={storeName} logoUrl={logoUrl} active="products" baseHref={`/dashboard/${id}`} userRole={accessType} />
+          <StoreSidebar
+            storeName={storeName}
+            logoUrl={logoUrl}
+            active="products"
+            baseHref={`/dashboard/${id}`}
+            userRole={accessType}
+          />
           <SidebarInset>
             <div className="flex items-center justify-center min-h-[60vh]">
               <div className="text-center">
@@ -157,7 +180,13 @@ export default function ProductsPage({ params }: { params: Promise<{ id: string 
     return (
       <div className="min-h-screen bg-gray-50">
         <SidebarProvider>
-          <StoreSidebar storeName={storeName} logoUrl={logoUrl} active="products" baseHref={`/dashboard/${id}`} userRole={accessType} />
+          <StoreSidebar
+            storeName={storeName}
+            logoUrl={logoUrl}
+            active="products"
+            baseHref={`/dashboard/${id}`}
+            userRole={accessType}
+          />
           <SidebarInset>
             <div className="flex items-center justify-center min-h-[60vh]">
               <div className="text-center">
@@ -173,7 +202,13 @@ export default function ProductsPage({ params }: { params: Promise<{ id: string 
   return (
     <div className="min-h-screen bg-gray-50">
       <SidebarProvider>
-        <StoreSidebar storeName={storeName} logoUrl={logoUrl} active="products" baseHref={`/dashboard/${id}`} userRole={accessType} />
+        <StoreSidebar
+          storeName={storeName}
+          logoUrl={logoUrl}
+          active="products"
+          baseHref={`/dashboard/${id}`}
+          userRole={accessType}
+        />
         <SidebarInset>
           {/* Header */}
           <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-white px-4">
@@ -227,6 +262,7 @@ export default function ProductsPage({ params }: { params: Promise<{ id: string 
               onViewProduct={handleViewProduct}
               onAddProduct={handleAddProduct}
               onBulkEditVariants={handleBulkEditVariants}
+              onBulkEditStatus={handleBulkEditStatus}
               isLoading={productsLoading}
               pagination={pagination}
               onPageChange={setPage}
@@ -243,14 +279,26 @@ export default function ProductsPage({ params }: { params: Promise<{ id: string 
         productNames={bulkEditProductNames}
       />
 
+      {/* Bulk Product Status Modal */}
+      <BulkProductStatusModal
+        open={bulkStatusModalOpen}
+        onClose={closeBulkStatusModal}
+        selectedProductIds={selectedProducts}
+        productNames={bulkStatusProductNames}
+      />
+
       {/* Delete Confirmation Dialog */}
       {productToDelete && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Confirmar eliminación</h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 mb-4">
               ¿Estás seguro de que querés eliminar el producto{' '}
-              <span className="font-medium">{productToDelete.title}</span>? Esta acción no se puede deshacer.
+              <span className="font-medium">{productToDelete.title}</span>?
+            </p>
+            <p className="text-amber-600 text-sm mb-6 p-3 bg-amber-50 rounded-lg border border-amber-200">
+              <strong>Advertencia:</strong> Se eliminarán todas las variantes asociadas a este producto. Esta acción no
+              se puede deshacer.
             </p>
             <div className="flex gap-3 justify-end">
               <Button variant="outline" onClick={cancelDelete} disabled={deleteProductMutation.isPending}>

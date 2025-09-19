@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Sparkles, Clock, Shield } from 'lucide-react';
 import { Header } from '@/components/layout/header';
 import { StoreCard } from '@/components/home/store-card';
@@ -9,6 +9,7 @@ import { Filters } from '@/components/home/filters';
 import { Button } from '@/components/ui/button';
 import { useProducts } from '@/hooks/api/use-products';
 import { useStores } from '@/hooks/api/use-stores';
+import { shuffleArray } from '@/lib/utils';
 import type { StoreFilterOptions } from '@/types/store';
 import type { ProductFilterOptions } from '@/types/product';
 
@@ -61,6 +62,22 @@ export default function HomePage() {
   const handleStoreFiltersChange = (filters: StoreFilterOptions) => {
     setStoreFilters(filters);
   };
+
+  // Shuffle products when not searching to create a more mixed display
+  const displayedProducts = useMemo(() => {
+    if (!productsData?.data?.products) return [];
+
+    // Only shuffle when not searching or filtering - preserve sort for search results
+    const hasActiveFilters = searchQuery.trim() ||
+                            Object.keys(productFilters).some(key => productFilters[key] !== undefined);
+
+    if (hasActiveFilters) {
+      return productsData.data.products;
+    }
+
+    // Shuffle products for a more mixed display on the main home page
+    return shuffleArray(productsData.data.products);
+  }, [productsData?.data?.products, searchQuery, productFilters]);
 
   const isLoading = viewMode === 'products' ? productsLoading : storesLoading;
   const hasError = viewMode === 'products' ? productsError : storesError;
@@ -198,9 +215,9 @@ export default function HomePage() {
         {/* Content Grid */}
         {!isLoading && !hasError && (
           <>
-            {viewMode === 'products' && productsData?.data?.products && (
+            {viewMode === 'products' && displayedProducts.length > 0 && (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {productsData.data.products.map((product) => (
+                {displayedProducts.map((product) => (
                   <ProductCard key={product._id} product={product} />
                 ))}
               </div>
@@ -222,7 +239,7 @@ export default function HomePage() {
             )}
 
             {/* Empty State */}
-            {((viewMode === 'products' && productsData?.data?.products.length === 0) ||
+            {((viewMode === 'products' && displayedProducts.length === 0) ||
               (viewMode === 'stores' && storesData?.data?.stores.length === 0)) && (
               <div className="text-center py-12">
                 <p className="text-gray-600 mb-4">

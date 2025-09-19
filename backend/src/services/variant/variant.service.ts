@@ -87,6 +87,28 @@ export class VariantService {
     }
   }
 
+  static async deleteVariantsByProductId(productId: string) {
+    // Find all variants for this product
+    const variants = await VariantModel.find({ productId });
+
+    if (variants.length === 0) {
+      return; // No variants to delete
+    }
+
+    // Collect all image keys from variants
+    const imageKeysToDelete = variants.flatMap(variant =>
+      variant.images.map(img => img.key)
+    );
+
+    // Delete all variants for this product
+    await VariantModel.deleteMany({ productId });
+
+    // Delete associated images
+    if (imageKeysToDelete.length > 0) {
+      VariantImageService.deleteVariantImages(imageKeysToDelete);
+    }
+  }
+
   // Stock management methods - delegated to VariantStockService
   static async checkStockAvailable(variantId: string, requestedQty: number) {
     return VariantStockService.checkStockAvailable(variantId, requestedQty);
