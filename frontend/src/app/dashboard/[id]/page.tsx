@@ -30,6 +30,7 @@ import type { OrderNewEvent, ReturnInspectItemsEvent } from '@/types/websockets'
 import type { OrderStatus } from '@/types/order';
 import { useCurrentStore } from '@/contexts/store-context';
 import { useStoreBilling } from '@/hooks/api/use-stores';
+import { useOrderSound } from '@/hooks/use-order-sound';
 import Link from 'next/link';
 
 export default function StoreDashboardPage() {
@@ -55,6 +56,7 @@ export default function StoreDashboardPage() {
     limit: 20,
   });
   const { respondToOrder, joinStoreChannel, leaveStoreChannel, completeReturnInspection } = useStoreEvents();
+  const { playOrderSound } = useOrderSound();
   const { on, off } = useWebSocket();
   const setStoreStatusMutation = useSetStoreStatus();
 
@@ -84,6 +86,14 @@ export default function StoreDashboardPage() {
   const [selectedInspection, setSelectedInspection] = React.useState<any | null>(null);
   const [isInspectionModalOpen, setIsInspectionModalOpen] = React.useState(false);
 
+  // Track if we've played sound for page load to avoid spam
+  const hasPlayedPageLoadSoundRef = React.useRef(false);
+
+  // Reset page load sound flag when store changes
+  React.useEffect(() => {
+    hasPlayedPageLoadSoundRef.current = false;
+  }, [id]);
+
   // Fetch pending orders from API to handle page reloads
   const { data: pendingOrdersData } = usePendingOrders(id);
   
@@ -99,8 +109,17 @@ export default function StoreDashboardPage() {
       }));
       setPendingOrders(apiPendingOrders);
       setLastFetchTime(new Date());
+
+      // Play sound if there are pending orders and we haven't played sound for page load yet
+      if (apiPendingOrders.length > 0 && !hasPlayedPageLoadSoundRef.current) {
+        console.log(`🔊 Found ${apiPendingOrders.length} pending orders on page load, playing sound`);
+        playOrderSound().catch((error) => {
+          console.warn('Failed to play order notification sound on page load:', error);
+        });
+        hasPlayedPageLoadSoundRef.current = true;
+      }
     }
-  }, [pendingOrdersData]);
+  }, [pendingOrdersData, playOrderSound]);
 
   // Initialize pending inspections from API on page load
   React.useEffect(() => {
@@ -245,6 +264,11 @@ export default function StoreDashboardPage() {
           // Order already exists, don't add duplicate
           return prev;
         }
+
+        // Play sound notification for new order
+        playOrderSound().catch((error) => {
+          console.warn('Failed to play order notification sound:', error);
+        });
 
         // Add new order to the beginning of the list
         return [formattedOrder, ...prev];

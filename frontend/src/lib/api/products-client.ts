@@ -7,8 +7,18 @@ import {
   CreateProductResponse,
   ProductCommonResponse,
   ProductsByStoreResponse,
+  BulkProductUpdateDTO,
+  BulkProductUpdateResponse,
+  BulkUploadResponse,
 } from '@/types/product';
-import { CreateVariantDTO, createVariantResponse, BulkVariantUpdateDTO, BulkVariantUpdateResponse, BulkVariantRetrievalQuery, VariantWithProduct } from '@/types/variant';
+import {
+  CreateVariantDTO,
+  createVariantResponse,
+  BulkVariantUpdateDTO,
+  BulkVariantUpdateResponse,
+  BulkVariantRetrievalQuery,
+  VariantWithProduct,
+} from '@/types/variant';
 import { imageUploadBody } from '@/types/global';
 import { AddImageToVariant } from '@/types/variant';
 import { buildQueryString } from '@/lib/utils';
@@ -86,7 +96,9 @@ export class ProductsClient extends BaseApiClient {
   }
 
   // Bulk variant operations
-  public async getBulkVariants(query: BulkVariantRetrievalQuery): Promise<{ total: number; data: VariantWithProduct[] }> {
+  public async getBulkVariants(
+    query: BulkVariantRetrievalQuery,
+  ): Promise<{ total: number; data: VariantWithProduct[] }> {
     const queryString = buildQueryString({
       ...query,
       productIds: query.productIds.join(','),
@@ -108,5 +120,19 @@ export class ProductsClient extends BaseApiClient {
       productIds: productIds.join(','),
     });
     return this.fetchApi<{ total: number; data: VariantWithProduct[] }>(`/products/variants/by-products${queryString}`);
+  }
+
+  public async bulkUpdateProducts(updates: BulkProductUpdateDTO): Promise<{ data: BulkProductUpdateResponse }> {
+    return this.fetchApi<{ data: BulkProductUpdateResponse }>('/products/bulk', {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    });
+  }
+
+  public async bulkUploadProducts(formData: FormData): Promise<{ data: BulkUploadResponse }> {
+    return this.fetchApi<{ data: BulkUploadResponse }>('/products/bulk-upload', {
+      method: 'POST',
+      body: formData,
+    });
   }
 }

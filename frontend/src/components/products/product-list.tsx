@@ -44,6 +44,7 @@ interface ProductListProps {
   onViewProduct: (productId: string) => void;
   onAddProduct?: () => void;
   onBulkEditVariants?: (productIds: string[], productNames: Record<string, string>) => void;
+  onBulkEditStatus?: (productIds: string[], productNames: Record<string, string>) => void;
   isLoading?: boolean;
   pagination?: {
     current: number;
@@ -129,6 +130,7 @@ export function ProductList({
   onViewProduct,
   onAddProduct,
   onBulkEditVariants,
+  onBulkEditStatus,
   isLoading = false,
   pagination,
   onPageChange,
@@ -148,6 +150,20 @@ export function ProductList({
     }, {} as Record<string, string>);
 
     onBulkEditVariants(selectedProducts, productNames);
+  };
+
+  const handleBulkEditStatus = () => {
+    if (!onBulkEditStatus || selectedProducts.length === 0) return;
+
+    const productNames = selectedProducts.reduce((acc, productId) => {
+      const product = products.find((p) => p.id === productId);
+      if (product) {
+        acc[productId] = product.name;
+      }
+      return acc;
+    }, {} as Record<string, string>);
+
+    onBulkEditStatus(selectedProducts, productNames);
   };
 
   return (
@@ -176,9 +192,21 @@ export function ProductList({
                     Editar variantes
                   </Button>
                 )}
-                <Button variant="outline" size="sm">
-                  Más acciones
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      Más acciones
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {onBulkEditStatus && (
+                      <DropdownMenuItem onClick={handleBulkEditStatus}>
+                        <Package className="h-4 w-4 mr-2" />
+                        Cambiar estado
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             )}
           </div>

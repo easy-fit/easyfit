@@ -22,6 +22,8 @@ import {
   ChevronDown,
   ChevronUp,
   ArrowLeft,
+  Navigation,
+  AlertCircle,
 } from 'lucide-react';
 import Image from 'next/image';
 import { AuthGuard } from '@/components/auth/auth-guard';
@@ -142,6 +144,22 @@ const paymentStatusConfig = {
   },
 };
 
+// Helper function to identify active orders that need tracking
+const isActiveOrder = (status: string): boolean => {
+  const activeStatuses = [
+    'order_placed',
+    'order_accepted',
+    'pending_rider',
+    'rider_assigned',
+    'in_transit',
+    'delivered',
+    'awaiting_return_pickup',
+    'returning_to_store',
+    'store_checking_returns',
+  ];
+  return activeStatuses.includes(status);
+};
+
 export default function OrdersPage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
@@ -201,6 +219,13 @@ export default function OrdersPage() {
     return order.status === statusFilter;
   });
 
+  // Find the most recent active order for tracking
+  const activeOrders = orders.filter((order) => isActiveOrder(order.status));
+  const mostRecentActiveOrder =
+    activeOrders.length > 0
+      ? activeOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
+      : null;
+
   const toggleOrderExpansion = (orderId: string) => {
     setExpandedOrder(expandedOrder === orderId ? null : orderId);
   };
@@ -225,6 +250,64 @@ export default function OrdersPage() {
             <h1 className="text-3xl font-bold text-[#20313A] font-helvetica mb-2">Mis Pedidos</h1>
             <p className="text-gray-600 font-satoshi">Seguí el estado de tus pedidos y pruebas</p>
           </div>
+
+          {/* Active Order Tracking Card */}
+          {mostRecentActiveOrder && (
+            <Card className="mb-6 bg-gradient-to-r from-[#9EE493] to-[#8dd482] border-[#9EE493]">
+              <CardContent className="p-4 md:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3 md:gap-4">
+                    <div className="bg-white p-2 md:p-3 rounded-full shadow-sm flex-shrink-0">
+                      <Navigation className="h-5 w-5 md:h-6 md:w-6 text-[#20313A]" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-base md:text-lg font-semibold text-[#20313A] mb-1">
+                        Pedido Activo en Seguimiento
+                      </h3>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Image
+                          src={buildStoreAssetUrl(mostRecentActiveOrder.storeId.customization?.logoUrl)}
+                          alt={mostRecentActiveOrder.storeId.name}
+                          width={20}
+                          height={20}
+                          className="rounded-full flex-shrink-0"
+                        />
+                        <p className="text-[#20313A] font-medium text-sm md:text-base truncate">
+                          #{mostRecentActiveOrder._id.slice(-4).toUpperCase()} • {mostRecentActiveOrder.storeId.name}
+                        </p>
+                      </div>
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                        <Badge
+                          className={
+                            statusConfig[mostRecentActiveOrder.status as keyof typeof statusConfig]?.color ||
+                            'bg-gray-100 text-gray-800'
+                          }
+                        >
+                          {statusConfig[mostRecentActiveOrder.status as keyof typeof statusConfig]?.label ||
+                            mostRecentActiveOrder.status}
+                        </Badge>
+                        {(mostRecentActiveOrder.status === 'in_transit' ||
+                          mostRecentActiveOrder.status === 'pending_rider' ||
+                          mostRecentActiveOrder.status === 'rider_assigned') && (
+                          <div className="flex items-center gap-1 text-[#20313A]">
+                            <AlertCircle className="h-3 w-3 md:h-4 md:w-4" />
+                            <span className="text-xs md:text-sm font-medium">Requiere seguimiento</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => router.push(`/orders/${mostRecentActiveOrder._id}`)}
+                    className="bg-[#20313A] hover:bg-[#1a252e] text-white px-4 md:px-6 py-2 md:py-3 font-medium w-full sm:w-auto"
+                  >
+                    <Truck className="h-4 w-4 mr-2" />
+                    Seguir Pedido
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Filters */}
           <div className="mb-6 flex items-center gap-4">

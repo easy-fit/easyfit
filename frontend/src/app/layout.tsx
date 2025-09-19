@@ -5,6 +5,7 @@ import './globals.css';
 import Script from 'next/script';
 import { Providers } from '@/providers/providers';
 import { Toaster } from 'sonner';
+import { ConditionalFooter } from '@/components/layout/conditional-footer';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -57,7 +58,10 @@ fbq('track', 'PageView');
       </head>
       <body className={inter.className}>
         <Providers>
-          {children}
+          <div className="min-h-screen flex flex-col">
+            <main className="flex-1">{children}</main>
+            <ConditionalFooter />
+          </div>
           <Toaster position="top-right" />
         </Providers>
       </body>

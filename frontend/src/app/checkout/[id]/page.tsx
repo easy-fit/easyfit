@@ -65,7 +65,7 @@ export default function CheckoutPage() {
 
   // Initialize MercadoPago
   useEffect(() => {
-    initMercadoPago('APP_USR-b545e130-814c-4399-99db-22e25760c4f2');
+    initMercadoPago('TEST-6183029f-7ef1-4cbc-935f-89a5afce3df1');
   }, []);
 
   // API calls

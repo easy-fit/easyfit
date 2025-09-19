@@ -54,11 +54,19 @@ export class BaseApiClient {
 
   protected async fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
     const makeRequest = async (): Promise<Response> => {
+      // Don't set Content-Type for FormData, let the browser set it
+      const headers: HeadersInit = {};
+
+      // Only set JSON content type if body is not FormData
+      if (!(options?.body instanceof FormData)) {
+        headers['Content-Type'] = 'application/json';
+      }
+
       return fetch(`${this.baseURL}${endpoint}`, {
         ...options,
         credentials: 'include',
         headers: {
-          'Content-Type': 'application/json',
+          ...headers,
           ...options?.headers,
         },
       });

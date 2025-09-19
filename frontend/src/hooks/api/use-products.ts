@@ -8,6 +8,7 @@ import {
   ProductFilterOptions,
   ProductCommonResponse,
   ProductsByStoreResponse,
+  BulkProductUpdateDTO,
 } from '@/types/product';
 import { CreateVariantDTO, BulkVariantUpdateDTO, BulkVariantRetrievalQuery, VariantWithProduct } from '@/types/variant';
 
@@ -153,14 +154,38 @@ export const useBulkUpdateVariants = () => {
       // Invalidate all variant-related queries to ensure fresh data
       queryClient.invalidateQueries({ queryKey: ['variants'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      
+
       // Update specific product queries if we know which products were affected
       if (result.data.updatedVariants.length > 0) {
-        const affectedProductIds = [...new Set(result.data.updatedVariants.map(v => v.productId))];
-        affectedProductIds.forEach(productId => {
+        const affectedProductIds = [...new Set(result.data.updatedVariants.map((v) => v.productId))];
+        affectedProductIds.forEach((productId) => {
           queryClient.invalidateQueries({ queryKey: ['products', productId] });
         });
       }
+    },
+  });
+};
+
+export const useBulkUpdateProducts = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (updates: BulkProductUpdateDTO) => api.products.bulkUpdateProducts(updates),
+    onSuccess: () => {
+      // Invalidate all product-related queries to ensure fresh data
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['stores'] }); // In case store metrics are affected
+    },
+  });
+};
+
+export const useBulkUploadProducts = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (formData: FormData) => api.products.bulkUploadProducts(formData),
+    onSuccess: () => {
+      // Invalidate all product-related queries to ensure fresh data
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['stores'] }); // In case store metrics are affected
     },
   });
 };
