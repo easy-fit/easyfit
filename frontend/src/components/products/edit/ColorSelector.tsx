@@ -23,11 +23,8 @@ export function ColorSelector({ field }: ColorSelectorProps) {
 
   const handleSelectChange = (value: string) => {
     if (value === 'custom') {
-      // If switching to custom, keep current hex if it's valid, otherwise set default
-      if (!field.value || field.value === 'custom') {
-        field.onChange('#000000');
-      }
-      // If already a custom hex, keep it as-is
+      // If switching to custom, set to 'custom' to show the inputs
+      field.onChange('custom');
     } else {
       // Predefined color selected
       field.onChange(value);
@@ -70,14 +67,22 @@ export function ColorSelector({ field }: ColorSelectorProps) {
         <div className="mt-2 flex gap-2">
           <Input
             type="color"
-            value={field.value === 'custom' ? '#000000' : field.value}
+            value={field.value === 'custom' ? '#ffffff' : field.value}
             onChange={(e) => field.onChange(e.target.value)}
             className="w-12 h-10 p-1 border rounded"
           />
           <Input
             placeholder="#FFFFFF"
             value={field.value === 'custom' ? '' : field.value}
-            onChange={(e) => field.onChange(e.target.value)}
+            onChange={(e) => {
+              const inputValue = e.target.value;
+              // If user types a valid hex color, use it; otherwise keep the input
+              if (inputValue.match(/^#[0-9A-Fa-f]{6}$/) || inputValue === '') {
+                field.onChange(inputValue || 'custom');
+              } else {
+                field.onChange(inputValue);
+              }
+            }}
             className="flex-1"
           />
         </div>
