@@ -22,9 +22,9 @@ export class ProductService {
           from: 'variants',
           localField: '_id',
           foreignField: 'productId',
-          as: 'variants'
-        }
-      }
+          as: 'variants',
+        },
+      },
     ]);
 
     if (!result || result.length === 0) {
@@ -62,8 +62,8 @@ export class ProductService {
     const product = await ProductModel.create(enhancedData);
 
     // Separate bulk and non-bulk variants
-    const nonBulkVariants = variants.filter(variant => !variant.isBulk);
-    const bulkVariants = variants.filter(variant => variant.isBulk);
+    const nonBulkVariants = variants.filter((variant) => !variant.isBulk);
+    const bulkVariants = variants.filter((variant) => variant.isBulk);
 
     // Process images only for non-bulk variants
     const images = nonBulkVariants.flatMap((variant) =>
@@ -99,16 +99,14 @@ export class ProductService {
     // Process bulk variants - copy image keys from parent variant (same color)
     const processedBulkVariants = bulkVariants.map((bulkVariant) => {
       // Find the parent variant with the same color (non-bulk)
-      const parentVariant = processedNonBulkVariants.find(
-        variant => variant.color === bulkVariant.color
-      );
+      const parentVariant = processedNonBulkVariants.find((variant) => variant.color === bulkVariant.color);
 
       if (!parentVariant) {
         throw new AppError(`Parent variant not found for bulk variant with color: ${bulkVariant.color}`, 400);
       }
 
       // Copy image keys from parent variant
-      const copiedImages = parentVariant.images.map(parentImg => ({
+      const copiedImages = parentVariant.images.map((parentImg) => ({
         ...parentImg,
         // Keep the same key to reference the same image in R2
       }));
@@ -139,13 +137,41 @@ export class ProductService {
   }
 
   static async deleteProduct(productId: string) {
-    const variants = await VariantService.getVariantsByProductId(productId);
-    if (variants) {
-      throw new AppError('Cannot delete product with existing variants', 400);
-    }
+    // First delete all variants associated with this product
+    await VariantService.deleteVariantsByProductId(productId);
 
+    // Then delete the product itself
     const deletedProduct = await ProductModel.findByIdAndDelete(productId);
     this.ensureProductExists(deletedProduct);
+  }
+
+  static async bulkUpdateProducts(productIds: string[], updateData: UpdateProductDTO) {
+    try {
+      // Validate that all products exist and get their current data
+      const existingProducts = await ProductModel.find({ _id: { $in: productIds } });
+
+      if (existingProducts.length !== productIds.length) {
+        const foundIds = existingProducts.map(p => p._id.toString());
+        const missingIds = productIds.filter(id => !foundIds.includes(id));
+        throw new AppError(`Products not found: ${missingIds.join(', ')}`, 404);
+      }
+
+      // Perform bulk update
+      const result = await ProductModel.updateMany(
+        { _id: { $in: productIds } },
+        { $set: updateData },
+        { runValidators: true }
+      );
+
+      return {
+        successful: result.modifiedCount,
+        failed: productIds.length - result.modifiedCount,
+        total: productIds.length,
+        errors: []
+      };
+    } catch (error) {
+      throw new AppError(`Bulk update failed: ${error}`, 500);
+    }
   }
 
   private static ensureProductExists(product: any): void {

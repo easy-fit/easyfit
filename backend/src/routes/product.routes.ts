@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { ProductController } from '../controllers/product.controller';
 import { VariantController } from '../controllers/variant.controller';
 import { protect, restrictTo, isKYCVerified } from '../middlewares/auth';
+// Upload middleware imports moved to upload.routes.ts
 import {
   verifyProductOwnership,
   verifyProductAccess,
@@ -22,16 +23,27 @@ productRoutes.route('/id/:id').get(ProductController.getProductById);
 
 // Bulk operations - placed before dynamic routes to avoid conflicts
 productRoutes
+  .route('/bulk')
+  .patch(
+    protect,
+    restrictTo('admin', 'merchant', 'manager'),
+    isKYCVerified,
+    ProductController.bulkUpdateProducts
+  );
+
+// Bulk upload route moved to separate upload.routes.ts to avoid JSON parser conflicts
+
+productRoutes
   .route('/variants/bulk')
   .get(
-    protect, 
-    restrictTo('admin', 'merchant', 'manager'), 
+    protect,
+    restrictTo('admin', 'merchant', 'manager'),
     isKYCVerified,
     VariantController.getBulkVariants
   )
   .patch(
-    protect, 
-    restrictTo('admin', 'merchant', 'manager'), 
+    protect,
+    restrictTo('admin', 'merchant', 'manager'),
     isKYCVerified,
     VariantController.bulkUpdateVariants
   );
@@ -39,8 +51,8 @@ productRoutes
 productRoutes
   .route('/variants/by-products')
   .get(
-    protect, 
-    restrictTo('admin', 'merchant', 'manager'), 
+    protect,
+    restrictTo('admin', 'merchant', 'manager'),
     isKYCVerified,
     VariantController.getVariantsByProducts
   );

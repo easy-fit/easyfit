@@ -97,6 +97,9 @@ export const ERROR_TRANSLATIONS: Record<string, string> = {
   "Quota exceeded": "Cuota excedida",
   "Feature not available": "Función no disponible",
   "Store cannot be deleted as it contains products. Please delete the products first.": "No se puede eliminar la tienda porque contiene productos. Eliminá los productos primero.",
+  "Product cannot be deleted as it contains variants. Please delete the variants first.": "No se puede eliminar el producto porque tiene variantes. Eliminá las variantes primero o usá la opción de eliminación forzada.",
+  "Cannot delete product with variants": "No se puede eliminar el producto con variantes",
+  "Product has variants and cannot be deleted": "El producto tiene variantes y no puede ser eliminado",
 
   // ==========================================
   // RESOURCE NOT FOUND (20 messages)

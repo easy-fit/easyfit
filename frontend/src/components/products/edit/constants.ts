@@ -24,31 +24,37 @@ export const sizesByCategory = {
   shoes: ['35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45'],
   accessories: ['Único'],
   baby: ['0-3m', '3-6m', '6-9m', '9-12m', '12-18m'],
+  corseteria: [], // Empty array - corseteria uses custom numeric sizes
 };
 
 export const getSizesForCategory = (category: string): string[] => {
   if (!category) return [];
-  
+
+  // Check for corseteria (bras) - should use custom numeric sizes
+  if (category === 'mujer.corseteria') {
+    return sizesByCategory.corseteria; // Returns empty array to allow custom input
+  }
+
   // Check for clothing categories
-  if ((category.includes('hombre.') || category.includes('mujer.') || category.includes('ninos.')) 
+  if ((category.includes('hombre.') || category.includes('mujer.') || category.includes('ninos.'))
       && !category.includes('zapatos') && !category.includes('accesorios')) {
     return sizesByCategory.clothing;
   }
-  
+
   // Check for shoe categories
   if (category.includes('zapatos')) {
     return sizesByCategory.shoes;
   }
-  
+
   // Check for accessory categories
   if (category.includes('accesorios')) {
     return sizesByCategory.accessories;
   }
-  
+
   // Check for baby categories
   if (category.includes('bebe')) {
     return sizesByCategory.baby;
   }
-  
+
   return [];
 };
