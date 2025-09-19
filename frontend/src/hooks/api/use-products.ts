@@ -178,4 +178,16 @@ export const useBulkUpdateProducts = () => {
   });
 };
 
+export const useBulkUploadProducts = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (formData: FormData) => api.products.bulkUploadProducts(formData),
+    onSuccess: () => {
+      // Invalidate all product-related queries to ensure fresh data
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['stores'] }); // In case store metrics are affected
+    },
+  });
+};
+
 export type { ProductFilterOptions };

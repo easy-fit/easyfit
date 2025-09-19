@@ -220,3 +220,26 @@ export interface BulkProductUpdateResponse {
   total: number;
   errors: string[];
 }
+
+export interface BulkUploadValidationError {
+  row: number;
+  field: string;
+  error: string;
+  data: any;
+}
+
+export interface BulkUploadResponse {
+  summary: {
+    totalRows: number;
+    validRows: number;
+    invalidRows: number;
+    productsCreated: number;
+    variantsCreated: number;
+    errors: number;
+  };
+  errors: BulkUploadValidationError[];
+  warnings: Array<{
+    row: number;
+    warning: string;
+  }>;
+}

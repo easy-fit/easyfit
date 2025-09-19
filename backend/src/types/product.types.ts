@@ -36,3 +36,38 @@ export interface UpdateProductDTO {
   status?: ProductStatus;
   slug?: string;
 }
+
+export interface BulkUploadRowDTO {
+  TITLE: string;
+  DESCRIPTION?: string;
+  CATEGORY: string;
+  STATUS?: string;
+  SIZE: string;
+  COLOR: string;
+  PRICE: number;
+  STOCK: number;
+  SKU: string;
+}
+
+export interface BulkUploadValidationError {
+  row: number;
+  field: string;
+  error: string;
+  data: Partial<BulkUploadRowDTO>;
+}
+
+export interface BulkUploadResponse {
+  summary: {
+    totalRows: number;
+    validRows: number;
+    invalidRows: number;
+    productsCreated: number;
+    variantsCreated: number;
+    errors: number;
+  };
+  errors: BulkUploadValidationError[];
+  warnings: Array<{
+    row: number;
+    warning: string;
+  }>;
+}

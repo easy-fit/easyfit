@@ -17,6 +17,7 @@ import { ProductFilters } from '@/components/products/product-filters';
 import { ProductList } from '@/components/products/product-list';
 import { BulkVariantEditModal } from '@/components/products/bulk-variant-edit-modal';
 import { BulkProductStatusModal } from '@/components/products/bulk-product-status-modal';
+import { BulkUploadModal } from '@/components/products/bulk-upload-modal';
 import { Loader2 } from 'lucide-react';
 
 export default function ProductsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -42,6 +43,9 @@ export default function ProductsPage({ params }: { params: Promise<{ id: string 
   // Bulk status edit modal state
   const [bulkStatusModalOpen, setBulkStatusModalOpen] = React.useState(false);
   const [bulkStatusProductNames, setBulkStatusProductNames] = React.useState<Record<string, string>>({});
+
+  // Bulk upload modal state
+  const [bulkUploadModalOpen, setBulkUploadModalOpen] = React.useState(false);
 
   // Delete states
   const [productToDelete, setProductToDelete] = React.useState<{ id: string; title: string } | null>(null);
@@ -143,6 +147,14 @@ export default function ProductsPage({ params }: { params: Promise<{ id: string 
     setBulkStatusProductNames({});
     // Clear selection after bulk edit
     setSelectedProducts([]);
+  };
+
+  const handleBulkUpload = () => {
+    setBulkUploadModalOpen(true);
+  };
+
+  const closeBulkUploadModal = () => {
+    setBulkUploadModalOpen(false);
   };
 
   // Reset page when filters change
@@ -249,6 +261,7 @@ export default function ProductsPage({ params }: { params: Promise<{ id: string 
               onStatusChange={setStatus}
               onStockStatusChange={setStockStatus}
               onAddProduct={handleAddProduct}
+              onBulkUpload={handleBulkUpload}
             />
 
             {/* Product List */}
@@ -285,6 +298,13 @@ export default function ProductsPage({ params }: { params: Promise<{ id: string 
         onClose={closeBulkStatusModal}
         selectedProductIds={selectedProducts}
         productNames={bulkStatusProductNames}
+      />
+
+      {/* Bulk Upload Modal */}
+      <BulkUploadModal
+        open={bulkUploadModalOpen}
+        onClose={closeBulkUploadModal}
+        storeId={id}
       />
 
       {/* Delete Confirmation Dialog */}

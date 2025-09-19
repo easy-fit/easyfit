@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { ProductService } from '../services/product/product.service';
+import { BulkUploadService } from '../services/product/bulkUpload.service';
 import { catchAsync } from '../utils/catchAsync';
 import { CreateProductDTO, UpdateProductDTO } from '../types/product.types';
 import { CreateVariantDTO } from '../types/variant.types';
@@ -100,6 +101,37 @@ export class ProductController {
     }
 
     const result = await ProductService.bulkUpdateProducts(productIds, updateData);
+
+    res.status(200).json({
+      status: 'success',
+      data: result
+    });
+  });
+
+  static bulkUploadProducts = catchAsync(async (req: Request, res: Response) => {
+    // Handle multer.any() structure
+    const files = req.files as Express.Multer.File[];
+    const excelFile = files?.find(file => file.fieldname === 'excelFile');
+
+    if (!excelFile) {
+      res.status(400).json({
+        status: 'error',
+        message: 'Excel file is required'
+      });
+      return;
+    }
+
+    // Get storeId from request body (populated by multer from form data)
+    const storeId = req.body.storeId;
+    if (!storeId) {
+      res.status(400).json({
+        status: 'error',
+        message: 'Store ID is required'
+      });
+      return;
+    }
+
+    const result = await BulkUploadService.processExcelFile(excelFile.buffer, storeId);
 
     res.status(200).json({
       status: 'success',

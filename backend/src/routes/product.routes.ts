@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { ProductController } from '../controllers/product.controller';
 import { VariantController } from '../controllers/variant.controller';
 import { protect, restrictTo, isKYCVerified } from '../middlewares/auth';
+// Upload middleware imports moved to upload.routes.ts
 import {
   verifyProductOwnership,
   verifyProductAccess,
@@ -29,6 +30,8 @@ productRoutes
     isKYCVerified,
     ProductController.bulkUpdateProducts
   );
+
+// Bulk upload route moved to separate upload.routes.ts to avoid JSON parser conflicts
 
 productRoutes
   .route('/variants/bulk')

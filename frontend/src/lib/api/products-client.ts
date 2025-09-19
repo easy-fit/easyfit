@@ -9,6 +9,7 @@ import {
   ProductsByStoreResponse,
   BulkProductUpdateDTO,
   BulkProductUpdateResponse,
+  BulkUploadResponse,
 } from '@/types/product';
 import {
   CreateVariantDTO,
@@ -125,6 +126,13 @@ export class ProductsClient extends BaseApiClient {
     return this.fetchApi<{ data: BulkProductUpdateResponse }>('/products/bulk', {
       method: 'PATCH',
       body: JSON.stringify(updates),
+    });
+  }
+
+  public async bulkUploadProducts(formData: FormData): Promise<{ data: BulkUploadResponse }> {
+    return this.fetchApi<{ data: BulkUploadResponse }>('/products/bulk-upload', {
+      method: 'POST',
+      body: formData,
     });
   }
 }
