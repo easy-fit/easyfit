@@ -1,24 +1,30 @@
 import { PickupHours } from '../types/store.types';
+import { toZonedTime, format } from 'date-fns-tz';
+import { ENV } from '../config/env';
 
 /**
  * Get current day of week in the format used by pickup hours
+ * Uses configured timezone (Argentina) to determine the correct day
  * @returns Day string ('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun')
  */
 export const getCurrentDayOfWeek = (): string => {
   const days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
   const now = new Date();
-  return days[now.getDay()];
+  const zonedTime = toZonedTime(now, ENV.TIMEZONE);
+  return days[zonedTime.getDay()];
 };
 
 /**
  * Check if current time is within the specified range
+ * Uses configured timezone (Argentina) to get the correct local time
  * @param openTime Time string in HH:mm format (e.g., "09:00")
  * @param closeTime Time string in HH:mm format (e.g., "18:00")
  * @returns True if current time is within the range
  */
 export const isCurrentTimeInRange = (openTime: string, closeTime: string): boolean => {
   const now = new Date();
-  const currentTime = now.toTimeString().slice(0, 5); // Get HH:mm format
+  const zonedTime = toZonedTime(now, ENV.TIMEZONE);
+  const currentTime = format(zonedTime, 'HH:mm', { timeZone: ENV.TIMEZONE }); // Get HH:mm format in Argentina timezone
   
   // Handle closed store (indicated by "00:00" open time)
   if (openTime === '00:00' && closeTime === '00:00') {
@@ -80,10 +86,13 @@ export const calculateStoreOpenStatus = (pickupHours: PickupHours): boolean => {
 
 /**
  * Get a readable timestamp for logging
+ * Uses configured timezone (Argentina) for local timestamp
  * @returns Formatted timestamp string
  */
 export const getTimestamp = (): string => {
-  return new Date().toISOString();
+  const now = new Date();
+  const zonedTime = toZonedTime(now, ENV.TIMEZONE);
+  return format(zonedTime, 'yyyy-MM-dd HH:mm:ss zzz', { timeZone: ENV.TIMEZONE });
 };
 
 /**

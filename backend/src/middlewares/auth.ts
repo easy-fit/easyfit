@@ -38,8 +38,30 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
 
     req.user = user;
     next();
-  } catch (err) {
-    return next(new AppError('Invalid or expired token', 401));
+  } catch (err: any) {
+    // If token is expired and we have a refresh token, try to refresh
+    if (err.name === 'TokenExpiredError' && req.cookies.refresh) {
+      try {
+        const refreshToken = req.cookies.refresh;
+        const refreshDecoded = jwt.verify(refreshToken, JWT_CONFIG.REFRESH_TOKEN_SECRET) as { id: string };
+        const user = await UserModel.findById(refreshDecoded.id);
+
+        if (!user || user.refreshToken !== refreshToken) {
+          return next(new AppError('Invalid refresh token', 401));
+        }
+
+        // Generate new access token
+        const newAccessToken = signAccessToken(user._id.toString());
+        res.cookie('jwt', newAccessToken, accessTokenCookieOptions);
+
+        req.user = user;
+        next();
+      } catch (refreshErr) {
+        return next(new AppError('Session expired. Please log in again.', 401));
+      }
+    } else {
+      return next(new AppError('Invalid or expired token', 401));
+    }
   }
 };
 

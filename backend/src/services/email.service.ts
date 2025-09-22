@@ -94,7 +94,7 @@ export class EmailService {
   // Critical Alert Methods
   static async sendCriticalPaymentAlert(context: CriticalAlertContext) {
     const adminEmails = this.getAdminEmails();
-    const alertKey = `payment-${context.orderId}-${context.operation}`;
+    const alertKey = `payment-alert-${context.orderId}-${context.operation}`;
 
     if (!this.shouldSendEmail(alertKey)) {
       console.log(`Throttled payment alert for ${alertKey}`);
@@ -117,20 +117,16 @@ export class EmailService {
       metadata: context.metadata,
     });
 
-    const promises = adminEmails.map(email =>
-      this.sendEmail({
-        to: email,
-        subject: `🚨 EasyFit Payment Issue - Order ${context.orderId || 'Unknown'}`,
-        html,
-      })
+    await this.sendEmailToAdmins(
+      adminEmails,
+      `🚨 EasyFit Payment Issue - Order ${context.orderId || 'Unknown'}`,
+      html
     );
-
-    await Promise.allSettled(promises);
   }
 
   static async sendRiderAssignmentAlert(context: CriticalAlertContext & { attempts?: number; strategies?: string[] }) {
     const adminEmails = this.getAdminEmails();
-    const alertKey = `rider-${context.orderId}-${context.operation}`;
+    const alertKey = `rider-alert-${context.orderId}-${context.operation}`;
 
     if (!this.shouldSendEmail(alertKey)) {
       console.log(`Throttled rider assignment alert for ${alertKey}`);
@@ -154,20 +150,16 @@ export class EmailService {
       metadata: context.metadata,
     });
 
-    const promises = adminEmails.map(email =>
-      this.sendEmail({
-        to: email,
-        subject: `🚨 EasyFit Rider Assignment Failed - Order ${context.orderId || 'Unknown'}`,
-        html,
-      })
+    await this.sendEmailToAdmins(
+      adminEmails,
+      `🚨 EasyFit Rider Assignment Failed - Order ${context.orderId || 'Unknown'}`,
+      html
     );
-
-    await Promise.allSettled(promises);
   }
 
   static async sendOrderManagementAlert(context: CriticalAlertContext) {
     const adminEmails = this.getAdminEmails();
-    const alertKey = `order-${context.orderId}-${context.operation}`;
+    const alertKey = `order-alert-${context.orderId}-${context.operation}`;
 
     if (!this.shouldSendEmail(alertKey)) {
       console.log(`Throttled order management alert for ${alertKey}`);
@@ -190,20 +182,16 @@ export class EmailService {
       metadata: context.metadata,
     });
 
-    const promises = adminEmails.map(email =>
-      this.sendEmail({
-        to: email,
-        subject: `🚨 EasyFit Order Issue - Order ${context.orderId || 'Unknown'}`,
-        html,
-      })
+    await this.sendEmailToAdmins(
+      adminEmails,
+      `🚨 EasyFit Order Issue - Order ${context.orderId || 'Unknown'}`,
+      html
     );
-
-    await Promise.allSettled(promises);
   }
 
   static async sendCriticalSystemAlert(context: CriticalAlertContext) {
     const adminEmails = this.getAdminEmails();
-    const alertKey = `system-${context.operation}`;
+    const alertKey = `system-alert-${context.operation}-${context.orderId || 'global'}`;
 
     if (!this.shouldSendEmail(alertKey)) {
       console.log(`Throttled system alert for ${alertKey}`);
@@ -226,30 +214,34 @@ export class EmailService {
       metadata: context.metadata,
     });
 
-    const promises = adminEmails.map(email =>
-      this.sendEmail({
-        to: email,
-        subject: `🚨 EasyFit System Alert - ${context.operation}`,
-        html,
-      })
+    await this.sendEmailToAdmins(
+      adminEmails,
+      `🚨 EasyFit System Alert - ${context.operation}`,
+      html
     );
-
-    await Promise.allSettled(promises);
   }
 
   // Helper method to get admin emails
   private static getAdminEmails(): string[] {
-    const adminEmailsString = process.env.ADMIN_ALERT_EMAILS || '';
+    const adminEmailsString = SENDGRID_CONFIG.ADMIN_ALERT_EMAILS;
     if (!adminEmailsString) {
       console.warn('No admin emails configured for critical alerts. Set ADMIN_ALERT_EMAILS environment variable.');
       return [];
     }
-    return adminEmailsString.split(',').map(email => email.trim()).filter(email => email.length > 0);
+    const emails = adminEmailsString.split(',').map(email => email.trim()).filter(email => email.length > 0);
+
+    // Validate email format
+    const validEmails = emails.filter(email => this.isValidEmail(email));
+    if (validEmails.length !== emails.length) {
+      console.warn(`Some admin emails are invalid. Valid: ${validEmails.length}, Total: ${emails.length}`);
+    }
+
+    return validEmails;
   }
 
   // Email throttling mechanism to prevent spam
   private static emailThrottleCache = new Map<string, number>();
-  private static readonly THROTTLE_DURATION_MS = 10 * 60 * 1000; // 10 minutes
+  private static readonly THROTTLE_DURATION_MS = 2 * 60 * 1000; // 2 minutes (reduced from 10)
 
   static shouldSendEmail(alertKey: string): boolean {
     const now = Date.now();
@@ -261,6 +253,44 @@ export class EmailService {
     }
 
     return false;
+  }
+
+  // Email validation helper
+  private static isValidEmail(email: string): boolean {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }
+
+  // Improved email sending with better error handling
+  private static async sendEmailToAdmins(adminEmails: string[], subject: string, html: string): Promise<void> {
+    if (adminEmails.length === 0) {
+      throw new Error('No valid admin emails configured');
+    }
+
+    const sendResults = await Promise.allSettled(
+      adminEmails.map(async (email) => {
+        try {
+          await this.sendEmail({ to: email, subject, html });
+          return { email, success: true };
+        } catch (error: any) {
+          console.error(`Failed to send admin alert to ${email}:`, error.message);
+          throw error;
+        }
+      })
+    );
+
+    const failures = sendResults.filter(result => result.status === 'rejected');
+    const successes = sendResults.filter(result => result.status === 'fulfilled');
+
+    if (failures.length > 0) {
+      const failedEmails = failures.map((result, index) => adminEmails[index]);
+      console.error(`Failed to send admin alerts to: ${failedEmails.join(', ')}`);
+
+      // If ALL emails failed, throw error
+      if (successes.length === 0) {
+        throw new Error(`All admin alert emails failed. Recipients: ${adminEmails.join(', ')}`);
+      }
+    }
   }
 
   // HTML Generation Methods

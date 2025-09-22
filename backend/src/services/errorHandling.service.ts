@@ -70,13 +70,20 @@ export class ErrorHandlingService {
     if (fallbacks && fallbacks.length > 0) {
       console.error(`All retries failed for ${operation.context.operation}. Attempting fallback strategies.`);
 
+      let fallbackSucceeded = false;
       for (const fallback of fallbacks) {
         try {
           const result = await fallback.execute();
           this.notifyAdminOfFallbackSuccess(operation.context, fallback.description);
+          fallbackSucceeded = true;
           return result;
         } catch (fallbackError: any) {
           console.error(`Fallback strategy "${fallback.description}" failed:`, fallbackError.message);
+
+          // For critical operations like rider assignment, send alert even if fallback fails
+          if (operation.context.operation === 'rider_assignment') {
+            await this.handleCriticalError(operation.context, fallbackError);
+          }
         }
       }
     }
@@ -251,8 +258,8 @@ export class ErrorHandlingService {
       },
     ];
 
-    // For now, just handle as critical error
-    this.handleCriticalError(context, error);
+    // Handle as critical error - this will send email alert
+    await this.handleCriticalError(context, error);
   }
 
   /**
