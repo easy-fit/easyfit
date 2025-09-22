@@ -20,8 +20,18 @@ export class AuthController {
 
   static logout = catchAsync(async (req: Request, res: Response) => {
     await AuthService.logout(req.user._id);
-    res.clearCookie('jwt', accessTokenCookieOptions);
-    res.clearCookie('refresh', accessTokenCookieOptions);
+
+    // Clear cookies with the same options they were set with
+    const clearCookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' as const : 'lax' as const,
+      domain: accessTokenCookieOptions.domain,
+      path: '/',
+    };
+
+    res.clearCookie('jwt', clearCookieOptions);
+    res.clearCookie('refresh', clearCookieOptions);
     res.status(200).json({ message: 'Logged out successfully' });
   });
 
@@ -29,14 +39,29 @@ export class AuthController {
     const token = req.cookies.refresh;
     if (!token) throw new AppError('No refresh token found', 401);
 
-    const { user, accessToken } = await AuthService.refreshToken(token);
-    res.cookie('jwt', accessToken, accessTokenCookieOptions);
+    try {
+      const { user, accessToken } = await AuthService.refreshToken(token);
+      res.cookie('jwt', accessToken, accessTokenCookieOptions);
 
-    res.status(200).json({
-      status: 'success',
-      token: accessToken,
-      data: { user },
-    });
+      res.status(200).json({
+        status: 'success',
+        token: accessToken,
+        data: { user },
+      });
+    } catch (error) {
+      // Clear invalid refresh token
+      const clearCookieOptions = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' as const : 'lax' as const,
+        domain: accessTokenCookieOptions.domain,
+        path: '/',
+      };
+
+      res.clearCookie('jwt', clearCookieOptions);
+      res.clearCookie('refresh', clearCookieOptions);
+      throw error;
+    }
   });
 
   static resetPassword = catchAsync(async (req: Request, res: Response) => {

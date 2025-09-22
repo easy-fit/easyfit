@@ -9,6 +9,7 @@ export const ENV = {
   DATABASE_PASSWORD: process.env.DATABASE_PASSWORD || '',
   FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:3001',
   BACKEND_URL: process.env.BACKEND_URL || 'http://localhost:3000',
+  TIMEZONE: process.env.TIMEZONE || 'America/Argentina/Buenos_Aires',
 };
 
 export const JWT_CONFIG = {
@@ -26,6 +27,7 @@ export const SENDGRID_CONFIG = {
   TEMPLATE_ID_EMAIL_VERIFICATION: process.env.SENDGRID_TEMPLATE_ID_EMAIL_VERIFICATION || '',
   TEMPLATE_ID_ORDER_RECIPT: process.env.SENDGRID_TEMPLATE_ID_ORDER_RECIPT || '',
   TEMPLATE_ID_LOGIN_ALERT: process.env.SENDGRID_TEMPLATE_ID_LOGIN_ALERT || '',
+  ADMIN_ALERT_EMAILS: process.env.ADMIN_ALERT_EMAILS || '',
 };
 
 export const SUMSUB_CONFIG = {
