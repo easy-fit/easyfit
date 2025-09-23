@@ -96,9 +96,46 @@ export class ProductFilterService {
     }
 
     // Add sorting
-    const sortField = sort.startsWith('-') ? sort.substring(1) : sort;
-    const sortOrder = sort.startsWith('-') ? -1 : 1;
-    pipeline.push({ $sort: { [sortField]: sortOrder } });
+    if (sort === 'discovery') {
+      // Discovery sort: Create more dynamic mixing to avoid store clustering
+      const currentHour = new Date().getHours();
+      const currentDay = new Date().getDay();
+      const currentMinute = new Date().getMinutes();
+
+      pipeline.push({
+        $addFields: {
+          // Create a more dynamic discovery score that changes over time
+          discoveryScore: {
+            $add: [
+              // Time-based rotation that changes frequently
+              { $multiply: [
+                { $mod: [
+                  { $add: [
+                    { $multiply: [currentHour, 13] }, // Changes hourly
+                    { $multiply: [currentMinute, 7] }, // Changes every minute for more variety
+                    { $multiply: [currentDay, 31] } // Daily variation
+                  ]},
+                  100
+                ]},
+                1
+              ]},
+              // Recent products get some boost (but not dominant)
+              { $multiply: [{ $divide: [{ $subtract: [new Date(), '$createdAt'] }, 86400000] }, -0.02] },
+              // Boost products with more color variety
+              { $multiply: [{ $size: '$availableColors' }, 2] },
+              // Price-based variation for mixing
+              { $multiply: [{ $mod: ['$minPrice', 7] }, 0.5] }
+            ]
+          }
+        }
+      });
+      pipeline.push({ $sort: { discoveryScore: -1, _id: 1 } });
+    } else {
+      // Standard sorting for other cases
+      const sortField = sort.startsWith('-') ? sort.substring(1) : sort;
+      const sortOrder = sort.startsWith('-') ? -1 : 1;
+      pipeline.push({ $sort: { [sortField]: sortOrder } });
+    }
 
     // Execute aggregation with pagination
     const [products, totalResult] = await Promise.all([
