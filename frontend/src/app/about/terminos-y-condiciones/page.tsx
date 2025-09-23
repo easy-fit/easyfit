@@ -17,7 +17,7 @@ export default function TermsAndConditionsPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => router.back()}
+              onClick={() => router.push('/')}
               className="flex items-center gap-2 text-[#20313A] hover:bg-gray-100"
             >
               <ChevronLeft className="h-4 w-4" />

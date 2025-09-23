@@ -8,8 +8,9 @@ import { ProductCard } from '@/components/home/product-card';
 import { Filters } from '@/components/home/filters';
 import { Button } from '@/components/ui/button';
 import { useProducts } from '@/hooks/api/use-products';
+import { useInfiniteProductsData } from '@/hooks/api/use-infinite-products';
 import { useStores } from '@/hooks/api/use-stores';
-import { shuffleArray } from '@/lib/utils';
+import { InfiniteScrollTrigger } from '@/components/ui/infinite-scroll-trigger';
 import type { StoreFilterOptions } from '@/types/store';
 import type { ProductFilterOptions } from '@/types/product';
 
@@ -31,12 +32,19 @@ export default function HomePage() {
     ...(searchQuery && { search: searchQuery }),
   };
 
-  // API calls
+  // API calls - use infinite products for better performance
   const {
-    data: productsData,
+    products: allProducts,
+    totalProducts,
     isLoading: productsLoading,
     error: productsError,
-  } = useProducts(viewMode === 'products' ? combinedProductFilters : undefined);
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteProductsData({
+    ...(viewMode === 'products' ? combinedProductFilters : {}),
+    enabled: viewMode === 'products',
+  });
 
   const {
     data: storesData,
@@ -63,21 +71,8 @@ export default function HomePage() {
     setStoreFilters(filters);
   };
 
-  // Shuffle products when not searching to create a more mixed display
-  const displayedProducts = useMemo(() => {
-    if (!productsData?.data?.products) return [];
-
-    // Only shuffle when not searching or filtering - preserve sort for search results
-    const hasActiveFilters = searchQuery.trim() ||
-                            Object.keys(productFilters).some(key => productFilters[key] !== undefined);
-
-    if (hasActiveFilters) {
-      return productsData.data.products;
-    }
-
-    // Shuffle products for a more mixed display on the main home page
-    return shuffleArray(productsData.data.products);
-  }, [productsData?.data?.products, searchQuery, productFilters]);
+  // Products are already processed by the infinite hook with shuffling logic
+  const displayedProducts = allProducts;
 
   const isLoading = viewMode === 'products' ? productsLoading : storesLoading;
   const hasError = viewMode === 'products' ? productsError : storesError;
@@ -144,7 +139,7 @@ export default function HomePage() {
                 </h2>
                 <p className="text-gray-600 text-sm">
                   {viewMode === 'products'
-                    ? `${productsData?.results || 0} productos encontrados`
+                    ? `${totalProducts || 0} productos encontrados`
                     : `${storesData?.results || 0} tiendas encontradas`}
                 </p>
               </div>
@@ -216,11 +211,50 @@ export default function HomePage() {
         {!isLoading && !hasError && (
           <>
             {viewMode === 'products' && displayedProducts.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {displayedProducts.map((product) => (
-                  <ProductCard key={product._id} product={product} />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {displayedProducts.map((product) => (
+                    <ProductCard key={product._id} product={product} />
+                  ))}
+                </div>
+
+                {/* Infinite scroll trigger */}
+                {hasNextPage && (
+                  <InfiniteScrollTrigger
+                    onIntersect={fetchNextPage}
+                    loading={isFetchingNextPage}
+                    disabled={!hasNextPage}
+                  />
+                )}
+
+                {/* Loading more indicator */}
+                {isFetchingNextPage && (
+                  <div className="flex justify-center py-8">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full">
+                      {Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="bg-white rounded-lg p-4 animate-pulse">
+                          <div className="aspect-[4/3] bg-gray-200 rounded-lg mb-3"></div>
+                          <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                          <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Load more fallback button */}
+                {!isFetchingNextPage && hasNextPage && (
+                  <div className="flex justify-center py-8">
+                    <Button
+                      onClick={() => fetchNextPage()}
+                      variant="outline"
+                      className="border-[#2F4858] text-[#2F4858] hover:bg-[#DBF7DC]"
+                    >
+                      Cargar más productos
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
 
             {viewMode === 'stores' && storesData?.data?.stores && (

@@ -33,7 +33,7 @@ export default function AboutUsPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => router.back()}
+              onClick={() => router.push('/')}
               className="flex items-center gap-2 text-[#20313A] hover:bg-gray-100"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -105,6 +105,16 @@ export default function AboutUsPage() {
                           <Image
                             src="/felipe.jpg"
                             alt="Felipe Pontiggia"
+                            width={160}
+                            height={160}
+                            className="object-cover w-full h-full"
+                          />
+                        </div>
+                      ) : founder.name === 'Nicolas Pussetto' ? (
+                        <div className="w-full h-full rounded-full overflow-hidden shadow-lg">
+                          <Image
+                            src="/nico.jpeg"
+                            alt="Nicolas Pussetto"
                             width={160}
                             height={160}
                             className="object-cover w-full h-full"
