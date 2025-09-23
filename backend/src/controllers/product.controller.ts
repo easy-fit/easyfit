@@ -7,7 +7,7 @@ import { CreateVariantDTO } from '../types/variant.types';
 
 export class ProductController {
   static getProducts = catchAsync(async (req: Request, res: Response) => {
-    const { search, category, minPrice, maxPrice, sort = '-createdAt', page = 1, limit = 20 } = req.query;
+    const { search, category, minPrice, maxPrice, sort = 'discovery', page = 1, limit = 20 } = req.query;
 
     const filterOptions = {
       search: search as string,
