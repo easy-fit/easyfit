@@ -8,7 +8,14 @@ import { Badge } from '@/components/ui/badge';
 import { SizeSelector } from './SizeSelector';
 import { ColorSelector } from './ColorSelector';
 import { VariantImageUpload } from './VariantImageUpload';
+import { BulkSizeSelector } from '../bulk-size-selector';
 import type { ProductFormValues } from './schemas';
+
+interface BulkSizeData {
+  size: string;
+  stock: number;
+  sku: string;
+}
 
 interface VariantFormItemProps {
   control: Control<ProductFormValues>;
@@ -22,6 +29,7 @@ interface VariantFormItemProps {
   onImageUpload: (variantIndex: number, files: FileList | null) => void;
   onImageRemove: (variantIndex: number, imageIndex: number) => void;
   onDeleteImage?: (variantId: string, imageKey: string) => Promise<void>;
+  onBulkAdd?: (baseVariantIndex: number, bulkSizes: BulkSizeData[]) => void;
   isDeleting?: boolean;
   isDeletingImage?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -40,6 +48,7 @@ export function VariantFormItem({
   onImageUpload,
   onImageRemove,
   onDeleteImage,
+  onBulkAdd,
   isDeleting = false,
   isDeletingImage = false,
   watchVariant,
@@ -131,8 +140,9 @@ export function VariantFormItem({
                 <Input
                   type="number"
                   min="0"
-                  placeholder="0"
+                  placeholder=""
                   {...field}
+                  value={field.value || ''}
                   onChange={(e) => field.onChange(Number.parseInt(e.target.value) || 0)}
                 />
               </FormControl>
@@ -152,8 +162,9 @@ export function VariantFormItem({
                   type="number"
                   min="0"
                   step="0.01"
-                  placeholder="0.00"
+                  placeholder=""
                   {...field}
+                  value={field.value || ''}
                   onChange={(e) => field.onChange(Number.parseFloat(e.target.value) || 0)}
                 />
               </FormControl>
@@ -188,6 +199,15 @@ export function VariantFormItem({
         onDeleteImage={onDeleteImage}
         isDeletingImage={isDeletingImage}
       />
+
+      {/* Bulk Size Addition - Only show if variant has color, price and size defined */}
+      {watchVariant?.color && watchVariant?.price && watchVariant?.size && onBulkAdd && category && (
+        <BulkSizeSelector
+          category={category}
+          currentSize={watchVariant.size}
+          onBulkAdd={(bulkSizes) => onBulkAdd(index, bulkSizes)}
+        />
+      )}
     </div>
   );
 }

@@ -98,8 +98,8 @@ export function BulkSizeSelector({ category, currentSize, onBulkAdd }: BulkSizeS
                 <Input
                   type="number"
                   min="0"
-                  placeholder="0"
-                  value={bulkSize.stock}
+                  placeholder=""
+                  value={bulkSize.stock || ''}
                   onChange={(e) => updateBulkSize(index, 'stock', Number.parseInt(e.target.value) || 0)}
                   className="h-8 text-xs"
                 />

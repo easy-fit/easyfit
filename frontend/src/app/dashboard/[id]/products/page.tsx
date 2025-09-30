@@ -63,7 +63,7 @@ export default function ProductsPage({ params }: { params: Promise<{ id: string 
     status: status !== 'all' ? status : undefined,
     stockStatus: stockStatus !== 'all' ? stockStatus : undefined,
     page,
-    limit: 20,
+    limit: 5,
   });
 
   const metrics = metricsData?.data;
@@ -280,6 +280,31 @@ export default function ProductsPage({ params }: { params: Promise<{ id: string 
               pagination={pagination}
               onPageChange={setPage}
             />
+
+            {/* Pagination Controls */}
+            {pagination && pagination.total > 1 && (
+              <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
+                <Button
+                  variant="outline"
+                  onClick={() => setPage(page - 1)}
+                  disabled={!pagination.hasPrev || productsLoading}
+                  className="hover:bg-[#DBF7DC]"
+                >
+                  &lt; Anterior
+                </Button>
+                <span className="text-sm text-gray-600">
+                  Página {pagination.current} de {pagination.total}
+                </span>
+                <Button
+                  variant="outline"
+                  onClick={() => setPage(page + 1)}
+                  disabled={!pagination.hasNext || productsLoading}
+                  className="hover:bg-[#DBF7DC]"
+                >
+                  Siguiente &gt;
+                </Button>
+              </div>
+            )}
           </main>
         </SidebarInset>
       </SidebarProvider>

@@ -18,6 +18,11 @@ const ProductSchema = new Schema<Product>(
       required: true,
     },
     slug: { type: String, required: true },
+    allowedShippingTypes: {
+      type: [String],
+      enum: ['simple', 'advanced', 'premium'],
+      default: ['simple', 'advanced', 'premium'],
+    },
   },
   {
     timestamps: true,

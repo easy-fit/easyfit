@@ -48,18 +48,21 @@ export class AuthController {
         token: accessToken,
         data: { user },
       });
-    } catch (error) {
-      // Clear invalid refresh token
-      const clearCookieOptions = {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' as const : 'lax' as const,
-        domain: accessTokenCookieOptions.domain,
-        path: '/',
-      };
+    } catch (error: any) {
+      // Only clear cookies if the error indicates we should
+      // This prevents clearing cookies for transient errors (database issues, etc.)
+      if (error.shouldClearCookies) {
+        const clearCookieOptions = {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: process.env.NODE_ENV === 'production' ? 'none' as const : 'lax' as const,
+          domain: accessTokenCookieOptions.domain,
+          path: '/',
+        };
 
-      res.clearCookie('jwt', clearCookieOptions);
-      res.clearCookie('refresh', clearCookieOptions);
+        res.clearCookie('jwt', clearCookieOptions);
+        res.clearCookie('refresh', clearCookieOptions);
+      }
       throw error;
     }
   });

@@ -99,6 +99,11 @@ export interface PaginationInfo {
 }
 
 export interface Store {
+  contactInfo: any;
+  contactInfo: any;
+  location: any;
+  bannerUrl: string;
+  description: string | undefined;
   _id: string;
   merchantId: string;
   name: string;

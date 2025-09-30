@@ -6,6 +6,7 @@ import { Header } from '@/components/layout/header';
 import { StoreCard } from '@/components/home/store-card';
 import { ProductCard } from '@/components/home/product-card';
 import { Filters } from '@/components/home/filters';
+import { CategoryNavigation } from '@/components/home/category-navigation';
 import { Button } from '@/components/ui/button';
 import { useProducts } from '@/hooks/api/use-products';
 import { useInfiniteProductsData } from '@/hooks/api/use-infinite-products';
@@ -69,6 +70,11 @@ export default function HomePage() {
 
   const handleStoreFiltersChange = (filters: StoreFilterOptions) => {
     setStoreFilters(filters);
+  };
+
+  const handleCategoryChange = (category: string | undefined) => {
+    setProductFilters({ ...productFilters, category });
+    setViewMode('products'); // Switch to products view when category is selected
   };
 
   // Products are already processed by the infinite hook with shuffling logic
@@ -173,6 +179,14 @@ export default function HomePage() {
               </Button>
             </div>
           </div>
+
+          {/* Category Navigation - Only show for products view */}
+          {viewMode === 'products' && (
+            <CategoryNavigation
+              selectedCategory={combinedProductFilters.category}
+              onCategoryChange={handleCategoryChange}
+            />
+          )}
 
           {/* Filters */}
           <Filters
