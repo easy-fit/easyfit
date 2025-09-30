@@ -12,17 +12,16 @@ const protectedRoutes = ['/profile', '/orders', '/checkout', '/dashboard', '/adm
 
 // Check if user has authentication cookies
 function isAuthenticated(request: NextRequest): boolean {
-  // Get all possible cookie names your backend might use
-  const cookieNames = ['jwt', 'refresh'];
+  // Check for JWT specifically - this is more reliable than refresh token
+  // If JWT is missing but refresh exists, the user will need to refresh first
+  const jwtCookie = request.cookies.get('jwt');
+  return !!jwtCookie?.value;
+}
 
-  for (const cookieName of cookieNames) {
-    const cookie = request.cookies.get(cookieName);
-    if (cookie?.value) {
-      return true;
-    }
-  }
-
-  return false;
+// Check if user has refresh token (for determining if they can be refreshed)
+function hasRefreshToken(request: NextRequest): boolean {
+  const refreshCookie = request.cookies.get('refresh');
+  return !!refreshCookie?.value;
 }
 
 // Get user role by making API call (only when needed)
@@ -33,11 +32,19 @@ async function getUserRole(request: NextRequest): Promise<string | null> {
         Cookie: request.headers.get('cookie') || '',
       },
       credentials: 'include',
+      // Add cache control to prevent stale data
+      cache: 'no-store',
     });
 
     if (response.ok) {
       const data = await response.json();
       return data.data.user.role;
+    }
+
+    // If we get 401 but have refresh token, let the request through
+    // The client-side will handle the refresh
+    if (response.status === 401) {
+      return null;
     }
   } catch (error) {
     console.error('Failed to get user role:', error);
@@ -49,13 +56,23 @@ async function getUserRole(request: NextRequest): Promise<string | null> {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const userIsAuthenticated = isAuthenticated(request);
+  const userHasRefreshToken = hasRefreshToken(request);
 
   // Handle protected routes first
   const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route));
-  if (isProtectedRoute && !userIsAuthenticated) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('redirect', pathname);
-    return NextResponse.redirect(loginUrl);
+  if (isProtectedRoute) {
+    // If user has no tokens at all, redirect to login
+    if (!userIsAuthenticated && !userHasRefreshToken) {
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    // If user has refresh token but no JWT, let them through
+    // The client-side will handle the refresh
+    if (!userIsAuthenticated && userHasRefreshToken) {
+      return NextResponse.next();
+    }
   }
 
   // Handle public routes
@@ -77,34 +94,43 @@ export async function middleware(request: NextRequest) {
   }
 
   // Handle dashboard route (merchant/admin only)
-  if (pathname === '/dashboard') {
-    if (!userIsAuthenticated) {
+  if (pathname === '/dashboard' || pathname.startsWith('/dashboard/')) {
+    // If user has no tokens at all, redirect to login
+    if (!userIsAuthenticated && !userHasRefreshToken) {
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
     }
 
-    // Get user role for dashboard access check
-    const userRole = await getUserRole(request);
-    if (userRole !== 'merchant' && userRole !== 'admin' && userRole !== 'manager') {
-      return NextResponse.redirect(new URL('/unauthorized', request.url));
+    // If user has tokens, get role for authorization check
+    if (userIsAuthenticated) {
+      const userRole = await getUserRole(request);
+      // Only check role if we successfully got it
+      // If getUserRole fails, let it through and let the page handle it
+      if (userRole && userRole !== 'merchant' && userRole !== 'admin' && userRole !== 'manager') {
+        return NextResponse.redirect(new URL('/unauthorized', request.url));
+      }
     }
 
     return NextResponse.next();
   }
 
   // Handle admin route (admin only)
-  if (pathname === '/admin') {
-    if (!userIsAuthenticated) {
+  if (pathname === '/admin' || pathname.startsWith('/admin/')) {
+    // If user has no tokens at all, redirect to login
+    if (!userIsAuthenticated && !userHasRefreshToken) {
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
     }
 
-    // Get user role for admin access check
-    const userRole = await getUserRole(request);
-    if (userRole !== 'admin') {
-      return NextResponse.redirect(new URL('/unauthorized', request.url));
+    // If user has tokens, get role for authorization check
+    if (userIsAuthenticated) {
+      const userRole = await getUserRole(request);
+      // Only check role if we successfully got it
+      if (userRole && userRole !== 'admin') {
+        return NextResponse.redirect(new URL('/unauthorized', request.url));
+      }
     }
 
     return NextResponse.next();

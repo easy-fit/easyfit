@@ -7,6 +7,12 @@ import { buildImageUrl } from '@/lib/utils/image-url';
 import type { ProductCategory } from '@/types/product';
 import { api } from '@/lib/api/client';
 
+interface BulkSizeData {
+  size: string;
+  stock: number;
+  sku: string;
+}
+
 export function useEditProductForm(productData?: any, productId?: string) {
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
@@ -42,6 +48,7 @@ export function useEditProductForm(productData?: any, productId?: string) {
         description: product.description || '',
         category: product.category as ProductCategory,
         status: product.status,
+        allowedShippingTypes: product.allowedShippingTypes,
         variants:
           product.variants?.map((variant: any) => ({
             _id: variant._id,
@@ -85,6 +92,32 @@ export function useEditProductForm(productData?: any, productId?: string) {
     if (fields.length > 1) {
       remove(index);
     }
+  };
+
+  const addBulkVariants = (baseVariantIndex: number, bulkSizes: BulkSizeData[]) => {
+    const baseVariant = form.getValues(`variants.${baseVariantIndex}`);
+
+    if (!baseVariant) {
+      return;
+    }
+
+    // Create new variants based on the base variant but with different sizes and stocks
+    const newVariants = bulkSizes.map((bulkSize) => ({
+      ...baseVariant,
+      size: bulkSize.size,
+      stock: bulkSize.stock,
+      sku: bulkSize.sku,
+      isDefault: false,
+      // Add isBulk flag to identify these variants for backend processing
+      isBulk: true,
+      // Remove _id so these are treated as new variants
+      _id: undefined,
+    }));
+
+    // Add all new variants to the form
+    newVariants.forEach((variant) => {
+      append(variant);
+    });
   };
 
   const handleDefaultChange = (index: number, checked: boolean) => {
@@ -169,6 +202,7 @@ export function useEditProductForm(productData?: any, productId?: string) {
     fields,
     addVariant,
     removeVariant,
+    addBulkVariants,
     handleDefaultChange,
     handleImageUpload,
     removeImage,

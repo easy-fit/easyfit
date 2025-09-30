@@ -28,6 +28,7 @@ export async function updateProductData(
     description: data.description || '',
     category: data.category as ProductCategory,
     status: data.status,
+    allowedShippingTypes: data.allowedShippingTypes,
   };
 
   await updateProductMutation.mutateAsync(productUpdatePayload);

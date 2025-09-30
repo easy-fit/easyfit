@@ -8,6 +8,8 @@ export const ERROR_TRANSLATIONS: Record<string, string> = {
   // ==========================================
   // AUTHENTICATION & AUTHORIZATION (24 messages)
   // ==========================================
+  "You are not logged in!": "No iniciaste sesión",
+  "Authentication failed": "No iniciaste sesión",
   "Invalid email or password": "Email o contraseña inválidos",
   "Invalid token, login to get access": "Token inválido, iniciá sesión para acceder",
   "Your token expired, login to get access": "Tu sesión expiró, iniciá sesión nuevamente",
@@ -42,6 +44,7 @@ export const ERROR_TRANSLATIONS: Record<string, string> = {
   "Email is required": "El email es requerido",
   "Invalid delivery address": "Dirección de entrega inválida",
   "User address is required for checkout": "Necesitás configurar tu dirección para continuar con la compra",
+  "Some products in your cart only allow simple delivery": "Algunos productos en tu carrito solo permiten envío simple",
   "Invalid document type": "Tipo de documento inválido",
   "Invalid store ID format": "Formato de ID de tienda inválido",
   "Invalid manager ID format": "Formato de ID de manager inválido",

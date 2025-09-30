@@ -11,7 +11,7 @@ export class CartItemService {
       select: 'size color price images productId',
       populate: {
         path: 'productId',
-        select: 'title',
+        select: 'title allowedShippingTypes',
       },
       // transform: (variant) => {
       //   if (variant && variant.images && variant.images.length > 0) {
@@ -73,7 +73,7 @@ export class CartItemService {
       select: 'size color price productId',
       populate: {
         path: 'productId',
-        select: 'storeId title',
+        select: 'storeId title allowedShippingTypes',
       },
     });
 

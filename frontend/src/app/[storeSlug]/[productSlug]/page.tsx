@@ -19,6 +19,7 @@ import Link from 'next/link';
 import { useEasyFitToast } from '@/hooks/use-toast';
 import { CategoryUtils } from '@/lib/utils/categoryUtils';
 import type { Variant } from '@/types/variant';
+import { ShippingTypeBadge } from '@/components/product/shipping-type-badge';
 
 export default function ProductPage() {
   const params = useParams();
@@ -270,6 +271,9 @@ export default function ProductPage() {
                 <p className="text-gray-600 text-sm leading-relaxed">{product.description}</p>
               </div>
             )}
+
+            {/* Shipping Type Badge */}
+            <ShippingTypeBadge allowedShippingTypes={product.allowedShippingTypes} variant="detail" />
 
             <Separator />
 

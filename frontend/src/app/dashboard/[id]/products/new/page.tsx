@@ -65,6 +65,7 @@ export default function NewProductPage({ params }: { params: Promise<{ id: strin
           description: data.description || '',
           category: data.category,
           status: data.status,
+          allowedShippingTypes: data.allowedShippingTypes,
         },
         variants: data.variants.map((variant) => ({
           size: variant.size,

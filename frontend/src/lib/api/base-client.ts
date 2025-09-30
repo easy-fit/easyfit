@@ -2,6 +2,10 @@ import { ENV } from '@/config/env';
 
 let isRefreshing = false;
 let refreshPromise: Promise<boolean> | null = null;
+let failedRequestsQueue: Array<{
+  resolve: (value: boolean) => void;
+  reject: (reason?: any) => void;
+}> = [];
 
 interface ApiError extends Error {
   status?: number;
@@ -25,27 +29,62 @@ export class BaseApiClient {
         return true;
       }
 
+      // If refresh fails with specific status codes, don't retry
+      if (response.status === 401 || response.status === 403) {
+        return false;
+      }
+
+      // For other errors (500, network issues), consider it a transient error
+      console.error('Token refresh failed with status:', response.status);
       return false;
     } catch (error) {
-      console.error('Token refresh failed:', error);
+      console.error('Token refresh network error:', error);
       return false;
     }
   }
 
   private async handleAuthError(originalRequest: () => Promise<Response>): Promise<Response> {
-    if (!isRefreshing) {
-      isRefreshing = true;
-      refreshPromise = this.performTokenRefresh();
+    // If already refreshing, queue this request
+    if (isRefreshing && refreshPromise) {
+      return new Promise((resolve, reject) => {
+        failedRequestsQueue.push({
+          resolve: (success: boolean) => {
+            if (success) {
+              resolve(originalRequest());
+            } else {
+              reject(new Error('Authentication failed'));
+            }
+          },
+          reject,
+        });
+      });
     }
+
+    // Start refresh process
+    isRefreshing = true;
+    refreshPromise = this.performTokenRefresh();
 
     try {
       const refreshSuccess = await refreshPromise;
+
+      // Process all queued requests
+      failedRequestsQueue.forEach((promise) => {
+        promise.resolve(refreshSuccess);
+      });
+      failedRequestsQueue = [];
 
       if (refreshSuccess) {
         return await originalRequest();
       } else {
         throw new Error('Authentication failed');
       }
+    } catch (error) {
+      // Reject all queued requests
+      failedRequestsQueue.forEach((promise) => {
+        promise.reject(error);
+      });
+      failedRequestsQueue = [];
+      throw error;
     } finally {
       isRefreshing = false;
       refreshPromise = null;

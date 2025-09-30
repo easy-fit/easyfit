@@ -57,6 +57,9 @@ export class CheckoutService {
 
     const cartItems = await CartItemService.getCartItemsForCheckout(user._id);
 
+    // Validate shipping type is allowed for all products in cart
+    this.validateShippingTypeForCart(cartItems, shippingType);
+
     const subtotal = cartItems.reduce((total, item: any) => {
       return total + item.variantId.price * item.quantity;
     }, 0);
@@ -112,5 +115,25 @@ export class CheckoutService {
 
   private static async cancelActiveCheckoutSessions(userId: string) {
     await CheckoutSessionModel.updateMany({ userId, status: 'active' }, { status: 'cancelled' });
+  }
+
+  private static validateShippingTypeForCart(cartItems: any[], shippingType: ShippingType) {
+    const restrictedProducts: string[] = [];
+
+    for (const item of cartItems) {
+      const product = item.variantId?.productId;
+      if (product && product.allowedShippingTypes && product.allowedShippingTypes.length > 0) {
+        if (!product.allowedShippingTypes.includes(shippingType)) {
+          restrictedProducts.push(product.title);
+        }
+      }
+    }
+
+    if (restrictedProducts.length > 0) {
+      throw new AppError(
+        `Some products in your cart only allow simple delivery: ${restrictedProducts.join(', ')}`,
+        400
+      );
+    }
   }
 }
