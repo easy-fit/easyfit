@@ -64,6 +64,11 @@ export function Filters({ filters, onFiltersChange, isOpen, onToggle, type }: Fi
       const productFilters = filters as ProductFilterOptions;
       if (productFilters.minPrice) count++;
       if (productFilters.maxPrice) count++;
+      if (productFilters.category) count++;
+      if (productFilters.size) count++;
+      if (productFilters.color) count++;
+      if (productFilters.inStock) count++;
+      if (productFilters.freeShipping) count++;
     }
     if (type === 'stores') {
       const storeFilters = filters as StoreFilterOptions;
@@ -103,10 +108,10 @@ export function Filters({ filters, onFiltersChange, isOpen, onToggle, type }: Fi
 
             {/* Clear Filters */}
             {activeFiltersCount > 0 && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={clearFilters} 
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearFilters}
                 className="h-9 text-sm text-gray-600 hover:text-[#20313A]"
               >
                 Limpiar filtros
@@ -126,7 +131,7 @@ export function Filters({ filters, onFiltersChange, isOpen, onToggle, type }: Fi
             )}
             {filters.sort && filters.sort !== 'default' && (
               <Badge variant="outline" className="flex items-center gap-1 text-xs">
-                {sortOptions[type].find(opt => opt.value === filters.sort)?.label}
+                {sortOptions[type].find((opt) => opt.value === filters.sort)?.label}
                 <X className="h-3 w-3 cursor-pointer" onClick={() => updateFilter('sort', undefined)} />
               </Badge>
             )}
@@ -142,12 +147,32 @@ export function Filters({ filters, onFiltersChange, isOpen, onToggle, type }: Fi
                 <X className="h-3 w-3 cursor-pointer" onClick={() => updateFilter('maxPrice', undefined)} />
               </Badge>
             )}
-            {type === 'stores' && (filters as StoreFilterOptions).tags && (filters as StoreFilterOptions).tags !== 'all' && (
+            {type === 'products' && (filters as ProductFilterOptions).size && (
               <Badge variant="outline" className="flex items-center gap-1 text-xs">
-                {storeTagOptions.find(opt => opt.value === (filters as StoreFilterOptions).tags)?.label}
-                <X className="h-3 w-3 cursor-pointer" onClick={() => updateFilter('tags', undefined)} />
+                Talle: {String((filters as ProductFilterOptions).size)}
+                <X className="h-3 w-3 cursor-pointer" onClick={() => updateFilter('size', undefined)} />
               </Badge>
             )}
+            {type === 'products' && (filters as ProductFilterOptions).color && (
+              <Badge variant="outline" className="flex items-center gap-1 text-xs">
+                Color: {String((filters as ProductFilterOptions).color)}
+                <X className="h-3 w-3 cursor-pointer" onClick={() => updateFilter('color', undefined)} />
+              </Badge>
+            )}
+            {type === 'products' && (filters as ProductFilterOptions).inStock && (
+              <Badge variant="outline" className="flex items-center gap-1 text-xs">
+                En stock
+                <X className="h-3 w-3 cursor-pointer" onClick={() => updateFilter('inStock', undefined)} />
+              </Badge>
+            )}
+            {type === 'stores' &&
+              (filters as StoreFilterOptions).tags &&
+              (filters as StoreFilterOptions).tags !== 'all' && (
+                <Badge variant="outline" className="flex items-center gap-1 text-xs">
+                  {storeTagOptions.find((opt) => opt.value === (filters as StoreFilterOptions).tags)?.label}
+                  <X className="h-3 w-3 cursor-pointer" onClick={() => updateFilter('tags', undefined)} />
+                </Badge>
+              )}
             {type === 'stores' && (filters as StoreFilterOptions).rating && (
               <Badge variant="outline" className="flex items-center gap-1 text-xs">
                 {(filters as StoreFilterOptions).rating}+ estrellas
@@ -162,7 +187,7 @@ export function Filters({ filters, onFiltersChange, isOpen, onToggle, type }: Fi
             )}
             {type === 'stores' && (filters as any).storeType && (filters as any).storeType !== 'all' && (
               <Badge variant="outline" className="flex items-center gap-1 text-xs">
-                {storeTypeOptions.find(opt => opt.value === (filters as any).storeType)?.label}
+                {storeTypeOptions.find((opt) => opt.value === (filters as any).storeType)?.label}
                 <X className="h-3 w-3 cursor-pointer" onClick={() => updateFilter('storeType', undefined)} />
               </Badge>
             )}
@@ -177,7 +202,10 @@ export function Filters({ filters, onFiltersChange, isOpen, onToggle, type }: Fi
             <div className="flex flex-wrap items-center gap-3">
               {/* Sort By */}
               <div className="min-w-[150px]">
-                <Select value={filters.sort || 'default'} onValueChange={(value) => updateFilter('sort', value === 'default' ? undefined : value)}>
+                <Select
+                  value={filters.sort || 'default'}
+                  onValueChange={(value) => updateFilter('sort', value === 'default' ? undefined : value)}
+                >
                   <SelectTrigger className="h-9 text-sm">
                     <SelectValue placeholder="Ordenar por" />
                   </SelectTrigger>
@@ -285,6 +313,68 @@ export function Filters({ filters, onFiltersChange, isOpen, onToggle, type }: Fi
                       value={(filters as ProductFilterOptions).maxPrice || ''}
                       onChange={(e) => updateFilter('maxPrice', e.target.value ? Number(e.target.value) : undefined)}
                       className="w-32 px-3 py-2 border border-gray-200 rounded-md text-sm h-9 focus:border-[#9EE493] focus:ring-[#9EE493]"
+                    />
+                  </div>
+
+                  {/* Size Filter */}
+                  <div className="min-w-[200px]">
+                    <Select
+                      value={
+                        Array.isArray((filters as ProductFilterOptions).size)
+                          ? 'multiple'
+                          : String((filters as ProductFilterOptions).size || 'all')
+                      }
+                      onValueChange={(value) => updateFilter('size', value === 'all' ? undefined : value)}
+                    >
+                      <SelectTrigger className="h-9 text-sm">
+                        <SelectValue placeholder="Talle" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos los talles</SelectItem>
+                        <SelectItem value="XS">XS</SelectItem>
+                        <SelectItem value="S">S</SelectItem>
+                        <SelectItem value="M">M</SelectItem>
+                        <SelectItem value="L">L</SelectItem>
+                        <SelectItem value="XL">XL</SelectItem>
+                        <SelectItem value="XXL">XXL</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Color Filter */}
+                  <div className="min-w-[180px]">
+                    <Select
+                      value={
+                        Array.isArray((filters as ProductFilterOptions).color)
+                          ? 'multiple'
+                          : String((filters as ProductFilterOptions).color || 'all')
+                      }
+                      onValueChange={(value) => updateFilter('color', value === 'all' ? undefined : value)}
+                    >
+                      <SelectTrigger className="h-9 text-sm">
+                        <SelectValue placeholder="Color" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos los colores</SelectItem>
+                        <SelectItem value="Negro">⚫ Negro</SelectItem>
+                        <SelectItem value="Blanco">⚪ Blanco</SelectItem>
+                        <SelectItem value="Gris">🔘 Gris</SelectItem>
+                        <SelectItem value="Rojo">🔴 Rojo</SelectItem>
+                        <SelectItem value="Azul">🔵 Azul</SelectItem>
+                        <SelectItem value="Verde">🟢 Verde</SelectItem>
+                        <SelectItem value="Amarillo">🟡 Amarillo</SelectItem>
+                        <SelectItem value="Rosa">🩷 Rosa</SelectItem>
+                        <SelectItem value="Marrón">🟤 Marrón</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* In Stock Toggle */}
+                  <div className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-md bg-white">
+                    <span className="text-sm text-gray-700">En stock</span>
+                    <Switch
+                      checked={Boolean((filters as ProductFilterOptions).inStock)}
+                      onCheckedChange={(value) => updateFilter('inStock', value || undefined)}
                     />
                   </div>
                 </>

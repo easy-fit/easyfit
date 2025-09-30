@@ -27,6 +27,7 @@ export const productSchema = z
     status: z.enum(['published', 'draft', 'deleted'], {
       message: 'Estado requerido',
     }),
+    allowedShippingTypes: z.array(z.enum(['simple', 'advanced', 'premium'])).optional(),
     variants: z.array(variantSchema).min(1, 'Al menos una variante es requerida'),
   })
   .refine((data) => data.variants.some((variant) => variant.isDefault), {

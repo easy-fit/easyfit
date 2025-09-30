@@ -1,5 +1,6 @@
 import { Types } from 'mongoose';
 import { ProductCategory } from './category.types';
+import { ShippingType } from './order.types';
 
 export type ProductStatus = 'published' | 'draft' | 'deleted';
 
@@ -20,6 +21,7 @@ export interface Product {
   status: ProductStatus;
   category: ProductCategory;
   slug: string;
+  allowedShippingTypes?: ShippingType[];
 }
 
 export interface CreateProductDTO {
@@ -27,6 +29,7 @@ export interface CreateProductDTO {
   description?: string;
   status?: ProductStatus;
   category: ProductCategory;
+  allowedShippingTypes?: ShippingType[];
 }
 
 export interface UpdateProductDTO {
@@ -35,6 +38,7 @@ export interface UpdateProductDTO {
   category?: ProductCategory;
   status?: ProductStatus;
   slug?: string;
+  allowedShippingTypes?: ShippingType[];
 }
 
 export interface BulkUploadRowDTO {

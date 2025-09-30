@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import type React from 'react';
-
+import * as React from 'react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/layout/header';
@@ -80,7 +79,32 @@ function CartPageContent() {
   const deleteCartItemMutation = useDeleteCartItem();
   const createCheckoutSessionMutation = useCreateCheckoutSession();
 
-  const cartItems = cartData?.data?.cartItems || [];
+  const cartItems = React.useMemo(() => cartData?.data?.cartItems || [], [cartData]);
+
+  // Check if any product restricts shipping types
+  const allowedShippingTypes = React.useMemo(() => {
+    if (cartItems.length === 0) return ['simple', 'advanced', 'premium'] as ShippingType[];
+
+    // Start with all types allowed
+    let allowed: ShippingType[] = ['simple', 'advanced', 'premium'];
+
+    // For each cart item, intersect with its allowed types
+    cartItems.forEach((item: CartItem) => {
+      const product = item.variantId?.productId;
+      if (product && product.allowedShippingTypes && product.allowedShippingTypes.length > 0) {
+        allowed = allowed.filter((type) => product.allowedShippingTypes!.includes(type));
+      }
+    });
+
+    return allowed;
+  }, [cartItems]);
+
+  // Check if current selection is still valid, if not switch to simple
+  React.useEffect(() => {
+    if (!allowedShippingTypes.includes(selectedShipping)) {
+      setSelectedShipping('simple');
+    }
+  }, [allowedShippingTypes, selectedShipping]);
 
   const handleQuantityChange = async (itemId: string, newQuantity: number) => {
     if (newQuantity < 1) return;
@@ -290,7 +314,10 @@ function CartPageContent() {
                             {/* Price */}
                             <div className="text-right sm:mb-3">
                               <p className="text-lg sm:text-xl font-bold text-[#20313A] font-helvetica">
-                                ${item.variantId.price ? (item.variantId.price * item.quantity).toLocaleString('es-AR') : '0'}
+                                $
+                                {item.variantId.price
+                                  ? (item.variantId.price * item.quantity).toLocaleString('es-AR')
+                                  : '0'}
                               </p>
                               {item.quantity > 1 && item.variantId.price && (
                                 <p className="text-xs sm:text-sm text-gray-500">
@@ -346,17 +373,28 @@ function CartPageContent() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {allowedShippingTypes.length < 3 && (
+                    <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
+                      <p className="text-xs text-amber-800">
+                        Algunos productos en tu carrito solo permiten envío simple (ej: perfumes, skincare, accesorios
+                        no probables)
+                      </p>
+                    </div>
+                  )}
                   {shippingOptions.map((option) => {
                     const Icon = option.icon;
+                    const isDisabled = !allowedShippingTypes.includes(option.id);
                     return (
                       <div
                         key={option.id}
-                        className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                          selectedShipping === option.id
-                            ? 'border-[#9EE493] bg-[#DBF7DC]/30 shadow-sm'
-                            : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
+                        className={`p-4 rounded-lg border-2 transition-all ${
+                          isDisabled
+                            ? 'opacity-50 cursor-not-allowed bg-gray-50 border-gray-200'
+                            : selectedShipping === option.id
+                            ? 'border-[#9EE493] bg-[#DBF7DC]/30 shadow-sm cursor-pointer'
+                            : 'border-gray-200 hover:border-gray-300 hover:shadow-sm cursor-pointer'
                         }`}
-                        onClick={() => setSelectedShipping(option.id)}
+                        onClick={() => !isDisabled && setSelectedShipping(option.id)}
                       >
                         <div className="flex items-start gap-3">
                           <div

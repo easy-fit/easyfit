@@ -1,8 +1,10 @@
 import type { Variant, VariantImage } from './variant';
+import type { ShippingType } from './order';
 
 export interface CartProductInfo {
   _id: string;
   title: string;
+  allowedShippingTypes?: ShippingType[];
 }
 
 export interface CartVariantInfo extends Omit<Variant, 'productId' | 'images'> {

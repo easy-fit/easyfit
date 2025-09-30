@@ -1,6 +1,7 @@
 import { Variant, CreateVariantDTO } from './variant';
 import { SignedUrl } from './global';
 import { Store } from './store';
+import { ShippingType } from './order';
 
 export type ProductStatus = 'published' | 'draft' | 'deleted';
 
@@ -141,6 +142,11 @@ export interface ProductFilterOptions {
   category?: string;
   minPrice?: number;
   maxPrice?: number;
+  size?: string | string[]; // Single size or multiple sizes
+  color?: string | string[]; // Single color or multiple colors
+  storeId?: string | string[]; // Filter by store(s)
+  inStock?: boolean; // Only show in-stock products
+  freeShipping?: boolean; // Only show products with free shipping
   page?: number;
   limit?: number;
   sort?: string;
@@ -154,6 +160,7 @@ export interface Product {
   status: ProductStatus;
   category: ProductCategory;
   slug: string;
+  allowedShippingTypes?: ShippingType[];
   createdAt: string;
   updatedAt: string;
   // Enhanced fields from aggregation
@@ -171,6 +178,7 @@ export interface CreateProductDTO {
     category: string;
     status: string;
     description?: string;
+    allowedShippingTypes?: ShippingType[];
   };
   variants: CreateVariantDTO[];
 }
@@ -181,6 +189,7 @@ export interface UpdateProductDTO {
   category?: ProductCategory;
   status?: ProductStatus;
   slug?: string;
+  allowedShippingTypes?: ShippingType[];
 }
 
 export interface GetProductsResponse {

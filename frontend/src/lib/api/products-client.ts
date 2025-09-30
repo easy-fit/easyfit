@@ -25,7 +25,20 @@ import { buildQueryString } from '@/lib/utils';
 
 export class ProductsClient extends BaseApiClient {
   public async getProducts(filters?: ProductFilterOptions): Promise<GetProductsResponse> {
-    const queryString = filters ? buildQueryString(filters) : '';
+    // Handle gender-level filtering (Ver Todo for hombre/mujer/ninos)
+    // When category is just a gender, we need to match all categories starting with that gender
+    const modifiedFilters = filters ? { ...filters } : undefined;
+    if (modifiedFilters?.category) {
+      const category = modifiedFilters.category;
+      // Check if it's a gender-only filter (no dots in the category)
+      if (category === 'hombre' || category === 'mujer' || category === 'ninos') {
+        // Send as a pattern to match all categories starting with this gender
+        // Most backends support regex patterns prefixed with ^
+        modifiedFilters.category = `^${category}`;
+      }
+    }
+
+    const queryString = modifiedFilters ? buildQueryString(modifiedFilters) : '';
     return this.fetchApi<GetProductsResponse>(`/products${queryString}`);
   }
 

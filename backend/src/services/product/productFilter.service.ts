@@ -12,7 +12,14 @@ export class ProductFilterService {
     };
 
     if (category) {
-      matchFilter.category = category;
+      // Check if category is a regex pattern (starts with ^)
+      // This is used for gender-level filtering (e.g., ^hombre matches all hombre.* categories)
+      if (category.startsWith('^')) {
+        const genderPattern = category.substring(1); // Remove the ^ prefix
+        matchFilter.category = { $regex: `^${genderPattern}`, $options: 'i' };
+      } else {
+        matchFilter.category = category;
+      }
     }
 
     if (search) {

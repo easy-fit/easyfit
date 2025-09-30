@@ -4,8 +4,9 @@ import type { Control } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { HierarchicalCategorySelector } from './hierarchical-category-selector';
 import { statusOptions } from './product-form-constants';
 import type { ProductFormValues } from './product-form-schema';
@@ -88,6 +89,97 @@ export function ProductBasicInfo({ control }: ProductBasicInfoProps) {
                   ))}
                 </SelectContent>
               </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Allowed Shipping Types */}
+        <FormField
+          control={control}
+          name="allowedShippingTypes"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-base">Tipos de envío permitidos</FormLabel>
+              <FormDescription className="text-sm">
+                Si tu producto no puede probarse (ej: perfumes, skincare), seleccioná solo &quot;Envío Simple&quot;
+              </FormDescription>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
+                <div
+                  className={`flex items-start p-4 rounded-lg border-2 transition-all ${
+                    field.value?.includes('simple') ?? true
+                      ? 'border-[#9EE493] bg-[#DBF7DC]/30'
+                      : 'border-gray-200 bg-gray-50'
+                  }`}
+                >
+                  <Checkbox
+                    checked={field.value?.includes('simple') ?? true}
+                    onCheckedChange={(checked) => {
+                      const current = field.value || ['simple', 'advanced', 'premium'];
+                      if (checked) {
+                        field.onChange([...current.filter((t) => t !== 'simple'), 'simple']);
+                      } else {
+                        field.onChange(current.filter((t) => t !== 'simple'));
+                      }
+                    }}
+                    className="mt-0.5 data-[state=checked]:bg-[#9EE493] data-[state=checked]:border-[#9EE493]"
+                  />
+                  <div className="ml-3 flex-1">
+                    <div className="font-semibold text-[#20313A]">Envío Simple</div>
+                    <p className="text-xs text-gray-600 mt-1">Delivery tradicional a domicilio</p>
+                  </div>
+                </div>
+
+                <div
+                  className={`flex items-start p-4 rounded-lg border-2 transition-all ${
+                    field.value?.includes('advanced') ?? true
+                      ? 'border-[#9EE493] bg-[#DBF7DC]/30'
+                      : 'border-gray-200 bg-gray-50'
+                  }`}
+                >
+                  <Checkbox
+                    checked={field.value?.includes('advanced') ?? true}
+                    onCheckedChange={(checked) => {
+                      const current = field.value || ['simple', 'advanced', 'premium'];
+                      if (checked) {
+                        field.onChange([...current.filter((t) => t !== 'advanced'), 'advanced']);
+                      } else {
+                        field.onChange(current.filter((t) => t !== 'advanced'));
+                      }
+                    }}
+                    className="mt-0.5 data-[state=checked]:bg-[#9EE493] data-[state=checked]:border-[#9EE493]"
+                  />
+                  <div className="ml-3 flex-1">
+                    <div className="font-semibold text-[#20313A]">Envío Avanzado</div>
+                    <p className="text-xs text-gray-600 mt-1">10 minutos de prueba</p>
+                  </div>
+                </div>
+
+                <div
+                  className={`flex items-start p-4 rounded-lg border-2 transition-all ${
+                    field.value?.includes('premium') ?? true
+                      ? 'border-[#9EE493] bg-[#DBF7DC]/30'
+                      : 'border-gray-200 bg-gray-50'
+                  }`}
+                >
+                  <Checkbox
+                    checked={field.value?.includes('premium') ?? true}
+                    onCheckedChange={(checked) => {
+                      const current = field.value || ['simple', 'advanced', 'premium'];
+                      if (checked) {
+                        field.onChange([...current.filter((t) => t !== 'premium'), 'premium']);
+                      } else {
+                        field.onChange(current.filter((t) => t !== 'premium'));
+                      }
+                    }}
+                    className="mt-0.5 data-[state=checked]:bg-[#9EE493] data-[state=checked]:border-[#9EE493]"
+                  />
+                  <div className="ml-3 flex-1">
+                    <div className="font-semibold text-[#20313A]">Envío Premium</div>
+                    <p className="text-xs text-gray-600 mt-1">17 minutos de prueba</p>
+                  </div>
+                </div>
+              </div>
               <FormMessage />
             </FormItem>
           )}

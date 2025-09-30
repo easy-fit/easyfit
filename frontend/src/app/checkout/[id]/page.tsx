@@ -233,6 +233,24 @@ export default function CheckoutPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
+                {/* Important Note for Prepaid Cards */}
+                <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <CreditCard className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-semibold text-blue-900 text-sm mb-1">
+                        Importante para tarjetas prepagas
+                      </h4>
+                      <p className="text-sm text-blue-800">
+                        Si usás tarjetas de <span className="font-semibold">Mercado Pago</span>,{' '}
+                        <span className="font-semibold">Ualá</span>, <span className="font-semibold">Naranja X</span>, o cualquier{' '}
+                        <span className="font-semibold">tarjeta prepaga/virtual</span>, seleccioná la opción{' '}
+                        <span className="font-semibold underline">&quot;Tarjeta de crédito&quot;</span> en el método de pago, no débito.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 {isProcessingPayment && (
                   <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10 rounded-lg">
                     <div className="flex items-center gap-2">

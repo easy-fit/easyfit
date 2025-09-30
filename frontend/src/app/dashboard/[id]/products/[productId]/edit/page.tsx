@@ -45,6 +45,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     fields,
     addVariant,
     removeVariant,
+    addBulkVariants,
     handleDefaultChange,
     handleImageUpload,
     removeImage,
@@ -211,6 +212,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                           onImageUpload={handleImageUpload}
                           onImageRemove={removeImage}
                           onDeleteImage={handleDeleteImage}
+                          onBulkAdd={addBulkVariants}
                           isDeleting={isDeleting(watchVariant._id || '')}
                           isDeletingImage={false}
                           watchVariant={watchVariant}
