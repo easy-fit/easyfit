@@ -258,6 +258,17 @@ export function Header({ onSearch, searchQuery = '' }: HeaderProps) {
                 </div>
               )}
 
+              {/* Register button on mobile (only when not authenticated) */}
+              {!isAuthenticated && (
+                <Button
+                  onClick={() => router.push('/register')}
+                  size="sm"
+                  className="md:hidden bg-[#9EE493] hover:bg-[#8BD480] text-[#20313A] font-medium px-3"
+                >
+                  Registrarse
+                </Button>
+              )}
+
               <Button onClick={() => router.push('/cart')} variant="ghost" size="icon" className="hover:bg-[#DBF7DC]">
                 <ShoppingCart className="h-5 w-5" />
               </Button>
