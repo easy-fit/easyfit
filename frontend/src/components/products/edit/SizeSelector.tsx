@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState } from 'react';
 import { ControllerRenderProps } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 import { FormControl, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 import { getSizesForCategory } from './constants';
 
 interface SizeSelectorProps {
@@ -12,51 +13,53 @@ interface SizeSelectorProps {
 }
 
 export function SizeSelector({ field, category }: SizeSelectorProps) {
-  const availableSizes = getSizesForCategory(category || '');
-  const isCorseteria = category === 'mujer.corseteria';
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const suggestedSizes = getSizesForCategory(category || '');
 
-  // For corseteria, check if current value is in available sizes or is custom
-  const isCustomSize = isCorseteria || (field.value && !availableSizes.includes(field.value) && field.value !== 'custom');
+  const handleSizeSelect = (size: string) => {
+    field.onChange(size);
+    setShowSuggestions(false);
+  };
 
   return (
     <FormItem>
       <FormLabel>Talle *</FormLabel>
-      {isCorseteria ? (
-        // For corseteria, use direct input since sizes are numeric and varied
-        <FormControl>
+      <FormControl>
+        <div className="relative">
           <Input
-            placeholder="Ej: 85, 90, 95..."
+            placeholder={suggestedSizes.length > 0 ? "Ej: S, M, L, 85, 90, etc." : "Ingrese el talle"}
             value={field.value || ''}
             onChange={(e) => field.onChange(e.target.value)}
+            onFocus={() => suggestedSizes.length > 0 && setShowSuggestions(true)}
+            onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
           />
-        </FormControl>
-      ) : (
-        <Select onValueChange={field.onChange} value={isCustomSize ? 'custom' : field.value}>
-          <FormControl>
-            <SelectTrigger>
-              <SelectValue placeholder="Seleccionar" />
-            </SelectTrigger>
-          </FormControl>
-          <SelectContent>
-            {availableSizes.map((size) => (
-              <SelectItem key={size} value={size}>
-                {size}
-              </SelectItem>
-            ))}
-            {availableSizes.length > 0 && <Separator />}
-            {isCustomSize && (
-              <SelectItem value="custom">
-                {field.value} (Personalizado)
-              </SelectItem>
-            )}
-            {!isCustomSize && (
-              <SelectItem value="custom">Personalizado...</SelectItem>
-            )}
-          </SelectContent>
-        </Select>
-      )}
-      {field.value === 'custom' && !isCorseteria && (
-        <Input placeholder="Talle personalizado" onChange={(e) => field.onChange(e.target.value)} className="mt-2" />
+          {showSuggestions && suggestedSizes.length > 0 && (
+            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
+              <div className="p-2 bg-gray-50 border-b text-xs text-gray-600 font-medium">
+                Talles sugeridos (o ingresá uno personalizado)
+              </div>
+              <div className="p-2 grid grid-cols-3 gap-1">
+                {suggestedSizes.map((size) => (
+                  <Button
+                    key={size}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleSizeSelect(size)}
+                    className="h-8 text-xs"
+                  >
+                    {size}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </FormControl>
+      {field.value && !suggestedSizes.includes(field.value) && (
+        <Badge variant="secondary" className="text-xs mt-1">
+          Talle personalizado
+        </Badge>
       )}
       <FormMessage />
     </FormItem>

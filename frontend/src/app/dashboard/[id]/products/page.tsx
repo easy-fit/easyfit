@@ -4,8 +4,9 @@ import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { useCurrentStore } from '@/contexts/store-context';
 import { useEasyFitToast } from '@/hooks/use-toast';
-import { useStoreProductMetrics, useStoreProducts } from '@/hooks/api/use-stores';
+import { useStoreProductMetrics, useStoreProducts, useExportStoreProducts } from '@/hooks/api/use-stores';
 import { useDeleteProduct } from '@/hooks/api/use-products';
+import { exportProductsToExcel } from '@/lib/export-utils';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -51,6 +52,9 @@ export default function ProductsPage({ params }: { params: Promise<{ id: string 
   const [productToDelete, setProductToDelete] = React.useState<{ id: string; title: string } | null>(null);
   const deleteProductMutation = useDeleteProduct(productToDelete?.id || '');
 
+  // Export
+  const exportMutation = useExportStoreProducts();
+
   // API calls
   const { data: metricsData, isLoading: metricsLoading } = useStoreProductMetrics(id);
   const {
@@ -63,7 +67,7 @@ export default function ProductsPage({ params }: { params: Promise<{ id: string 
     status: status !== 'all' ? status : undefined,
     stockStatus: stockStatus !== 'all' ? stockStatus : undefined,
     page,
-    limit: 5,
+    limit: 20,
   });
 
   const metrics = metricsData?.data;
@@ -155,6 +159,26 @@ export default function ProductsPage({ params }: { params: Promise<{ id: string 
 
   const closeBulkUploadModal = () => {
     setBulkUploadModalOpen(false);
+  };
+
+  const handleExport = async () => {
+    try {
+      const result = await exportMutation.mutateAsync(id);
+      if (result.data && result.data.length > 0) {
+        exportProductsToExcel(result.data, storeName || 'productos');
+        toast.success('Exportación exitosa', {
+          description: `Se exportaron ${result.data.length} variantes.`,
+        });
+      } else {
+        toast.warning('Sin datos', {
+          description: 'No hay productos para exportar.',
+        });
+      }
+    } catch (error) {
+      toast.error('Error al exportar', {
+        description: 'No se pudieron exportar los productos. Intentá nuevamente.',
+      });
+    }
   };
 
   // Reset page when filters change
@@ -262,6 +286,8 @@ export default function ProductsPage({ params }: { params: Promise<{ id: string 
               onStockStatusChange={setStockStatus}
               onAddProduct={handleAddProduct}
               onBulkUpload={handleBulkUpload}
+              onExport={handleExport}
+              isExporting={exportMutation.isPending}
             />
 
             {/* Product List */}
