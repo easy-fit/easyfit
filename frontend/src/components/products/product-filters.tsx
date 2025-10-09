@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, Plus, Upload } from 'lucide-react';
+import { Search, Plus, Upload, Download } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,8 @@ interface ProductFiltersProps {
   onStockStatusChange: (value: string) => void;
   onAddProduct: () => void;
   onBulkUpload?: () => void;
+  onExport?: () => void;
+  isExporting?: boolean;
 }
 
 export function ProductFilters({
@@ -30,6 +32,8 @@ export function ProductFilters({
   onStockStatusChange,
   onAddProduct,
   onBulkUpload,
+  onExport,
+  isExporting = false,
 }: ProductFiltersProps) {
   return (
     <Card>
@@ -86,6 +90,12 @@ export function ProductFilters({
 
           {/* Actions */}
           <div className="flex gap-2">
+            {onExport && (
+              <Button variant="outline" onClick={onExport} disabled={isExporting}>
+                <Download className="h-4 w-4 mr-2" />
+                {isExporting ? 'Exportando...' : 'Exportar'}
+              </Button>
+            )}
             {onBulkUpload && (
               <Button variant="outline" onClick={onBulkUpload}>
                 <Upload className="h-4 w-4 mr-2" />

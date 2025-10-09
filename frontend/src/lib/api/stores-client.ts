@@ -187,6 +187,10 @@ export class StoresClient extends BaseApiClient {
     return this.fetchApi<{ status: string; results: number; pagination: any; data: { products: any[] } }>(url);
   }
 
+  public async exportStoreProducts(storeId: string): Promise<{ status: string; data: any[] }> {
+    return this.fetchApi<{ status: string; data: any[] }>(`/stores/id/${storeId}/products/export`);
+  }
+
   // Billing Management Methods
   public async getStoreBilling(storeId: string): Promise<StoreBillingResponse> {
     return this.fetchApi<StoreBillingResponse>(`/stores/id/${storeId}/billing`);

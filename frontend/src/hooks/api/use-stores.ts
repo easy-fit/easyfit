@@ -265,6 +265,12 @@ export const useStoreProducts = (
   });
 };
 
+export const useExportStoreProducts = () => {
+  return useMutation({
+    mutationFn: (storeId: string) => api.stores.exportStoreProducts(storeId),
+  });
+};
+
 // Billing Management Hooks
 export const useStoreBilling = (storeId: string) => {
   return useQuery<StoreBillingResponse>({

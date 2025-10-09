@@ -759,6 +759,64 @@ export class StoreService {
     }
   }
 
+  static async exportStoreProducts(storeId: string) {
+    const storeObjectId = new Types.ObjectId(storeId);
+
+    try {
+      // Fetch ALL products with all their variants (no pagination)
+      const products = await ProductModel.aggregate([
+        { $match: { storeId: storeObjectId } },
+        {
+          $lookup: {
+            from: 'variants',
+            localField: '_id',
+            foreignField: 'productId',
+            as: 'variants',
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            title: 1,
+            category: 1,
+            status: 1,
+            variants: {
+              _id: 1,
+              sku: 1,
+              size: 1,
+              color: 1,
+              price: 1,
+              stock: 1,
+            },
+          },
+        },
+        { $sort: { createdAt: -1 } },
+      ]);
+
+      // Flatten products into rows (one row per variant)
+      const exportData = products.flatMap((product) =>
+        product.variants.map((variant: any) => ({
+          productId: product._id.toString(),
+          productTitle: product.title,
+          category: CategoryUtils.getCategoryDisplayName(product.category),
+          categoryKey: product.category,
+          status: product.status,
+          variantId: variant._id.toString(),
+          sku: variant.sku,
+          size: variant.size,
+          color: variant.color,
+          price: variant.price,
+          stock: variant.stock,
+        })),
+      );
+
+      return exportData;
+    } catch (error) {
+      console.error('Error in exportStoreProducts:', error);
+      throw new AppError('Error exporting store products', 500);
+    }
+  }
+
   // Billing Management Methods
   private static isBillingComplete(billing: any): boolean {
     if (!billing) return false;
