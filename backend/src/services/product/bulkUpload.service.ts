@@ -10,7 +10,7 @@ import {
   BulkUploadResponse,
   BulkUploadValidationError,
   CreateProductDTO,
-  ProductStatus
+  ProductStatus,
 } from '../../types/product.types';
 import { CreateVariantDTO } from '../../types/variant.types';
 import { VariantModel } from '../../models/variant.model';
@@ -42,32 +42,126 @@ const SIZE_MAPPING: { [key: string]: string } = {
   '3': 'M',
   '4': 'L',
   '5': 'XL',
-  '6': 'XXL'
+  '6': 'XXL',
 };
 
-// Color name to hex mapping (Spanish color names)
+// Color name to hex mapping (Spanish color names - extended)
 const COLOR_NAME_MAPPING: { [key: string]: string } = {
-  'negro': '#000000',
-  'blanco': '#FFFFFF',
-  'gris': '#808080',
-  'azul': '#0000FF',
-  'rojo': '#FF0000',
-  'verde': '#008000',
-  'amarillo': '#FFFF00',
-  'rosa': '#FFC0CB',
-  'violeta': '#8A2BE2',
-  'naranja': '#FFA500',
-  'marrón': '#A52A2A',
-  'marron': '#A52A2A',
-  'beige': '#F5F5DC',
-  'terra': '#8E7368',
-  'café': '#6F4E37',
-  'cafe': '#6F4E37',
-  'dorado': '#FFD700',
-  'plateado': '#C0C0C0',
-  'celeste': '#87CEEB',
-  'marino': '#000080',
-  'oliva': '#808000'
+  // Basic colors
+  negro: '#000000',
+  blanco: '#FFFFFF',
+  gris: '#808080',
+  'gris oscuro': '#A9A9A9',
+  'gris claro': '#D3D3D3',
+  azul: '#0000FF',
+  'azul marino': '#000080',
+  'azul cielo': '#87CEEB',
+  'azul oscuro': '#00008B',
+  'azul claro': '#ADD8E6',
+  rojo: '#FF0000',
+  'rojo oscuro': '#8B0000',
+  verde: '#008000',
+  'verde oscuro': '#006400',
+  'verde claro': '#90EE90',
+  amarillo: '#FFFF00',
+  rosa: '#FFC0CB',
+  'rosa claro': '#FFB6C1',
+  'rosa oscuro': '#FF1493',
+  violeta: '#8A2BE2',
+  púrpura: '#800080',
+  purpura: '#800080',
+  naranja: '#FFA500',
+
+  // Browns and earth tones
+  marrón: '#A52A2A',
+  marron: '#A52A2A',
+  café: '#6F4E37',
+  cafe: '#6F4E37',
+  caramelo: '#AF6E4D',
+  chocolate: '#D2691E',
+  tierra: '#8E7368',
+  terra: '#8E7368',
+  terracota: '#E2725B',
+  arena: '#C2B280',
+  tostado: '#D2B48C',
+  beige: '#F5F5DC',
+  crema: '#FFFDD0',
+  camel: '#C19A6B',
+  cognac: '#9A463D',
+  cuero: '#8B4513',
+
+  // Metallics
+  dorado: '#FFD700',
+  oro: '#FFD700',
+  plateado: '#C0C0C0',
+  plata: '#C0C0C0',
+  bronce: '#CD7F32',
+  cobre: '#B87333',
+
+  // Blues
+  celeste: '#87CEEB',
+  marino: '#000080',
+  turquesa: '#40E0D0',
+  aguamarina: '#7FFFD4',
+  índigo: '#4B0082',
+  indigo: '#4B0082',
+  navy: '#000080',
+  cobalto: '#0047AB',
+  petróleo: '#2B5F75',
+  petroleo: '#2B5F75',
+
+  // Greens
+  oliva: '#808000',
+  lima: '#00FF00',
+  menta: '#98FF98',
+  esmeralda: '#50C878',
+  jade: '#00A86B',
+  'verde militar': '#4B5320',
+  'verde musgo': '#8A9A5B',
+  'verde botella': '#006A4E',
+
+  // Reds/Pinks
+  carmesí: '#DC143C',
+  carmesi: '#DC143C',
+  burdeos: '#800020',
+  borgoña: '#800020',
+  borgona: '#800020',
+  coral: '#FF7F50',
+  salmón: '#FA8072',
+  salmon: '#FA8072',
+  fucsia: '#FF00FF',
+  magenta: '#FF00FF',
+  cereza: '#990000',
+  vino: '#722F37',
+
+  // Neutrals
+  hueso: '#F9F6EE',
+  marfil: '#FFFFF0',
+  perla: '#EAE0C8',
+  avena: '#E8D5C4',
+  taupe: '#B38B6D',
+  grafito: '#383838',
+  carbón: '#36454F',
+  carbon: '#36454F',
+
+  // Others
+  lavanda: '#E6E6FA',
+  lila: '#C8A2C8',
+  mostaza: '#FFDB58',
+  ocre: '#CC7722',
+  durazno: '#FFDAB9',
+  melocotón: '#FFDAB9',
+  melocoton: '#FFDAB9',
+  melón: '#FEBAAD',
+  melon: '#FEBAAD',
+  almendra: '#EFDECD',
+
+  // Fashion/Brand specific colors
+  fuccia: '#FF00FF',
+  aero: '#7CB9E8',
+  natural: '#F5F5DC',
+  'gris melange': '#B8B8B8',
+  melange: '#B8B8B8',
 };
 
 export class BulkUploadService {
@@ -78,48 +172,96 @@ export class BulkUploadService {
     const sizeStr = String(sizeValue).trim();
 
     // For corseteria, preserve numeric values exactly as they are
-    if (category === 'mujer.corseteria') {
+    if (category?.includes('corseteria')) {
       return { size: sizeStr };
     }
 
-    // For other categories, check if it's a numeric mapping to clothing sizes
+    // For kids' clothing, preserve numeric sizes (2, 4, 6, 8, 10, 12, 14, 16, 18)
+    if (category?.includes('ninos') || category?.includes('nina') || category?.includes('nino')) {
+      const kidsSize = parseInt(sizeStr);
+      if (!isNaN(kidsSize) && kidsSize >= 0 && kidsSize <= 18) {
+        return { size: sizeStr };
+      }
+    }
+
+    // For adult categories, check if it's a numeric mapping (1-6) to clothing sizes
     if (SIZE_MAPPING[sizeStr]) {
       return { size: SIZE_MAPPING[sizeStr] };
     }
 
     // Check if it's already a valid size name
-    const validSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45', 'Único'];
+    const validSizes = [
+      'XS',
+      'S',
+      'M',
+      'L',
+      'XL',
+      'XXL',
+      'XXXL',
+      '35',
+      '36',
+      '37',
+      '38',
+      '39',
+      '40',
+      '41',
+      '42',
+      '43',
+      '44',
+      '45',
+      'Único',
+      'UNICO',
+    ];
     if (validSizes.includes(sizeStr.toUpperCase())) {
       return { size: sizeStr.toUpperCase() };
     }
 
-    // If not recognized, return as-is with warning
-    return {
-      size: sizeStr,
-      warning: `Size value '${sizeStr}' not recognized. Expected 1-6 or standard size names.`
-    };
+    // For shoe sizes (numeric), preserve as-is
+    if (category?.includes('calzado') || category?.includes('zapatos') || category?.includes('zapatillas')) {
+      const shoeSize = parseInt(sizeStr);
+      if (!isNaN(shoeSize) && shoeSize >= 20 && shoeSize <= 50) {
+        return { size: sizeStr };
+      }
+    }
+
+    // If not recognized, return as-is (no warning - allow any custom size)
+    return { size: sizeStr };
   }
 
   /**
    * Process color value - extract hex codes or map color names
+   * Supports:
+   * 1. Direct hex codes: #RRGGBB or #RGB
+   * 2. Hex with description: "#8E7368 (Terra)"
+   * 3. Spanish color names (custom mapping)
+   * 4. Partial matches in compound names
    */
   private static processColorValue(colorValue: string): { color: string; warning?: string } {
-    const colorStr = String(colorValue).trim().toLowerCase();
+    const colorStr = String(colorValue).trim();
+    const colorLower = colorStr.toLowerCase();
 
-    // Check if it already contains a hex code (like "#8E7368 (Terra)")
-    const hexMatch = colorStr.match(/#([0-9a-f]{6})/i);
+    // 1. Check if it already contains a hex code (like "#8E7368" or "#8E7368 (Terra)")
+    const hexMatch = colorStr.match(/#([0-9a-f]{6}|[0-9a-f]{3})/i);
     if (hexMatch) {
-      return { color: hexMatch[0].toUpperCase() };
+      let hex = hexMatch[1];
+      // Convert 3-digit hex to 6-digit
+      if (hex.length === 3) {
+        hex = hex
+          .split('')
+          .map((c) => c + c)
+          .join('');
+      }
+      return { color: '#' + hex.toUpperCase() };
     }
 
-    // Check if it's a color name we can map
-    if (COLOR_NAME_MAPPING[colorStr]) {
-      return { color: COLOR_NAME_MAPPING[colorStr] };
+    // 2. Check Spanish color name mappings (exact match)
+    if (COLOR_NAME_MAPPING[colorLower]) {
+      return { color: COLOR_NAME_MAPPING[colorLower] };
     }
 
-    // Try to match partial color names in parentheses or combined strings
+    // 3. Try to match partial Spanish color names in compound strings
     for (const [colorName, hexCode] of Object.entries(COLOR_NAME_MAPPING)) {
-      if (colorStr.includes(colorName)) {
+      if (colorLower.includes(colorName)) {
         return { color: hexCode };
       }
     }
@@ -127,14 +269,11 @@ export class BulkUploadService {
     // If not recognized, default to black with warning
     return {
       color: '#000000',
-      warning: `Color '${colorValue}' not recognized. Defaulted to black. Please use hex codes or common color names.`
+      warning: `Color '${colorValue}' not recognized. Defaulted to black. Please use hex codes (e.g., #FF0000) or common color names.`,
     };
   }
 
-  static async processExcelFile(
-    fileBuffer: Buffer,
-    storeId: string
-  ): Promise<BulkUploadResponse> {
+  static async processExcelFile(fileBuffer: Buffer, storeId: string): Promise<BulkUploadResponse> {
     const response: BulkUploadResponse = {
       summary: {
         totalRows: 0,
@@ -142,10 +281,10 @@ export class BulkUploadService {
         invalidRows: 0,
         productsCreated: 0,
         variantsCreated: 0,
-        errors: 0
+        errors: 0,
       },
       errors: [],
-      warnings: []
+      warnings: [],
     };
 
     try {
@@ -157,7 +296,7 @@ export class BulkUploadService {
       // Convert to JSON with expected headers
       const rawData = XLSX.utils.sheet_to_json(worksheet, {
         header: 1,
-        defval: ''
+        defval: '',
       }) as any[][];
 
       if (rawData.length < 2) {
@@ -196,13 +335,13 @@ export class BulkUploadService {
         if (sizeResult.warning) {
           response.warnings.push({
             row: rowNumber,
-            warning: sizeResult.warning
+            warning: sizeResult.warning,
           });
         }
         if (colorResult.warning) {
           response.warnings.push({
             row: rowNumber,
-            warning: colorResult.warning
+            warning: colorResult.warning,
           });
         }
 
@@ -215,7 +354,7 @@ export class BulkUploadService {
           COLOR: colorResult.color, // Use processed color
           PRICE: Number(row[headers.indexOf('PRICE')]) || 0,
           STOCK: Number(row[headers.indexOf('STOCK')]) || 0,
-          SKU: String(row[headers.indexOf('SKU')] || '').trim()
+          SKU: String(row[headers.indexOf('SKU')] || '').trim(),
         };
 
         const validationResult = this.validateRow(rowData, rowNumber);
@@ -224,7 +363,7 @@ export class BulkUploadService {
           processedRows.push({
             ...rowData,
             rowNumber,
-            isValid: true
+            isValid: true,
           });
           response.summary.validRows++;
         } else {
@@ -235,25 +374,37 @@ export class BulkUploadService {
 
       response.summary.errors = response.errors.length;
 
-      // Check for duplicate SKUs within the file
+      // Auto-fix duplicate SKUs within the file by appending a suffix
       const skuMap = new Map<string, number>();
+      const skuCounters = new Map<string, number>();
+
       for (const row of processedRows) {
+        const originalSku = row.SKU;
+
         if (skuMap.has(row.SKU)) {
-          response.errors.push({
+          // SKU already exists - generate a unique one
+          const counter = (skuCounters.get(originalSku) || 1) + 1;
+          skuCounters.set(originalSku, counter);
+          row.SKU = `${originalSku}-${counter}`;
+
+          response.warnings.push({
             row: row.rowNumber,
-            field: 'SKU',
-            error: `Duplicate SKU '${row.SKU}' found in row ${skuMap.get(row.SKU)}`,
-            data: row
+            warning: `Duplicate SKU '${originalSku}' auto-fixed to '${row.SKU}'`,
           });
-          continue;
         }
+
         skuMap.set(row.SKU, row.rowNumber);
+
+        // Initialize counter for this SKU
+        if (!skuCounters.has(originalSku)) {
+          skuCounters.set(originalSku, 1);
+        }
       }
 
       // Check for existing SKUs in database
       const existingSkus = await this.checkExistingSkus(
-        processedRows.map(r => r.SKU),
-        storeId
+        processedRows.map((r) => r.SKU),
+        storeId,
       );
 
       for (const row of processedRows) {
@@ -262,15 +413,13 @@ export class BulkUploadService {
             row: row.rowNumber,
             field: 'SKU',
             error: `SKU '${row.SKU}' already exists in your store`,
-            data: row
+            data: row,
           });
         }
       }
 
       // Filter out rows with errors
-      const validRows = processedRows.filter(row =>
-        !response.errors.some(error => error.row === row.rowNumber)
-      );
+      const validRows = processedRows.filter((row) => !response.errors.some((error) => error.row === row.rowNumber));
 
       // Group rows by product title
       const productGroups = this.groupByProduct(validRows);
@@ -288,7 +437,7 @@ export class BulkUploadService {
               row: variant.rowNumber,
               field: 'GENERAL',
               error: `Failed to create product '${productGroup.title}': ${error}`,
-              data: { TITLE: productGroup.title }
+              data: { TITLE: productGroup.title },
             });
           }
         }
@@ -302,7 +451,7 @@ export class BulkUploadService {
 
   private static validateRow(
     row: BulkUploadRowDTO,
-    rowNumber: number
+    rowNumber: number,
   ): { isValid: boolean; errors: BulkUploadValidationError[] } {
     const errors: BulkUploadValidationError[] = [];
 
@@ -312,7 +461,7 @@ export class BulkUploadService {
         row: rowNumber,
         field: 'TITLE',
         error: 'TITLE is required but empty',
-        data: row
+        data: row,
       });
     }
 
@@ -321,14 +470,16 @@ export class BulkUploadService {
         row: rowNumber,
         field: 'CATEGORY',
         error: 'CATEGORY is required but empty',
-        data: row
+        data: row,
       });
     } else if (!PRODUCT_CATEGORY_VALUES.includes(row.CATEGORY as any)) {
       errors.push({
         row: rowNumber,
         field: 'CATEGORY',
-        error: `Invalid category '${row.CATEGORY}'. Must be one of: ${PRODUCT_CATEGORY_VALUES.slice(0, 5).join(', ')}...`,
-        data: row
+        error: `Invalid category '${row.CATEGORY}'. Must be one of: ${PRODUCT_CATEGORY_VALUES.slice(0, 5).join(
+          ', ',
+        )}...`,
+        data: row,
       });
     }
 
@@ -337,7 +488,7 @@ export class BulkUploadService {
         row: rowNumber,
         field: 'SIZE',
         error: 'SIZE is required but empty',
-        data: row
+        data: row,
       });
     }
 
@@ -346,7 +497,7 @@ export class BulkUploadService {
         row: rowNumber,
         field: 'COLOR',
         error: 'COLOR is required but empty',
-        data: row
+        data: row,
       });
     }
 
@@ -355,7 +506,7 @@ export class BulkUploadService {
         row: rowNumber,
         field: 'SKU',
         error: 'SKU is required but empty',
-        data: row
+        data: row,
       });
     }
 
@@ -365,7 +516,7 @@ export class BulkUploadService {
         row: rowNumber,
         field: 'PRICE',
         error: 'PRICE must be greater than 0',
-        data: row
+        data: row,
       });
     }
 
@@ -375,7 +526,7 @@ export class BulkUploadService {
         row: rowNumber,
         field: 'STOCK',
         error: 'STOCK must be 0 or greater',
-        data: row
+        data: row,
       });
     }
 
@@ -385,75 +536,81 @@ export class BulkUploadService {
         row: rowNumber,
         field: 'STATUS',
         error: 'STATUS must be either "published" or "draft"',
-        data: row
+        data: row,
       });
     }
 
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     };
   }
 
   private static async checkExistingSkus(skus: string[], storeId: string): Promise<string[]> {
     const existingVariants = await VariantModel.find({
-      sku: { $in: skus }
+      sku: { $in: skus },
     }).populate({
       path: 'productId',
-      match: { storeId }
+      match: { storeId },
     });
 
-    return existingVariants
-      .filter(v => v.productId)
-      .map(v => v.sku);
+    return existingVariants.filter((v) => v.productId).map((v) => v.sku);
   }
 
   private static groupByProduct(rows: ProcessedRow[]): ProductGroup[] {
-    const groups: ProductGroup[] = [];
-    let currentGroup: ProductGroup | null = null;
+    // Use a Map to group all rows by DESCRIPTION (which will be used as title)
+    // This handles non-consecutive rows with the same product correctly
+    const groupsMap = new Map<string, ProductGroup>();
 
     for (const row of rows) {
-      if (!currentGroup || currentGroup.title !== row.TITLE) {
-        // Start new product group
-        currentGroup = {
+      // Use DESCRIPTION as the unique key since it becomes the product title
+      const key = (row.DESCRIPTION || '').trim();
+
+      if (!key) continue; // Skip rows without description
+
+      if (!groupsMap.has(key)) {
+        // Create new product group
+        groupsMap.set(key, {
           title: row.TITLE,
           description: row.DESCRIPTION || '',
           category: row.CATEGORY,
           status: (row.STATUS as ProductStatus) || 'draft',
-          variants: []
-        };
-        groups.push(currentGroup);
+          variants: [],
+        });
       }
 
-      // Add variant to current group
-      currentGroup.variants.push({
+      // Add variant to the group
+      const group = groupsMap.get(key)!;
+      group.variants.push({
         size: row.SIZE,
         color: row.COLOR,
         price: row.PRICE,
         stock: row.STOCK,
         sku: row.SKU,
-        rowNumber: row.rowNumber
+        rowNumber: row.rowNumber,
       });
     }
 
-    return groups;
+    // Convert Map to Array
+    return Array.from(groupsMap.values());
   }
 
-  private static async createProductWithVariants(
-    productGroup: ProductGroup,
-    storeId: string
-  ): Promise<void> {
+  private static async createProductWithVariants(productGroup: ProductGroup, storeId: string): Promise<void> {
+    // Use DESCRIPTION as title (which contains the full product name)
+    // This ensures uniqueness since each product has a different description
+    const productTitle = productGroup.description || productGroup.title;
+
     // Validate title uniqueness
-    await ProductValidationService.validateTitleUniqueness(storeId, productGroup.title);
+    await ProductValidationService.validateTitleUniqueness(storeId, productTitle);
 
     // Create product first
     const productData = {
-      title: productGroup.title,
+      title: productTitle,
       description: productGroup.description,
       category: productGroup.category as any,
       status: productGroup.status,
       storeId,
-      slug: ProductValidationService.generateSlug(productGroup.title)
+      slug: ProductValidationService.generateSlug(productTitle),
     };
 
     // Create the product directly
@@ -468,7 +625,7 @@ export class BulkUploadService {
       sku: variant.sku,
       images: [], // No images in bulk upload
       isDefault: index === 0, // First variant is default
-      isBulk: false // Set to false since we're bypassing the bulk/non-bulk logic
+      isBulk: false, // Set to false since we're bypassing the bulk/non-bulk logic
     }));
 
     // Create variants directly using VariantService

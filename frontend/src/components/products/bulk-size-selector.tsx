@@ -4,8 +4,8 @@ import * as React from 'react';
 import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { getSizeOptions } from './product-form-constants';
 
 interface BulkSizeData {
@@ -25,6 +25,7 @@ export function BulkSizeSelector({ category, currentSize, onBulkAdd }: BulkSizeS
   const [bulkSizes, setBulkSizes] = React.useState<BulkSizeData[]>([
     { size: '', stock: 0, sku: '' }
   ]);
+  const [showSuggestions, setShowSuggestions] = React.useState<number | null>(null);
 
   const sizeOptions = getSizeOptions(category);
   const availableSizes = sizeOptions.filter(size => size !== currentSize);
@@ -41,6 +42,11 @@ export function BulkSizeSelector({ category, currentSize, onBulkAdd }: BulkSizeS
     const updated = [...bulkSizes];
     updated[index] = { ...updated[index], [field]: value };
     setBulkSizes(updated);
+  };
+
+  const handleSizeSelect = (index: number, size: string) => {
+    updateBulkSize(index, 'size', size);
+    setShowSuggestions(null);
   };
 
   const handleBulkAdd = () => {
@@ -74,23 +80,40 @@ export function BulkSizeSelector({ category, currentSize, onBulkAdd }: BulkSizeS
 
           {bulkSizes.map((bulkSize, index) => (
             <div key={index} className="grid grid-cols-12 gap-2 items-end">
-              <div className="col-span-4">
+              <div className="col-span-4 relative">
                 <Label className="text-xs">Talle</Label>
-                <Select
+                <Input
+                  placeholder="Ej: S, M, 85, etc."
                   value={bulkSize.size}
-                  onValueChange={(value) => updateBulkSize(index, 'size', value)}
-                >
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder="Seleccionar" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableSizes.map((size) => (
-                      <SelectItem key={size} value={size}>
-                        {size}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={(e) => updateBulkSize(index, 'size', e.target.value)}
+                  onFocus={() => availableSizes.length > 0 && setShowSuggestions(index)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(null), 200)}
+                  className="h-8 text-xs"
+                />
+                {showSuggestions === index && availableSizes.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-y-auto">
+                    <div className="p-1 bg-gray-50 border-b text-xs text-gray-600">
+                      Sugerencias
+                    </div>
+                    <div className="p-1">
+                      {availableSizes.map((size) => (
+                        <button
+                          key={size}
+                          type="button"
+                          onClick={() => handleSizeSelect(index, size)}
+                          className="w-full text-left px-2 py-1 text-xs hover:bg-gray-100 rounded"
+                        >
+                          {size}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {bulkSize.size && !availableSizes.includes(bulkSize.size) && (
+                  <Badge variant="secondary" className="text-xs mt-1 absolute -bottom-5">
+                    Personalizado
+                  </Badge>
+                )}
               </div>
 
               <div className="col-span-3">

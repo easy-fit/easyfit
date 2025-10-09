@@ -76,6 +76,14 @@ storeRoutes.get(
   StoreController.getStoreProducts,
 );
 
+storeRoutes.get(
+  '/id/:id/products/export',
+  protect,
+  restrictTo('merchant', 'manager'),
+  verifyStoreAccess,
+  StoreController.exportStoreProducts,
+);
+
 // New Billing Management Routes
 storeRoutes.get(
   '/id/:id/billing',

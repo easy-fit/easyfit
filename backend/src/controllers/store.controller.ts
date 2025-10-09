@@ -359,4 +359,15 @@ export class StoreController {
 
     res.status(200).json(billing);
   });
+
+  static exportStoreProducts = catchAsync(async (req: Request, res: Response) => {
+    const storeId = req.params.id;
+
+    const result = await StoreService.exportStoreProducts(storeId);
+
+    res.status(200).json({
+      status: 'success',
+      data: result,
+    });
+  });
 }
