@@ -8,7 +8,7 @@ import {
 
 async function fetchStoreData(storeSlug: string) {
   try {
-    const response = await fetch(`${ENV.API_URL}/stores/slug/${storeSlug}`, {
+    const response = await fetch(`${ENV.API_URL}/stores/${storeSlug}`, {
       cache: 'no-store',
     });
 
