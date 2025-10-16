@@ -4,17 +4,20 @@ import { AppError } from '../utils/appError';
 // Configure multer for memory storage
 const storage = multer.memoryStorage();
 
-// File filter for Excel files only
+// File filter for Excel and CSV files
 const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   if (
     file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
     file.mimetype === 'application/vnd.ms-excel' ||
+    file.mimetype === 'text/csv' ||
+    file.mimetype === 'application/csv' ||
     file.originalname.endsWith('.xlsx') ||
-    file.originalname.endsWith('.xls')
+    file.originalname.endsWith('.xls') ||
+    file.originalname.endsWith('.csv')
   ) {
     cb(null, true);
   } else {
-    cb(new AppError('Only Excel files (.xlsx, .xls) are allowed', 400));
+    cb(new AppError('Only Excel and CSV files (.xlsx, .xls, .csv) are allowed', 400));
   }
 };
 

@@ -73,7 +73,7 @@ export function ProductInformationSection({ control }: ProductInformationSection
           render={({ field }) => (
             <FormItem>
               <FormLabel>Estado *</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
+              <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                 <FormControl>
                   <SelectTrigger className="w-[200px]">
                     <SelectValue placeholder="Seleccionar estado" />

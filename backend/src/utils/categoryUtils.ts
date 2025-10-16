@@ -47,6 +47,7 @@ export const CATEGORY_CONFIG: Record<ProductCategory, CategoryDisplayInfo> = {
   'mujer.mallas': { key: 'mujer.mallas', displayName: 'Mallas', gender: 'mujer', level: 'subcategory' },
   'mujer.mochilas-bolsos-carteras': { key: 'mujer.mochilas-bolsos-carteras', displayName: 'Mochilas & Bolsos / Carteras', gender: 'mujer', level: 'subcategory' },
   'mujer.pantalones': { key: 'mujer.pantalones', displayName: 'Pantalones', gender: 'mujer', level: 'subcategory' },
+  'mujer.pijamas': { key: 'mujer.pijamas', displayName: 'Pijamas', gender: 'mujer', level: 'subcategory' },
   'mujer.polleras-faldas': { key: 'mujer.polleras-faldas', displayName: 'Polleras / Faldas', gender: 'mujer', level: 'subcategory' },
   'mujer.shorts-bermudas': { key: 'mujer.shorts-bermudas', displayName: 'Shorts / Bermudas', gender: 'mujer', level: 'subcategory' },
   'mujer.sweaters-tejidos': { key: 'mujer.sweaters-tejidos', displayName: 'Sweaters / Tejidos', gender: 'mujer', level: 'subcategory' },

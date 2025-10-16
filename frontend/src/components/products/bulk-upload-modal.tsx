@@ -58,9 +58,9 @@ export function BulkUploadModal({ open, onClose, storeId }: BulkUploadModalProps
     const file = event.target.files?.[0];
     if (file) {
       // Validate file type
-      if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+      if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls') && !file.name.endsWith('.csv')) {
         toast.error('Archivo inválido', {
-          description: 'Solo se permiten archivos Excel (.xlsx, .xls)',
+          description: 'Solo se permiten archivos Excel (.xlsx, .xls) y CSV (.csv)',
         });
         return;
       }
@@ -173,7 +173,7 @@ export function BulkUploadModal({ open, onClose, storeId }: BulkUploadModalProps
             Carga Masiva de Productos
           </DialogTitle>
           <DialogDescription>
-            Subí un archivo Excel con productos y sus variantes para crear múltiples productos de una vez.
+            Subí un archivo Excel o CSV con productos y sus variantes para crear múltiples productos de una vez.
           </DialogDescription>
         </DialogHeader>
 
@@ -183,11 +183,11 @@ export function BulkUploadModal({ open, onClose, storeId }: BulkUploadModalProps
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <Download className="h-4 w-4" />
-                Plantilla de Excel
+                Plantilla CSV
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-sm text-gray-600">Descargá la plantilla con el formato correcto y datos de ejemplo.</p>
+              <p className="text-sm text-gray-600">Descargá la plantilla CSV con el formato correcto y datos de ejemplo. También podés usar archivos Excel (.xlsx, .xls).</p>
               <Button variant="outline" onClick={downloadTemplate} className="w-full">
                 <Download className="h-4 w-4 mr-2" />
                 Descargar Plantilla
@@ -216,7 +216,7 @@ export function BulkUploadModal({ open, onClose, storeId }: BulkUploadModalProps
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".xlsx,.xls"
+                  accept=".xlsx,.xls,.csv"
                   onChange={handleFileSelect}
                   className="hidden"
                 />
@@ -236,8 +236,8 @@ export function BulkUploadModal({ open, onClose, storeId }: BulkUploadModalProps
                   <div className="space-y-2">
                     <Upload className="h-8 w-8 mx-auto text-gray-400" />
                     <div className="text-sm">
-                      <p className="font-medium">Seleccionar archivo Excel</p>
-                      <p className="text-gray-500">Archivos .xlsx o .xls, máximo 10MB</p>
+                      <p className="font-medium">Seleccionar archivo Excel o CSV</p>
+                      <p className="text-gray-500">Archivos .xlsx, .xls o .csv, máximo 10MB</p>
                     </div>
                     <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
                       Seleccionar archivo
