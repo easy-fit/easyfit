@@ -33,7 +33,7 @@ export type HombreCategoryKeys =
   | 'accesorios';
 
 // Mujer subcategories
-export type MujerCategoryKeys = 
+export type MujerCategoryKeys =
   | 'ver-todo'
   | 'abrigos'
   | 'blazers'
@@ -47,6 +47,7 @@ export type MujerCategoryKeys =
   | 'mallas'
   | 'mochilas-bolsos-carteras'
   | 'pantalones'
+  | 'pijamas'
   | 'polleras-faldas'
   | 'shorts-bermudas'
   | 'sweaters-tejidos'
@@ -166,7 +167,7 @@ export const PRODUCT_CATEGORY_VALUES: ProductCategory[] = [
   // Mujer categories
   'mujer.ver-todo', 'mujer.abrigos', 'mujer.blazers', 'mujer.buzos', 'mujer.calzas', 'mujer.camisetas-remeras',
   'mujer.camisas-blusas', 'mujer.corseteria', 'mujer.deportivo', 'mujer.jeans', 'mujer.mallas', 'mujer.mochilas-bolsos-carteras', 'mujer.pantalones',
-  'mujer.polleras-faldas', 'mujer.shorts-bermudas', 'mujer.sweaters-tejidos', 'mujer.tops-bodies',
+  'mujer.pijamas', 'mujer.polleras-faldas', 'mujer.shorts-bermudas', 'mujer.sweaters-tejidos', 'mujer.tops-bodies',
   'mujer.vestidos-monos', 'mujer.trajes', 'mujer.zapatillas', 'mujer.zapatos', 'mujer.accesorios',
   
   // Niños - Niña 1-6

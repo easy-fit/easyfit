@@ -71,6 +71,7 @@ export const CATEGORY_CONFIG: Record<ProductCategory, CategoryDisplayInfo> = {
     level: 'subcategory',
   },
   'mujer.pantalones': { key: 'mujer.pantalones', displayName: 'Pantalones', gender: 'mujer', level: 'subcategory' },
+  'mujer.pijamas': { key: 'mujer.pijamas', displayName: 'Pijamas', gender: 'mujer', level: 'subcategory' },
   'mujer.polleras-faldas': {
     key: 'mujer.polleras-faldas',
     displayName: 'Polleras / Faldas',
