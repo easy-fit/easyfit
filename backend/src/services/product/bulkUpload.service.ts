@@ -35,16 +35,6 @@ interface ProductGroup {
   }>;
 }
 
-// Size mapping: numbers to size names
-const SIZE_MAPPING: { [key: string]: string } = {
-  '1': 'XS',
-  '2': 'S',
-  '3': 'M',
-  '4': 'L',
-  '5': 'XL',
-  '6': 'XXL',
-};
-
 // Color name to hex mapping (Spanish color names - extended)
 const COLOR_NAME_MAPPING: { [key: string]: string } = {
   // Basic colors
@@ -166,65 +156,11 @@ const COLOR_NAME_MAPPING: { [key: string]: string } = {
 
 export class BulkUploadService {
   /**
-   * Process size value - convert numbers to size names based on category
+   * Process size value - preserve exactly as provided in Excel
    */
   private static processSizeValue(sizeValue: string | number, category?: string): { size: string; warning?: string } {
+    // Simply trim and return the size value as-is from the Excel file
     const sizeStr = String(sizeValue).trim();
-
-    // For corseteria, preserve numeric values exactly as they are
-    if (category?.includes('corseteria')) {
-      return { size: sizeStr };
-    }
-
-    // For kids' clothing, preserve numeric sizes (2, 4, 6, 8, 10, 12, 14, 16, 18)
-    if (category?.includes('ninos') || category?.includes('nina') || category?.includes('nino')) {
-      const kidsSize = parseInt(sizeStr);
-      if (!isNaN(kidsSize) && kidsSize >= 0 && kidsSize <= 18) {
-        return { size: sizeStr };
-      }
-    }
-
-    // For adult categories, check if it's a numeric mapping (1-6) to clothing sizes
-    if (SIZE_MAPPING[sizeStr]) {
-      return { size: SIZE_MAPPING[sizeStr] };
-    }
-
-    // Check if it's already a valid size name
-    const validSizes = [
-      'XS',
-      'S',
-      'M',
-      'L',
-      'XL',
-      'XXL',
-      'XXXL',
-      '35',
-      '36',
-      '37',
-      '38',
-      '39',
-      '40',
-      '41',
-      '42',
-      '43',
-      '44',
-      '45',
-      'Único',
-      'UNICO',
-    ];
-    if (validSizes.includes(sizeStr.toUpperCase())) {
-      return { size: sizeStr.toUpperCase() };
-    }
-
-    // For shoe sizes (numeric), preserve as-is
-    if (category?.includes('calzado') || category?.includes('zapatos') || category?.includes('zapatillas')) {
-      const shoeSize = parseInt(sizeStr);
-      if (!isNaN(shoeSize) && shoeSize >= 20 && shoeSize <= 50) {
-        return { size: sizeStr };
-      }
-    }
-
-    // If not recognized, return as-is (no warning - allow any custom size)
     return { size: sizeStr };
   }
 
@@ -288,7 +224,7 @@ export class BulkUploadService {
     };
 
     try {
-      // Parse Excel file
+      // Parse Excel or CSV file (XLSX library handles both formats)
       const workbook = XLSX.read(fileBuffer, { type: 'buffer' });
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
@@ -300,7 +236,7 @@ export class BulkUploadService {
       }) as any[][];
 
       if (rawData.length < 2) {
-        throw new AppError('Excel file must contain headers and at least one data row', 400);
+        throw new AppError('File must contain headers and at least one data row', 400);
       }
 
       // Validate headers
@@ -445,7 +381,7 @@ export class BulkUploadService {
 
       return response;
     } catch (error) {
-      throw new AppError(`Failed to process Excel file: ${error}`, 500);
+      throw new AppError(`Failed to process file: ${error}`, 500);
     }
   }
 
