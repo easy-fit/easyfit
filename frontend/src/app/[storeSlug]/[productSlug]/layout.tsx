@@ -1,15 +1,11 @@
 import { Metadata } from 'next';
 import { ENV } from '@/config/env';
-import {
-  StructuredData,
-  generateProductSchema,
-  generateBreadcrumbSchema,
-} from '@/components/seo/StructuredData';
+import { StructuredData, generateProductSchema, generateBreadcrumbSchema } from '@/components/seo/StructuredData';
 
 async function fetchProductData(storeSlug: string, productSlug: string) {
   try {
     const [productRes, storeRes] = await Promise.all([
-      fetch(`${ENV.API_URL}/stores/${storeSlug}/products/${productSlug}`, {
+      fetch(`${ENV.API_URL}/stores/${storeSlug}/${productSlug}`, {
         cache: 'no-store',
       }),
       fetch(`${ENV.API_URL}/stores/slug/${storeSlug}`, {
@@ -51,11 +47,12 @@ export async function generateMetadata({
   const productUrl = `${baseUrl}/${storeSlug}/${productSlug}`;
 
   // Get the first image from variants
-  const images = product.variants
-    ?.flatMap((v: any) => v.images)
-    .filter((img: any) => !!img)
-    .map((img: any) => img.key)
-    .slice(0, 3) || [];
+  const images =
+    product.variants
+      ?.flatMap((v: any) => v.images)
+      .filter((img: any) => !!img)
+      .map((img: any) => img.key)
+      .slice(0, 3) || [];
 
   const title = `${product.title} - ${store.name}`;
   const description =
@@ -65,14 +62,9 @@ export async function generateMetadata({
   return {
     title,
     description,
-    keywords: [
-      product.title,
-      store.name,
-      product.category,
-      'ropa online',
-      'comprar ropa',
-      'probar en casa',
-    ].filter(Boolean),
+    keywords: [product.title, store.name, product.category, 'ropa online', 'comprar ropa', 'probar en casa'].filter(
+      Boolean,
+    ),
     openGraph: {
       title,
       description,
@@ -114,13 +106,7 @@ export default async function ProductLayout({
   );
 }
 
-async function ProductStructuredData({
-  storeSlug,
-  productSlug,
-}: {
-  storeSlug: string;
-  productSlug: string;
-}) {
+async function ProductStructuredData({ storeSlug, productSlug }: { storeSlug: string; productSlug: string }) {
   const data = await fetchProductData(storeSlug, productSlug);
   const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://easyfit.com.ar';
 

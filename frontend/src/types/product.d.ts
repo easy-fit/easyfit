@@ -44,6 +44,7 @@ export type MujerCategoryKeys =
   | 'mallas'
   | 'mochilas-bolsos-carteras'
   | 'pantalones'
+  | 'pijamas'
   | 'polleras-faldas'
   | 'shorts-bermudas'
   | 'sweaters-tejidos'
