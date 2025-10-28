@@ -27,9 +27,10 @@ import { MobileSidebar } from '@/components/layout/mobile-sidebar';
 interface HeaderProps {
   onSearch?: (query: string) => void;
   searchQuery?: string;
+  hideMobileSearch?: boolean;
 }
 
-export function Header({ onSearch, searchQuery = '' }: HeaderProps) {
+export function Header({ onSearch, searchQuery = '', hideMobileSearch = false }: HeaderProps) {
   const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
@@ -276,28 +277,30 @@ export function Header({ onSearch, searchQuery = '' }: HeaderProps) {
           </div>
 
           {/* Mobile search */}
-          <div className="pb-4 md:hidden">
-            <form onSubmit={handleSearch} className="relative mb-3">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Busca productos, marcas o categorías"
-                value={localSearchQuery}
-                onChange={(e) => handleSearchInputChange(e.target.value)}
-                className="pl-10 pr-10 bg-gray-50 border-gray-200 focus:border-[#9EE493] focus:ring-[#9EE493]"
-              />
-              {localSearchQuery && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={clearSearch}
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 hover:bg-transparent"
-                >
-                  <X className="h-4 w-4 text-gray-400" />
-                </Button>
-              )}
-            </form>
-          </div>
+          {!hideMobileSearch && (
+            <div className="pb-4 md:hidden">
+              <form onSubmit={handleSearch} className="relative mb-3">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Busca productos, marcas o categorías"
+                  value={localSearchQuery}
+                  onChange={(e) => handleSearchInputChange(e.target.value)}
+                  className="pl-10 pr-10 bg-gray-50 border-gray-200 focus:border-[#9EE493] focus:ring-[#9EE493]"
+                />
+                {localSearchQuery && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={clearSearch}
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 hover:bg-transparent"
+                  >
+                    <X className="h-4 w-4 text-gray-400" />
+                  </Button>
+                )}
+              </form>
+            </div>
+          )}
         </div>
       </header>
       {/* Mobile Sidebar */}
