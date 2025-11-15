@@ -4,7 +4,7 @@
 import type React from 'react';
 import { buildQueryString } from '@/lib/utils';
 import { useState, useEffect } from 'react';
-import { Search, MapPin, User, ShoppingCart, Menu, X, LogOut, Package, HelpCircle, UserCircle } from 'lucide-react';
+import { Search, MapPin, User, ShoppingCart, Menu, X, LogOut, Package, HelpCircle, UserCircle, Store } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -215,6 +215,14 @@ export function Header({ onSearch, searchQuery = '', hideMobileSearch = false }:
                       <Package className="mr-2 h-4 w-4" />
                       <span>Mis Pedidos</span>
                     </DropdownMenuItem>
+                    {user.role === 'merchant' && (
+                      <>
+                        <DropdownMenuItem onClick={() => router.push('/dashboard')}>
+                          <Store className="mr-2 h-4 w-4" />
+                          <span>Dashboard de Tienda</span>
+                        </DropdownMenuItem>
+                      </>
+                    )}
                     {user.role === 'admin' && (
                       <>
                         <DropdownMenuItem onClick={() => router.push('/admin')}>
