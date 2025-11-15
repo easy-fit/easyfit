@@ -21,6 +21,7 @@ export function useEditProductForm(productData?: any, productId?: string) {
       description: '',
       category: '' as ProductCategory,
       status: 'draft',
+      allowedShippingTypes: ['simple', 'advanced', 'premium'],
       variants: [],
     },
   });
