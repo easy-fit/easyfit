@@ -113,6 +113,14 @@ export class OrderService {
     const user = await UserModel.findById(userId);
     if (user?.email && store) {
       await EmailService.sendOrderReceipt(user.email, total, store.name, shipping.cost);
+
+      // Notify admin of new order
+      await EmailService.sendNewOrderNotification(
+        order._id.toString(),
+        total,
+        store.name,
+        user.email
+      );
     }
     return order;
   }
