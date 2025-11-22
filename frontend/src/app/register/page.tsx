@@ -2,15 +2,14 @@
 
 import type React from 'react';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Eye, EyeOff, Mail, Lock, User, Phone, Store, ChevronDown, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, Store, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useRegisterCustomer } from '@/hooks/api/use-auth';
 import { useEasyFitToast } from '@/hooks/use-toast';
 
@@ -21,41 +20,14 @@ export default function RegisterPage() {
     email: '',
     password: '',
     confirmPassword: '',
-    dni: '',
-    dniType: 'DNI' as 'DNI' | 'CI' | 'LC' | 'LE',
-    birthDate: '',
-    phone: '',
-    areaCode: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [showAdditionalFields, setShowAdditionalFields] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
   const registerMutation = useRegisterCustomer();
   const toast = useEasyFitToast();
-
-  // Check if basic fields are completed to show additional fields
-  useEffect(() => {
-    const basicFieldsCompleted =
-      formData.name.trim() !== '' &&
-      formData.surname.trim() !== '' &&
-      formData.email.trim() !== '' &&
-      formData.password.trim() !== '' &&
-      formData.confirmPassword.trim() !== '';
-
-    if (basicFieldsCompleted && !showAdditionalFields) {
-      setShowAdditionalFields(true);
-    }
-  }, [
-    formData.name,
-    formData.surname,
-    formData.email,
-    formData.password,
-    formData.confirmPassword,
-    showAdditionalFields,
-  ]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -69,22 +41,6 @@ export default function RegisterPage() {
       return;
     }
 
-    // Validate required additional fields
-    if (!formData.dni.trim()) {
-      toast.validationError('número de documento');
-      return;
-    }
-
-    if (!formData.birthDate) {
-      toast.validationError('fecha de nacimiento');
-      return;
-    }
-
-    if (!formData.areaCode.trim() || !formData.phone.trim()) {
-      toast.validationError('teléfono');
-      return;
-    }
-
     setIsLoading(true);
 
     try {
@@ -93,15 +49,6 @@ export default function RegisterPage() {
         surname: formData.surname,
         email: formData.email,
         password: formData.password,
-        additionalInfo: {
-          dni: formData.dni,
-          dniType: formData.dniType,
-          birthDate: new Date(formData.birthDate),
-          phone: {
-            areaCode: formData.areaCode,
-            number: formData.phone,
-          },
-        },
       };
 
       await registerMutation.mutateAsync(registerData);
@@ -262,84 +209,11 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              {/* Additional Fields - Show when basic fields are completed */}
-              {showAdditionalFields && (
-                <div className="pt-4 border-t border-gray-100 space-y-4 animate-in slide-in-from-top-2 duration-300">
-                  <div className="flex items-center gap-2 text-[#20313A]">
-                    <ChevronDown className="h-4 w-4" />
-                    <p className="text-sm font-medium">Datos adicionales</p>
-                  </div>
-
-                  {/* DNI */}
-                  <div className="grid grid-cols-3 gap-2">
-                    <Select value={formData.dniType} onValueChange={(value) => handleInputChange('dniType', value)}>
-                      <SelectTrigger className="border-gray-200">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="DNI">DNI</SelectItem>
-                        <SelectItem value="CI">CI</SelectItem>
-                        <SelectItem value="LC">LC</SelectItem>
-                        <SelectItem value="LE">LE</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <div className="col-span-2">
-                      <Input
-                        placeholder="Número de documento"
-                        value={formData.dni}
-                        onChange={(e) => handleInputChange('dni', e.target.value)}
-                        className="border-gray-200 focus:border-[#9EE493] focus:ring-[#9EE493]"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  {/* Birth Date */}
-                  <div className="space-y-2">
-                    <Label htmlFor="birthDate" className="text-[#20313A] font-medium text-sm">
-                      Fecha de nacimiento
-                    </Label>
-                    <Input
-                      id="birthDate"
-                      type="date"
-                      value={formData.birthDate}
-                      onChange={(e) => handleInputChange('birthDate', e.target.value)}
-                      className="border-gray-200 focus:border-[#9EE493] focus:ring-[#9EE493]"
-                      required
-                    />
-                  </div>
-
-                  {/* Phone */}
-                  <div className="space-y-2">
-                    <Label className="text-[#20313A] font-medium text-sm">Teléfono</Label>
-                    <div className="grid grid-cols-3 gap-2">
-                      <Input
-                        placeholder="Área"
-                        value={formData.areaCode}
-                        onChange={(e) => handleInputChange('areaCode', e.target.value)}
-                        className="border-gray-200 focus:border-[#9EE493] focus:ring-[#9EE493]"
-                        required
-                      />
-                      <div className="col-span-2 relative">
-                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                        <Input
-                          placeholder="Número de teléfono"
-                          value={formData.phone}
-                          onChange={(e) => handleInputChange('phone', e.target.value)}
-                          className="pl-10 border-gray-200 focus:border-[#9EE493] focus:ring-[#9EE493]"
-                          required
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               {/* Submit Button */}
               <Button
                 type="submit"
                 className="w-full bg-[#9EE493] hover:bg-[#8BD480] text-[#20313A] font-semibold py-2.5 mt-6"
-                disabled={isLoading || !showAdditionalFields}
+                disabled={isLoading}
               >
                 {isLoading ? 'Creando cuenta...' : 'Crear Cuenta'}
               </Button>
