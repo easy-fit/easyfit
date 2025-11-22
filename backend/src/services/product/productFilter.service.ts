@@ -16,7 +16,12 @@ export class ProductFilterService {
       // This is used for gender-level filtering (e.g., ^hombre matches all hombre.* categories)
       if (category.startsWith('^')) {
         const genderPattern = category.substring(1); // Remove the ^ prefix
-        matchFilter.category = { $regex: `^${genderPattern}`, $options: 'i' };
+        // Include unisex products when searching for hombre or mujer
+        if (genderPattern === 'hombre' || genderPattern === 'mujer') {
+          matchFilter.category = { $regex: `^(${genderPattern}|unisex)`, $options: 'i' };
+        } else {
+          matchFilter.category = { $regex: `^${genderPattern}`, $options: 'i' };
+        }
       } else {
         matchFilter.category = category;
       }

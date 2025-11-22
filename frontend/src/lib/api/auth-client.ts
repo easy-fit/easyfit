@@ -32,6 +32,13 @@ export class AuthClient extends BaseApiClient {
     });
   }
 
+  public async googleLogin(idToken: string): Promise<LoginResponse> {
+    return this.fetchApi<LoginResponse>('/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ idToken }),
+    });
+  }
+
   public async logout(): Promise<void> {
     return this.fetchApi<void>('/auth/logout', { method: 'POST' });
   }

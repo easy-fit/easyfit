@@ -8,7 +8,8 @@ const UserSchema = new Schema<User>(
     name: { type: String, required: true, trim: true, lowercase: true },
     surname: { type: String, required: true, trim: true, lowercase: true },
     email: { type: String, required: true, lowercase: true },
-    passwordHash: { type: String, required: true },
+    passwordHash: { type: String },
+    googleId: { type: String },
     role: {
       type: String,
       enum: ['customer', 'merchant', 'rider', 'admin', 'manager'],
@@ -18,8 +19,7 @@ const UserSchema = new Schema<User>(
       dni: { type: String, trim: true },
       dniType: {
         type: String,
-        enum: ['DNI', 'CI', 'LC', 'LE'],
-        default: 'dni',
+        enum: ['DNI', 'CI', 'LC', 'LE', 'dni'],
       },
       birthDate: { type: Date },
       phone: {
@@ -96,6 +96,7 @@ UserSchema.set('toObject', {
 
 UserSchema.index({ email: 1 }, { unique: true });
 UserSchema.index({ phone: 1 }, { unique: true, sparse: true });
+UserSchema.index({ googleId: 1 }, { unique: true, sparse: true });
 UserSchema.index({ role: 1 });
 
 export const UserModel = model('User', UserSchema);
