@@ -20,7 +20,6 @@ const UserSchema = new Schema<User>(
       dniType: {
         type: String,
         enum: ['DNI', 'CI', 'LC', 'LE'],
-        default: 'DNI',
       },
       birthDate: { type: Date },
       phone: {
