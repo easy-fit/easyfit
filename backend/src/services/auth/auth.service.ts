@@ -57,7 +57,7 @@ export class AuthService {
   static async login({ email, password }: LoginDTO, userAgent?: string) {
     const user = await UserModel.findOne({ email }).select('+passwordHash');
 
-    if (!user || !(await comparePasswords(password, user.passwordHash))) {
+    if (!user || !user.passwordHash || !(await comparePasswords(password, user.passwordHash))) {
       throw new AppError('Invalid email or password', 401);
     }
 

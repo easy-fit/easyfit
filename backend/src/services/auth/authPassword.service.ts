@@ -50,6 +50,10 @@ export class AuthPasswordService {
       throw new AppError('User not found', 404);
     }
 
+    if (!user.passwordHash) {
+      throw new AppError('Cannot update password for OAuth accounts', 400);
+    }
+
     const isMatch = await comparePasswords(currentPassword, user.passwordHash);
     if (!isMatch) {
       throw new AppError('Current password is incorrect', 401);
