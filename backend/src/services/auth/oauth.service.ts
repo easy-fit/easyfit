@@ -63,6 +63,7 @@ export class OAuthService {
         email: googleUserInfo.email,
         googleId: googleUserInfo.sub,
         role: 'customer',
+        additionalInfo: {},
         emailVerification: {
           verified: true, // Auto-verify for OAuth users
           attempts: 0,
