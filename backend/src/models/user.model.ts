@@ -9,7 +9,7 @@ const UserSchema = new Schema<User>(
     surname: { type: String, required: true, trim: true, lowercase: true },
     email: { type: String, required: true, lowercase: true },
     passwordHash: { type: String },
-    googleId: { type: String, sparse: true },
+    googleId: { type: String },
     role: {
       type: String,
       enum: ['customer', 'merchant', 'rider', 'admin', 'manager'],
