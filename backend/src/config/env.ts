@@ -53,3 +53,7 @@ export const MERCADO_PAGO = {
   MP_WEBHOOK_SECRET: process.env.MP_WEBHOOK_SECRET || '',
   MP_WEBHOOK_URL: process.env.MP_WEBHOOK_URL || '',
 };
+
+export const GOOGLE_OAUTH = {
+  CLIENT_ID: process.env.GOOGLE_OAUTH_CLIENT_ID || '',
+};

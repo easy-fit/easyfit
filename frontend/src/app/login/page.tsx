@@ -13,6 +13,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useLogin } from '@/hooks/api/use-auth';
 import { useEasyFitToast } from '@/hooks/use-toast';
+import { GoogleLogin } from '@react-oauth/google';
+import { useAuthContext } from '@/providers/auth-provider';
 
 function LoginForm() {
   const [email, setEmail] = useState('');
@@ -24,8 +26,33 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const loginMutation = useLogin();
   const toast = useEasyFitToast();
+  const { loginWithGoogle } = useAuthContext();
 
   const redirectTo = searchParams.get('redirect');
+
+  const handleGoogleSuccess = async (credentialResponse: { credential?: string }) => {
+    if (!credentialResponse.credential) {
+      toast.error('Error al iniciar sesión con Google');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const loggedInUser = await loginWithGoogle(credentialResponse.credential);
+      toast.loginSuccess();
+
+      if (redirectTo) {
+        router.push(redirectTo);
+      } else {
+        const defaultRedirect = getRoleBasedRedirect(loggedInUser.role);
+        router.push(defaultRedirect);
+      }
+    } catch (error: any) {
+      toast.authError(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const getRoleBasedRedirect = (userRole: string) => {
     switch (userRole) {
@@ -158,6 +185,29 @@ function LoginForm() {
                 {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
               </Button>
             </form>
+
+            {/* Divider */}
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">o continuar con</span>
+              </div>
+            </div>
+
+            {/* Google Login */}
+            <div className="flex justify-center">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => toast.error('Error al iniciar sesión con Google')}
+                theme="outline"
+                size="large"
+                width="100%"
+                text="signin_with"
+                locale="es"
+              />
+            </div>
 
             {/* Register Link */}
             <div className="mt-6 text-center">

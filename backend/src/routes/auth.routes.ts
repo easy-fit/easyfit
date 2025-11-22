@@ -8,6 +8,7 @@ authRoutes.post('/register', assignRoleFromPath, AuthController.register);
 authRoutes.post('/register/riders', assignRoleFromPath, AuthController.register);
 authRoutes.post('/register/stores', assignRoleFromPath, AuthController.register);
 authRoutes.post('/login', AuthController.login);
+authRoutes.post('/google', AuthController.googleAuth);
 
 authRoutes.post('/forgot-password', AuthController.forgotPassword);
 authRoutes.post('/reset-password/:token', AuthController.resetPassword);

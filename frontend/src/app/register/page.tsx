@@ -12,6 +12,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useRegisterCustomer } from '@/hooks/api/use-auth';
 import { useEasyFitToast } from '@/hooks/use-toast';
+import { GoogleLogin } from '@react-oauth/google';
+import { useAuthContext } from '@/providers/auth-provider';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -28,6 +30,25 @@ export default function RegisterPage() {
   const router = useRouter();
   const registerMutation = useRegisterCustomer();
   const toast = useEasyFitToast();
+  const { loginWithGoogle } = useAuthContext();
+
+  const handleGoogleSuccess = async (credentialResponse: { credential?: string }) => {
+    if (!credentialResponse.credential) {
+      toast.error('Error al registrarse con Google');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await loginWithGoogle(credentialResponse.credential);
+      toast.success('¡Cuenta creada exitosamente!');
+      router.push('/');
+    } catch (error: any) {
+      toast.smartError(error, 'Error al registrarse con Google');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -218,6 +239,29 @@ export default function RegisterPage() {
                 {isLoading ? 'Creando cuenta...' : 'Crear Cuenta'}
               </Button>
             </form>
+
+            {/* Divider */}
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">o registrate con</span>
+              </div>
+            </div>
+
+            {/* Google Sign Up */}
+            <div className="flex justify-center">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => toast.error('Error al registrarse con Google')}
+                theme="outline"
+                size="large"
+                width="100%"
+                text="signup_with"
+                locale="es"
+              />
+            </div>
 
             {/* Login Link */}
             <div className="mt-6 text-center">
