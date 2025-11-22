@@ -1,7 +1,7 @@
 // Category hierarchy structure for the e-commerce platform
 // Supports: Hombre, Mujer, Niños (with age groups and subcategories)
 
-export type Gender = 'hombre' | 'mujer' | 'ninos';
+export type Gender = 'hombre' | 'mujer' | 'ninos' | 'unisex';
 export type AgeGroup = '1-6' | '6-14' | '0-18m';
 
 // Main category structure
@@ -9,7 +9,26 @@ export interface CategoryHierarchy {
   hombre: HombreCategoryKeys;
   mujer: MujerCategoryKeys;
   ninos: NinosCategoryKeys;
+  unisex: UnisexCategoryKeys;
 }
+
+// Unisex subcategories (common to both hombre and mujer)
+export type UnisexCategoryKeys =
+  | 'ver-todo'
+  | 'abrigos'
+  | 'blazers'
+  | 'buzos'
+  | 'camisetas'
+  | 'camisas'
+  | 'deportivo'
+  | 'jeans'
+  | 'mochilas-bolsos'
+  | 'pantalones'
+  | 'sweaters'
+  | 'trajes'
+  | 'zapatillas'
+  | 'zapatos'
+  | 'accesorios';
 
 // Hombre subcategories
 export type HombreCategoryKeys = 
@@ -134,11 +153,13 @@ export type BebeCategoryKeys =
   | 'accesorios';
 
 // Flat category string for database storage (dot notation)
-export type ProductCategory = 
+export type ProductCategory =
   // Hombre categories
   | `hombre.${HombreCategoryKeys}`
   // Mujer categories
   | `mujer.${MujerCategoryKeys}`
+  // Unisex categories
+  | `unisex.${UnisexCategoryKeys}`
   // Niños categories
   | `ninos.nina.1-6.${NinaSubcategoryKeys}`
   | `ninos.nina.6-14.${NinaSubcategoryKeys}`
@@ -169,7 +190,12 @@ export const PRODUCT_CATEGORY_VALUES: ProductCategory[] = [
   'mujer.camisas-blusas', 'mujer.corseteria', 'mujer.deportivo', 'mujer.jeans', 'mujer.mallas', 'mujer.mochilas-bolsos-carteras', 'mujer.pantalones',
   'mujer.pijamas', 'mujer.polleras-faldas', 'mujer.shorts-bermudas', 'mujer.sweaters-tejidos', 'mujer.tops-bodies',
   'mujer.vestidos-monos', 'mujer.trajes', 'mujer.zapatillas', 'mujer.zapatos', 'mujer.accesorios',
-  
+
+  // Unisex categories
+  'unisex.ver-todo', 'unisex.abrigos', 'unisex.blazers', 'unisex.buzos', 'unisex.camisetas',
+  'unisex.camisas', 'unisex.deportivo', 'unisex.jeans', 'unisex.mochilas-bolsos', 'unisex.pantalones',
+  'unisex.sweaters', 'unisex.trajes', 'unisex.zapatillas', 'unisex.zapatos', 'unisex.accesorios',
+
   // Niños - Niña 1-6
   'ninos.nina.1-6.ver-todo', 'ninos.nina.1-6.abrigos', 'ninos.nina.1-6.buzos', 'ninos.nina.1-6.camisetas',
   'ninos.nina.1-6.camisas', 'ninos.nina.1-6.jeans', 'ninos.nina.1-6.pantalones', 'ninos.nina.1-6.vestidos-monos',

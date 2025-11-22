@@ -123,6 +123,7 @@ export function HierarchicalCategorySelector({
               <SelectContent>
                 <SelectItem value="hombre">Hombre</SelectItem>
                 <SelectItem value="mujer">Mujer</SelectItem>
+                <SelectItem value="unisex">Unisex</SelectItem>
                 <SelectItem value="ninos">Niños</SelectItem>
               </SelectContent>
             </Select>

@@ -40,8 +40,8 @@ export function CategorySidebar({ gender, selectedCategory, onCategoryChange, cl
   };
 
   const renderCategories = () => {
-    if (gender === 'hombre' || gender === 'mujer') {
-      const categories = gender === 'hombre' ? categoryTree.hombre : categoryTree.mujer;
+    if (gender === 'hombre' || gender === 'mujer' || gender === 'unisex') {
+      const categories = gender === 'hombre' ? categoryTree.hombre : gender === 'mujer' ? categoryTree.mujer : categoryTree.unisex;
 
       return (
         <div className="space-y-1">
@@ -167,6 +167,7 @@ export function CategorySidebar({ gender, selectedCategory, onCategoryChange, cl
         <h2 className="text-lg font-semibold text-gray-900">
           {gender === 'hombre' && 'Hombre'}
           {gender === 'mujer' && 'Mujer'}
+          {gender === 'unisex' && 'Unisex'}
           {gender === 'ninos' && 'Niños'}
         </h2>
       </div>

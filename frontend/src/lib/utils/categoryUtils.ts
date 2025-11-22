@@ -107,6 +107,23 @@ export const CATEGORY_CONFIG: Record<ProductCategory, CategoryDisplayInfo> = {
   'mujer.zapatos': { key: 'mujer.zapatos', displayName: 'Zapatos', gender: 'mujer', level: 'subcategory' },
   'mujer.accesorios': { key: 'mujer.accesorios', displayName: 'Accesorios', gender: 'mujer', level: 'subcategory' },
 
+  // Unisex categories
+  'unisex.ver-todo': { key: 'unisex.ver-todo', displayName: 'Ver Todo', gender: 'unisex', level: 'subcategory' },
+  'unisex.abrigos': { key: 'unisex.abrigos', displayName: 'Abrigos', gender: 'unisex', level: 'subcategory' },
+  'unisex.blazers': { key: 'unisex.blazers', displayName: 'Blazers', gender: 'unisex', level: 'subcategory' },
+  'unisex.buzos': { key: 'unisex.buzos', displayName: 'Buzos', gender: 'unisex', level: 'subcategory' },
+  'unisex.camisetas': { key: 'unisex.camisetas', displayName: 'Camisetas', gender: 'unisex', level: 'subcategory' },
+  'unisex.camisas': { key: 'unisex.camisas', displayName: 'Camisas', gender: 'unisex', level: 'subcategory' },
+  'unisex.deportivo': { key: 'unisex.deportivo', displayName: 'Deportivo', gender: 'unisex', level: 'subcategory' },
+  'unisex.jeans': { key: 'unisex.jeans', displayName: 'Jeans', gender: 'unisex', level: 'subcategory' },
+  'unisex.mochilas-bolsos': { key: 'unisex.mochilas-bolsos', displayName: 'Mochilas & Bolsos', gender: 'unisex', level: 'subcategory' },
+  'unisex.pantalones': { key: 'unisex.pantalones', displayName: 'Pantalones', gender: 'unisex', level: 'subcategory' },
+  'unisex.sweaters': { key: 'unisex.sweaters', displayName: 'Sweaters', gender: 'unisex', level: 'subcategory' },
+  'unisex.trajes': { key: 'unisex.trajes', displayName: 'Trajes', gender: 'unisex', level: 'subcategory' },
+  'unisex.zapatillas': { key: 'unisex.zapatillas', displayName: 'Zapatillas', gender: 'unisex', level: 'subcategory' },
+  'unisex.zapatos': { key: 'unisex.zapatos', displayName: 'Zapatos', gender: 'unisex', level: 'subcategory' },
+  'unisex.accesorios': { key: 'unisex.accesorios', displayName: 'Accesorios', gender: 'unisex', level: 'subcategory' },
+
   // Niños - Niña 1½-6 años
   'ninos.nina.1-6.ver-todo': {
     key: 'ninos.nina.1-6.ver-todo',
@@ -724,6 +741,8 @@ export class CategoryUtils {
         return 'Mujer';
       case 'ninos':
         return 'Niños';
+      case 'unisex':
+        return 'Unisex';
       default:
         return gender;
     }
@@ -768,6 +787,7 @@ export class CategoryUtils {
     const tree = {
       hombre: {} as Record<string, CategoryDisplayInfo>,
       mujer: {} as Record<string, CategoryDisplayInfo>,
+      unisex: {} as Record<string, CategoryDisplayInfo>,
       ninos: {
         nina: {
           '1-6': {} as Record<string, CategoryDisplayInfo>,
@@ -790,6 +810,8 @@ export class CategoryUtils {
         tree.hombre[parts[1]] = config;
       } else if (parts[0] === 'mujer') {
         tree.mujer[parts[1]] = config;
+      } else if (parts[0] === 'unisex') {
+        tree.unisex[parts[1]] = config;
       } else if (parts[0] === 'ninos') {
         const childGender = parts[1] as 'nina' | 'nino' | 'bebe';
         const ageGroup = parts[2] as '1-6' | '6-14' | '0-18m';
@@ -829,6 +851,7 @@ export class CategoryUtils {
     const grouped = {
       hombre: options.filter((opt) => opt.gender === 'hombre'),
       mujer: options.filter((opt) => opt.gender === 'mujer'),
+      unisex: options.filter((opt) => opt.gender === 'unisex'),
       ninos: {
         nina: {
           '1-6': options.filter(
