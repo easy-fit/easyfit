@@ -51,7 +51,7 @@ export interface EmailVerification {
 
 interface AdditionalInfo {
   dni?: string;
-  dniType?: 'DNI' | 'CI' | 'LC' | 'LE';
+  dniType?: 'DNI' | 'CI' | 'LC' | 'LE' | 'dni';
   birthDate?: Date;
   phone?: {
     areaCode?: string;
