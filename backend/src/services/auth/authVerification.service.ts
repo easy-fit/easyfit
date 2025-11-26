@@ -26,7 +26,7 @@ export class AuthVerificationService {
     ) {
       // Use direct MongoDB collection update to bypass schema validation
       await UserModel.collection.updateOne(
-        { _id: user._id },
+        { _id: new Types.ObjectId(user._id) },
         { $inc: { 'emailVerification.attempts': 1 } }
       );
       throw new AppError('Invalid or expired verification code', 400);
@@ -34,7 +34,7 @@ export class AuthVerificationService {
 
     // Use direct MongoDB collection update to bypass schema validation
     await UserModel.collection.updateOne(
-      { _id: user._id },
+      { _id: new Types.ObjectId(user._id) },
       {
         $set: {
           'emailVerification.verified': true,
@@ -70,7 +70,7 @@ export class AuthVerificationService {
 
     // Use direct MongoDB collection update to bypass schema validation
     await UserModel.collection.updateOne(
-      { _id: user._id },
+      { _id: new Types.ObjectId(user._id) },
       {
         $set: {
           'emailVerification.code': hashedCode,
