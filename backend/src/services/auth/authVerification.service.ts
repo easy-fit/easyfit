@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import { UserModel } from '../../models/user.model';
 import { AppError } from '../../utils/appError';
 import { EmailService } from '../email.service';
+import { Types } from 'mongoose';
 
 export class AuthVerificationService {
   static async verifyEmail(email: string, code: string) {
@@ -23,24 +24,26 @@ export class AuthVerificationService {
       !user.emailVerification.expires ||
       user.emailVerification.expires < new Date()
     ) {
-      // Increment attempts using findByIdAndUpdate to avoid full document validation
-      await UserModel.findByIdAndUpdate(
-        user._id,
-        { $inc: { 'emailVerification.attempts': 1 } },
-        { runValidators: false }
+      // Use direct MongoDB collection update to bypass schema validation
+      await UserModel.collection.updateOne(
+        { _id: user._id },
+        { $inc: { 'emailVerification.attempts': 1 } }
       );
       throw new AppError('Invalid or expired verification code', 400);
     }
 
-    // Update verification status using findByIdAndUpdate to avoid full document validation
-    await UserModel.findByIdAndUpdate(
-      user._id,
+    // Use direct MongoDB collection update to bypass schema validation
+    await UserModel.collection.updateOne(
+      { _id: user._id },
       {
-        'emailVerification.verified': true,
-        'emailVerification.code': undefined,
-        'emailVerification.expires': undefined,
-      },
-      { runValidators: false }
+        $set: {
+          'emailVerification.verified': true,
+        },
+        $unset: {
+          'emailVerification.code': '',
+          'emailVerification.expires': '',
+        },
+      }
     );
 
     user.emailVerification.verified = true;
@@ -65,15 +68,16 @@ export class AuthVerificationService {
 
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-    // Update verification fields using findByIdAndUpdate to avoid full document validation
-    await UserModel.findByIdAndUpdate(
-      user._id,
+    // Use direct MongoDB collection update to bypass schema validation
+    await UserModel.collection.updateOne(
+      { _id: user._id },
       {
-        'emailVerification.code': hashedCode,
-        'emailVerification.expires': expiresAt,
-        'emailVerification.attempts': 0,
-      },
-      { runValidators: false }
+        $set: {
+          'emailVerification.code': hashedCode,
+          'emailVerification.expires': expiresAt,
+          'emailVerification.attempts': 0,
+        },
+      }
     );
 
     await EmailService.sendVerificationCode(user.email, code);

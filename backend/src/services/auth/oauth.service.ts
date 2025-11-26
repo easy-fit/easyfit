@@ -3,6 +3,7 @@ import { UserModel } from '../../models/user.model';
 import { AppError } from '../../utils/appError';
 import { GOOGLE_OAUTH } from '../../config/env';
 import { AuthTokenService } from './authToken.service';
+import { Types } from 'mongoose';
 
 const client = new OAuth2Client(GOOGLE_OAUTH.CLIENT_ID);
 
@@ -52,10 +53,10 @@ export class OAuthService {
     if (user) {
       // Link Google account if user exists by email but doesn't have googleId
       if (!user.googleId) {
-        await UserModel.findByIdAndUpdate(
-          user._id,
-          { googleId: googleUserInfo.sub },
-          { runValidators: false }
+        // Use direct MongoDB collection update to bypass schema validation
+        await UserModel.collection.updateOne(
+          { _id: user._id },
+          { $set: { googleId: googleUserInfo.sub } }
         );
         user.googleId = googleUserInfo.sub;
       }
@@ -74,12 +75,11 @@ export class OAuthService {
       });
     }
 
-    // Generate refresh token and save using findByIdAndUpdate to avoid full document validation
+    // Use direct MongoDB collection update to bypass schema validation
     const refreshToken = AuthTokenService.signRefreshToken(user._id);
-    await UserModel.findByIdAndUpdate(
-      user._id,
-      { refreshToken },
-      { runValidators: false }
+    await UserModel.collection.updateOne(
+      { _id: user._id },
+      { $set: { refreshToken } }
     );
     user.refreshToken = refreshToken;
 

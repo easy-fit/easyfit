@@ -10,6 +10,7 @@ import { StoreManagerModel } from '../../models/storeManager.model';
 import { StoreModel } from '../../models/store.model';
 import { comparePasswords, hashPassword } from '../../utils/password';
 import { EmailService } from '../email.service';
+import { Types } from 'mongoose';
 
 export class AuthService {
   static async register(data: RegisterDTO) {
@@ -45,11 +46,10 @@ export class AuthService {
 
     const refreshToken = AuthTokenService.signRefreshToken(user._id);
 
-    // Update refreshToken using findByIdAndUpdate to avoid full document validation
-    await UserModel.findByIdAndUpdate(
-      user._id,
-      { refreshToken },
-      { runValidators: false }
+    // Use direct MongoDB collection update to bypass schema validation
+    await UserModel.collection.updateOne(
+      { _id: user._id },
+      { $set: { refreshToken } }
     );
 
     user.refreshToken = refreshToken;
@@ -70,11 +70,10 @@ export class AuthService {
 
     const refreshToken = AuthTokenService.signRefreshToken(user._id);
 
-    // Update refreshToken using findOneAndUpdate to avoid full document validation
-    await UserModel.findByIdAndUpdate(
-      user._id,
-      { refreshToken },
-      { runValidators: false }
+    // Use direct MongoDB collection update to bypass schema validation
+    await UserModel.collection.updateOne(
+      { _id: user._id },
+      { $set: { refreshToken } }
     );
 
     user.refreshToken = refreshToken;
@@ -86,14 +85,13 @@ export class AuthService {
   }
 
   static async logout(userId: string) {
-    // Update refreshToken using findByIdAndUpdate to avoid full document validation
-    const user = await UserModel.findByIdAndUpdate(
-      userId,
-      { refreshToken: undefined },
-      { runValidators: false }
+    // Use direct MongoDB collection update to bypass schema validation
+    const result = await UserModel.collection.updateOne(
+      { _id: new Types.ObjectId(userId) },
+      { $unset: { refreshToken: '' } }
     );
 
-    if (!user) throw new AppError('User not found', 404);
+    if (result.matchedCount === 0) throw new AppError('User not found', 404);
   }
 
   static async refreshToken(token: string) {
@@ -141,7 +139,6 @@ export class AuthService {
       name: data.name,
       surname: data.surname,
       email: data.email,
-      password: data.password,
       passwordHash: hashedPassword,
       role: 'manager',
       additionalInfo: data.additionalInfo,
