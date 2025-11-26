@@ -5,6 +5,7 @@ import { AppError } from '../../utils/appError';
 import { hashPassword, comparePasswords } from '../../utils/password';
 import { EmailService } from '../email.service';
 import { AuthTokenService } from './authToken.service';
+import { Types } from 'mongoose';
 
 export class AuthPasswordService {
   static async forgotPassword(email: string) {
@@ -35,16 +36,19 @@ export class AuthPasswordService {
     const hashedPassword = await hashPassword(newPassword);
     const refreshToken = AuthTokenService.signRefreshToken(user._id);
 
-    // Update fields using findByIdAndUpdate to avoid full document validation
-    await UserModel.findByIdAndUpdate(
-      user._id,
+    // Use direct MongoDB collection update to bypass schema validation
+    await UserModel.collection.updateOne(
+      { _id: user._id },
       {
-        passwordHash: hashedPassword,
-        passwordResetToken: undefined,
-        passwordResetExpires: undefined,
-        refreshToken,
-      },
-      { runValidators: false }
+        $set: {
+          passwordHash: hashedPassword,
+          refreshToken,
+        },
+        $unset: {
+          passwordResetToken: '',
+          passwordResetExpires: '',
+        },
+      }
     );
 
     user.passwordHash = hashedPassword;
@@ -73,14 +77,15 @@ export class AuthPasswordService {
     const hashedPassword = await hashPassword(newPassword);
     const refreshToken = AuthTokenService.signRefreshToken(user._id);
 
-    // Update fields using findByIdAndUpdate to avoid full document validation
-    await UserModel.findByIdAndUpdate(
-      userId,
+    // Use direct MongoDB collection update to bypass schema validation
+    await UserModel.collection.updateOne(
+      { _id: new Types.ObjectId(userId) },
       {
-        passwordHash: hashedPassword,
-        refreshToken,
-      },
-      { runValidators: false }
+        $set: {
+          passwordHash: hashedPassword,
+          refreshToken,
+        },
+      }
     );
 
     user.passwordHash = hashedPassword;
@@ -96,14 +101,15 @@ export class AuthPasswordService {
     const resetToken = crypto.randomBytes(32).toString('hex');
     const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
 
-    // Update fields using findByIdAndUpdate to avoid full document validation
-    await UserModel.findByIdAndUpdate(
-      user._id,
+    // Use direct MongoDB collection update to bypass schema validation
+    await UserModel.collection.updateOne(
+      { _id: user._id },
       {
-        passwordResetToken: hashedToken,
-        passwordResetExpires: new Date(Date.now() + 10 * 60 * 1000),
-      },
-      { runValidators: false }
+        $set: {
+          passwordResetToken: hashedToken,
+          passwordResetExpires: new Date(Date.now() + 10 * 60 * 1000),
+        },
+      }
     );
 
     await EmailService.sendPasswordReset(email, resetToken);
