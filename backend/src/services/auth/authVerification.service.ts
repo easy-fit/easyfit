@@ -23,15 +23,29 @@ export class AuthVerificationService {
       !user.emailVerification.expires ||
       user.emailVerification.expires < new Date()
     ) {
-      user.emailVerification.attempts += 1;
-      await user.save({ validateBeforeSave: false });
+      // Increment attempts using findByIdAndUpdate to avoid full document validation
+      await UserModel.findByIdAndUpdate(
+        user._id,
+        { $inc: { 'emailVerification.attempts': 1 } },
+        { runValidators: false }
+      );
       throw new AppError('Invalid or expired verification code', 400);
     }
+
+    // Update verification status using findByIdAndUpdate to avoid full document validation
+    await UserModel.findByIdAndUpdate(
+      user._id,
+      {
+        'emailVerification.verified': true,
+        'emailVerification.code': undefined,
+        'emailVerification.expires': undefined,
+      },
+      { runValidators: false }
+    );
 
     user.emailVerification.verified = true;
     user.emailVerification.code = undefined;
     user.emailVerification.expires = undefined;
-    await user.save({ validateBeforeSave: false });
 
     return user;
   }
@@ -49,17 +63,24 @@ export class AuthVerificationService {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const hashedCode = crypto.createHash('sha256').update(code).digest('hex');
 
-    user.emailVerification.code = hashedCode;
-    user.emailVerification.expires = new Date(Date.now() + 10 * 60 * 1000);
-    user.emailVerification.attempts = 0;
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-    await user.save({ validateBeforeSave: false });
+    // Update verification fields using findByIdAndUpdate to avoid full document validation
+    await UserModel.findByIdAndUpdate(
+      user._id,
+      {
+        'emailVerification.code': hashedCode,
+        'emailVerification.expires': expiresAt,
+        'emailVerification.attempts': 0,
+      },
+      { runValidators: false }
+    );
 
     await EmailService.sendVerificationCode(user.email, code);
 
     return {
       message: 'Verification code sent successfully',
-      expiresAt: user.emailVerification.expires,
+      expiresAt,
     };
   }
 }
