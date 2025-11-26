@@ -48,7 +48,7 @@ export class AuthService {
 
     // Use direct MongoDB collection update to bypass schema validation
     await UserModel.collection.updateOne(
-      { _id: user._id },
+      { _id: new Types.ObjectId(user._id) },
       { $set: { refreshToken } }
     );
 
@@ -72,7 +72,7 @@ export class AuthService {
 
     // Use direct MongoDB collection update to bypass schema validation
     await UserModel.collection.updateOne(
-      { _id: user._id },
+      { _id: new Types.ObjectId(user._id) },
       { $set: { refreshToken } }
     );
 

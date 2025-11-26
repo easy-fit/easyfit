@@ -38,7 +38,7 @@ export class AuthPasswordService {
 
     // Use direct MongoDB collection update to bypass schema validation
     await UserModel.collection.updateOne(
-      { _id: user._id },
+      { _id: new Types.ObjectId(user._id) },
       {
         $set: {
           passwordHash: hashedPassword,
@@ -103,7 +103,7 @@ export class AuthPasswordService {
 
     // Use direct MongoDB collection update to bypass schema validation
     await UserModel.collection.updateOne(
-      { _id: user._id },
+      { _id: new Types.ObjectId(user._id) },
       {
         $set: {
           passwordResetToken: hashedToken,

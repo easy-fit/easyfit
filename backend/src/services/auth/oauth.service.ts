@@ -55,7 +55,7 @@ export class OAuthService {
       if (!user.googleId) {
         // Use direct MongoDB collection update to bypass schema validation
         await UserModel.collection.updateOne(
-          { _id: user._id },
+          { _id: new Types.ObjectId(user._id) },
           { $set: { googleId: googleUserInfo.sub } }
         );
         user.googleId = googleUserInfo.sub;
@@ -78,7 +78,7 @@ export class OAuthService {
     // Use direct MongoDB collection update to bypass schema validation
     const refreshToken = AuthTokenService.signRefreshToken(user._id);
     await UserModel.collection.updateOne(
-      { _id: user._id },
+      { _id: new Types.ObjectId(user._id) },
       { $set: { refreshToken } }
     );
     user.refreshToken = refreshToken;
