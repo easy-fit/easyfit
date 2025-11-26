@@ -52,8 +52,12 @@ export class OAuthService {
     if (user) {
       // Link Google account if user exists by email but doesn't have googleId
       if (!user.googleId) {
+        await UserModel.findByIdAndUpdate(
+          user._id,
+          { googleId: googleUserInfo.sub },
+          { runValidators: false }
+        );
         user.googleId = googleUserInfo.sub;
-        await user.save({ validateBeforeSave: false });
       }
     } else {
       // Create new user
@@ -70,10 +74,14 @@ export class OAuthService {
       });
     }
 
-    // Generate refresh token and save
+    // Generate refresh token and save using findByIdAndUpdate to avoid full document validation
     const refreshToken = AuthTokenService.signRefreshToken(user._id);
+    await UserModel.findByIdAndUpdate(
+      user._id,
+      { refreshToken },
+      { runValidators: false }
+    );
     user.refreshToken = refreshToken;
-    await user.save({ validateBeforeSave: false });
 
     return user;
   }

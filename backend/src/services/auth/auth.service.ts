@@ -44,8 +44,15 @@ export class AuthService {
     });
 
     const refreshToken = AuthTokenService.signRefreshToken(user._id);
+
+    // Update refreshToken using findByIdAndUpdate to avoid full document validation
+    await UserModel.findByIdAndUpdate(
+      user._id,
+      { refreshToken },
+      { runValidators: false }
+    );
+
     user.refreshToken = refreshToken;
-    await user.save({ validateBeforeSave: false });
 
     AuthVerificationService.sendVerificationCode(user.email).catch((err) => {
       console.error(`Error sending verification code to ${user.email}:`, err);
@@ -62,8 +69,15 @@ export class AuthService {
     }
 
     const refreshToken = AuthTokenService.signRefreshToken(user._id);
+
+    // Update refreshToken using findOneAndUpdate to avoid full document validation
+    await UserModel.findByIdAndUpdate(
+      user._id,
+      { refreshToken },
+      { runValidators: false }
+    );
+
     user.refreshToken = refreshToken;
-    await user.save({ validateBeforeSave: false });
 
     if (!userAgent) userAgent = 'Desconocido';
     if (user.role === 'merchant') EmailService.sendLoginAlert(email, userAgent);
@@ -72,11 +86,14 @@ export class AuthService {
   }
 
   static async logout(userId: string) {
-    const user = await UserModel.findById(userId);
-    if (!user) throw new AppError('User not found', 404);
+    // Update refreshToken using findByIdAndUpdate to avoid full document validation
+    const user = await UserModel.findByIdAndUpdate(
+      userId,
+      { refreshToken: undefined },
+      { runValidators: false }
+    );
 
-    user.refreshToken = undefined;
-    await user.save({ validateBeforeSave: false });
+    if (!user) throw new AppError('User not found', 404);
   }
 
   static async refreshToken(token: string) {

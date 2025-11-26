@@ -32,14 +32,25 @@ export class AuthPasswordService {
       throw new AppError('Token is invalid or has expired', 400);
     }
 
-    user.passwordHash = await hashPassword(newPassword);
+    const hashedPassword = await hashPassword(newPassword);
+    const refreshToken = AuthTokenService.signRefreshToken(user._id);
+
+    // Update fields using findByIdAndUpdate to avoid full document validation
+    await UserModel.findByIdAndUpdate(
+      user._id,
+      {
+        passwordHash: hashedPassword,
+        passwordResetToken: undefined,
+        passwordResetExpires: undefined,
+        refreshToken,
+      },
+      { runValidators: false }
+    );
+
+    user.passwordHash = hashedPassword;
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
-
-    const refreshToken = AuthTokenService.signRefreshToken(user._id);
     user.refreshToken = refreshToken;
-
-    await user.save({ validateBeforeSave: false });
 
     return user;
   }
@@ -59,9 +70,21 @@ export class AuthPasswordService {
       throw new AppError('Current password is incorrect', 401);
     }
 
-    user.passwordHash = await hashPassword(newPassword);
-    user.refreshToken = AuthTokenService.signRefreshToken(user._id);
-    await user.save({ validateBeforeSave: false });
+    const hashedPassword = await hashPassword(newPassword);
+    const refreshToken = AuthTokenService.signRefreshToken(user._id);
+
+    // Update fields using findByIdAndUpdate to avoid full document validation
+    await UserModel.findByIdAndUpdate(
+      userId,
+      {
+        passwordHash: hashedPassword,
+        refreshToken,
+      },
+      { runValidators: false }
+    );
+
+    user.passwordHash = hashedPassword;
+    user.refreshToken = refreshToken;
 
     return user;
   }
@@ -73,9 +96,15 @@ export class AuthPasswordService {
     const resetToken = crypto.randomBytes(32).toString('hex');
     const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
 
-    user.passwordResetToken = hashedToken;
-    user.passwordResetExpires = new Date(Date.now() + 10 * 60 * 1000);
-    await user.save({ validateBeforeSave: false });
+    // Update fields using findByIdAndUpdate to avoid full document validation
+    await UserModel.findByIdAndUpdate(
+      user._id,
+      {
+        passwordResetToken: hashedToken,
+        passwordResetExpires: new Date(Date.now() + 10 * 60 * 1000),
+      },
+      { runValidators: false }
+    );
 
     await EmailService.sendPasswordReset(email, resetToken);
   }
