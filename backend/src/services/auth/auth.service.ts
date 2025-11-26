@@ -79,7 +79,11 @@ export class AuthService {
     user.refreshToken = refreshToken;
 
     if (!userAgent) userAgent = 'Desconocido';
-    if (user.role === 'merchant') EmailService.sendLoginAlert(email, userAgent);
+    if (user.role === 'merchant') {
+      EmailService.sendLoginAlert(email, userAgent).catch((err) => {
+        console.error(`Error sending login alert to ${email}:`, err);
+      });
+    }
 
     return user;
   }
