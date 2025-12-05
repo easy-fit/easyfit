@@ -170,13 +170,13 @@ export default function NewProductPage({ params }: { params: Promise<{ id: strin
 
           <main className="p-4 md:p-6">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleSubmit)} className="max-w-6xl mx-auto space-y-8">
+              <form onSubmit={form.handleSubmit((data) => handleSubmit(data as unknown as ProductFormValues))} className="max-w-6xl mx-auto space-y-8">
                 {/* Product Information */}
-                <ProductBasicInfo control={form.control} />
+                <ProductBasicInfo control={form.control as unknown as any} />
 
                 {/* Variants Section */}
                 <ProductVariantsSection
-                  control={form.control}
+                  control={form.control as unknown as any}
                   setValue={form.setValue}
                   watch={form.watch}
                   fieldArray={fieldArray}
