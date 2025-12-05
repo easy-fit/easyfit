@@ -218,20 +218,24 @@ export const getLowestPriceVariant = (variants: Variant[]): {
   }
 
   let lowestFinalPrice = Infinity;
-  let correspondingVariant: Variant | null = null;
+  let lowestVariant: Variant | null = null;
 
-  variants.forEach(variant => {
+  for (const variant of variants) {
     const finalPrice = calculateDiscountedPrice(variant.price, variant.discount);
     if (finalPrice < lowestFinalPrice) {
       lowestFinalPrice = finalPrice;
-      correspondingVariant = variant;
+      lowestVariant = variant;
     }
-  });
+  }
+
+  if (!lowestVariant) {
+    return { originalPrice: 0, finalPrice: 0, maxDiscount: 0, variant: null };
+  }
 
   return {
-    originalPrice: correspondingVariant?.price || 0,
+    originalPrice: lowestVariant.price,
     finalPrice: lowestFinalPrice,
-    maxDiscount: correspondingVariant?.discount || 0,
-    variant: correspondingVariant
+    maxDiscount: lowestVariant.discount,
+    variant: lowestVariant
   };
 };

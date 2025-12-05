@@ -43,6 +43,7 @@ export function useEditProductForm(productData?: any) {
             color: variant.color,
             stock: variant.stock,
             price: variant.price, // Price stored as whole amount
+            discount: variant.discount ?? 0,
             sku: variant.sku,
             isDefault: variant.isDefault,
             images:
@@ -70,6 +71,7 @@ export function useEditProductForm(productData?: any) {
       color: '',
       stock: 0,
       price: 0,
+      discount: 0,
       sku: '',
       isDefault: false,
       images: [],
