@@ -259,7 +259,7 @@ export default function ProductPage() {
               </Badge>
             </div>
 
-            {/* Price */}
+            {/* Discounted Price */}
             <div className="space-y-2">
               {selectedVariant && selectedVariant.discount > 0 ? (
                 <div>
