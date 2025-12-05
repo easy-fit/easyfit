@@ -16,6 +16,7 @@ const VariantSchema = new Schema<Variant>(
     stock: { type: Number, required: true },
     images: { type: [VariantImageSchema], default: [] },
     price: { type: Number, required: true },
+    discount: { type: Number, default: 0 },
     isDefault: { type: Boolean, default: false },
     isBulk: { type: Boolean, default: false },
     sku: { type: String, required: true },

@@ -2,6 +2,7 @@ import { api } from '@/lib/api/client';
 import type { ProductFormValues } from '@/components/products/edit/schemas';
 import type { ProductCategory } from '@/types/product';
 import type { SignedUrl } from '@/types/global';
+import type { Variant } from '@/types/variant';
 
 export interface VariantOperationResult {
   successfulOperations: number;
@@ -50,6 +51,7 @@ export async function processExistingVariant(
       color: variant.color,
       stock: variant.stock,
       price: Math.round(variant.price), // Price as whole amount
+      discount: variant.discount || 0,
       sku: variant.sku,
       isDefault: variant.isDefault,
       images: existingImages
@@ -87,6 +89,7 @@ export async function processNewVariant(
       color: variant.color,
       stock: variant.stock,
       price: Math.round(variant.price), // Price as whole amount
+      discount: variant.discount || 0,
       sku: variant.sku,
       isDefault: variant.isDefault,
       images: variant.images.map((img: any, index: number) => ({
@@ -198,3 +201,37 @@ export function showResults(
     callbacks.onWarning('Actualización parcial', `${result.successfulOperations} operaciones exitosas, ${result.failedOperations} fallaron`);
   }
 }
+
+export const calculateDiscountedPrice = (price: number, discount: number): number => {
+  if (!discount || discount <= 0 || discount > 99) return price;
+  return Math.round(price * (1 - discount / 100));
+};
+
+export const getLowestPriceVariant = (variants: Variant[]): {
+  originalPrice: number;
+  finalPrice: number;
+  maxDiscount: number;
+  variant: Variant | null;
+} => {
+  if (!variants || variants.length === 0) {
+    return { originalPrice: 0, finalPrice: 0, maxDiscount: 0, variant: null };
+  }
+
+  let lowestFinalPrice = Infinity;
+  let correspondingVariant: Variant | null = null;
+
+  variants.forEach(variant => {
+    const finalPrice = calculateDiscountedPrice(variant.price, variant.discount);
+    if (finalPrice < lowestFinalPrice) {
+      lowestFinalPrice = finalPrice;
+      correspondingVariant = variant;
+    }
+  });
+
+  return {
+    originalPrice: correspondingVariant?.price || 0,
+    finalPrice: lowestFinalPrice,
+    maxDiscount: correspondingVariant?.discount || 0,
+    variant: correspondingVariant
+  };
+};

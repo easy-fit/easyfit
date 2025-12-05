@@ -9,6 +9,7 @@ import { SizeSelector } from './SizeSelector';
 import { ColorSelector } from './ColorSelector';
 import { VariantImageUpload } from './VariantImageUpload';
 import { BulkSizeSelector } from '../bulk-size-selector';
+import { calculateDiscountedPrice } from '@/lib/utils/variant-operations';
 import type { ProductFormValues } from './schemas';
 
 interface BulkSizeData {
@@ -117,7 +118,7 @@ export function VariantFormItem({
       </div>
 
       {/* Variant Details */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
         <FormField
           control={control}
           name={`variants.${index}.size`}
@@ -142,7 +143,7 @@ export function VariantFormItem({
                   min="0"
                   placeholder=""
                   {...field}
-                  value={field.value || ''}
+                  value={field.value === 0 ? '' : field.value}
                   onChange={(e) => field.onChange(Number.parseInt(e.target.value) || 0)}
                 />
               </FormControl>
@@ -168,6 +169,46 @@ export function VariantFormItem({
                   onChange={(e) => field.onChange(Number.parseFloat(e.target.value) || 0)}
                 />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={control}
+          name={`variants.${index}.discount`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Descuento (%)</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  min="0"
+                  max="99"
+                  placeholder="0"
+                  {...field}
+                  value={field.value === 0 ? '' : field.value}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === '') {
+                      field.onChange(0);
+                    } else {
+                      const numValue = Number.parseInt(value) || 0;
+                      field.onChange(Math.min(Math.max(numValue, 0), 99));
+                    }
+                  }}
+                  onBlur={(e) => {
+                    if (e.target.value === '') {
+                      field.onChange(0);
+                    }
+                  }}
+                />
+              </FormControl>
+              {watchVariant.discount > 0 && watchVariant.price > 0 && (
+                <p className="text-xs text-green-600 mt-1">
+                  Final: ${calculateDiscountedPrice(watchVariant.price, watchVariant.discount).toLocaleString('es-AR')}
+                </p>
+              )}
               <FormMessage />
             </FormItem>
           )}

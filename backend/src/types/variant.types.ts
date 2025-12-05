@@ -14,6 +14,7 @@ export interface Variant {
   stock: number;
   images: VariantImage[];
   price: number;
+  discount?: number;
   isDefault?: boolean;
   isBulk?: boolean;
   sku: string;
@@ -24,6 +25,7 @@ export interface CreateVariantDTO {
   color: string;
   stock: number;
   price: number;
+  discount?: number;
   images: VariantImage[];
   isDefault?: boolean;
   isBulk?: boolean;
@@ -35,6 +37,7 @@ export interface UpdateVariantDTO {
   color?: string;
   stock?: number;
   price?: number;
+  discount?: number;
   images?: VariantImage[];
   isDefault?: boolean;
   sku?: string;
@@ -44,6 +47,7 @@ export interface BulkVariantUpdateItem {
   variantId: string;
   stock?: number;
   price?: number;
+  discount?: number;
   sku?: string;
 }
 

@@ -72,6 +72,7 @@ export default function NewProductPage({ params }: { params: Promise<{ id: strin
           color: variant.color,
           price: variant.price,
           stock: variant.stock,
+          discount: variant.discount || 0,
           sku: variant.sku,
           isDefault: variant.isDefault,
           isBulk: variant.isBulk || false,

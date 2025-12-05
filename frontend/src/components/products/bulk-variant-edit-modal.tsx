@@ -27,11 +27,12 @@ interface EditableVariant extends VariantWithProduct {
   isSelected: boolean;
   newStock?: number;
   newPrice?: number;
+  newDiscount?: number;
   hasChanges?: boolean;
 }
 
 interface BulkOperation {
-  type: 'stock' | 'price';
+  type: 'stock' | 'price' | 'discount';
   value: number;
   operation: 'set' | 'add' | 'multiply';
 }
@@ -146,6 +147,12 @@ export function BulkVariantEditModal({
   const selectedVariants = variants.filter(v => v.isSelected);
   const changedVariants = variants.filter(v => v.hasChanges);
 
+  const handleDiscountChange = (value: string) => {
+    const numValue = parseFloat(value) || 0;
+    const clampedValue = Math.min(Math.max(numValue, 0), 99);
+    setBulkOperation(prev => ({ ...prev, value: clampedValue }));
+  };
+
   const handleSelectVariant = useCallback((variantId: string) => {
     setVariants(prev => prev.map(variant =>
       variant._id === variantId 
@@ -167,13 +174,13 @@ export function BulkVariantEditModal({
     }));
   }, []);
 
-  const handleVariantChange = useCallback((variantId: string, field: 'stock' | 'price', value: number) => {
+  const handleVariantChange = useCallback((variantId: string, field: 'stock' | 'price' | 'discount', value: number) => {
     setVariants(prev => prev.map(variant => {
       if (variant._id !== variantId) return variant;
       
       const updated = {
         ...variant,
-        [field === 'stock' ? 'newStock' : 'newPrice']: value,
+        [field === 'stock' ? 'newStock' : field === 'price' ? 'newPrice' : 'newDiscount']: value,
         hasChanges: true,
       };
       
@@ -191,7 +198,14 @@ export function BulkVariantEditModal({
       if (!variant.isSelected) return variant;
 
       let newValue: number;
-      const currentValue = bulkOperation.type === 'stock' ? variant.stock : variant.price;
+      let currentValue = 0;
+      if (bulkOperation.type === 'stock') {
+        currentValue = variant.stock;
+      } else if (bulkOperation.type === 'price') {
+        currentValue = variant.price;
+      } else if (bulkOperation.type === 'discount') {
+        currentValue = variant.newDiscount || 0; 
+      }
 
       switch (bulkOperation.operation) {
         case 'set':
@@ -207,16 +221,24 @@ export function BulkVariantEditModal({
           newValue = currentValue;
       }
 
-      // Ensure values are valid
+      // Validations
       if (bulkOperation.type === 'stock') {
         newValue = Math.max(0, Math.floor(newValue));
+      } else if (bulkOperation.type === 'discount') {
+        newValue = Math.max(0, Math.min(99, Math.floor(newValue)));
       } else {
         newValue = Math.max(0, Math.round(newValue * 100) / 100);
       }
 
+      const fieldName = bulkOperation.type === 'stock' 
+        ? 'newStock' 
+        : bulkOperation.type === 'price' 
+          ? 'newPrice' 
+          : 'newDiscount';
+
       return {
         ...variant,
-        [bulkOperation.type === 'stock' ? 'newStock' : 'newPrice']: newValue,
+        [fieldName]: newValue,
         hasChanges: true,
       };
     }));
@@ -235,6 +257,10 @@ export function BulkVariantEditModal({
       
       if (variant.newPrice !== undefined) {
         update.price = variant.newPrice;
+      }
+
+      if (variant.newDiscount !== undefined) {
+        update.discount = variant.newDiscount;
       }
 
       return update;
@@ -388,6 +414,7 @@ export function BulkVariantEditModal({
                     <SelectContent>
                       <SelectItem value="stock">Stock</SelectItem>
                       <SelectItem value="price">Precio</SelectItem>
+                      <SelectItem value="discount">Descuento (%)</SelectItem>
                     </SelectContent>
                   </Select>
 
@@ -406,7 +433,15 @@ export function BulkVariantEditModal({
                     type="number"
                     placeholder="Valor"
                     value={bulkOperation.value}
-                    onChange={(e) => setBulkOperation(prev => ({ ...prev, value: parseFloat(e.target.value) || 0 }))}
+                    onChange={(e) => {
+                      if (bulkOperation.type === 'discount') {
+                        handleDiscountChange(e.target.value);
+                      } else {
+                        setBulkOperation(prev => ({ ...prev, value: parseFloat(e.target.value) || 0 }));
+                      }
+                    }}
+                    min="0"
+                    max={bulkOperation.type === 'discount' ? 99 : undefined}
                   />
 
                   <Button onClick={applyBulkOperation} size="sm">
