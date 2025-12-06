@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { buildImageUrl } from '@/lib/utils/image-url';
 import { CategoryUtils } from '@/lib/utils/categoryUtils';
+import { formatPrice } from '@/utils/formatters';
 
 interface Product {
   id: string;
@@ -29,6 +30,9 @@ interface Product {
   price: {
     min: number;
     max: number;
+    originalMin?: number;
+    originalMax?: number;
+    discountPercentage?: number;
   };
   status: 'published' | 'draft' | 'draft';
   createdAt: string;
@@ -248,10 +252,32 @@ export function ProductList({
 
                     {/* Price - centered */}
                     <div className="px-4">
-                      <div className="font-medium text-[#20313A] text-center">
-                        {product.price.min === product.price.max
-                          ? `$${product.price.min}`
-                          : `$${product.price.min} - $${product.price.max}`}
+                      <div className="flex flex-col items-center justify-center gap-1">
+                        {/* Price row */}
+                        <div className="flex items-center gap-2">
+                          {/* Original price crossed out */}
+                          {(product.price.discountPercentage || 0) > 0 && (
+                            <span className="text-xs text-gray-400 line-through">
+                              {product.price.originalMin === product.price.originalMax
+                                ? formatPrice(product.price.originalMin ?? 0)
+                                : `${formatPrice(product.price.originalMin ?? 0)} - ${formatPrice(product.price.originalMax ?? 0)}`}
+                            </span>
+                          )}
+
+                          {/* Final price */}
+                          <div className="font-medium text-[#20313A]">
+                            {product.price.min === product.price.max
+                              ? formatPrice(product.price.min)
+                              : `${formatPrice(product.price.min)} - ${formatPrice(product.price.max)}`}
+                          </div>
+
+                          {/* Discount Badge */}
+                          {(product.price.discountPercentage || 0) > 0 && (
+                            <Badge variant="secondary" className="bg-red-500 text-white text-xs h-5 px-1.5">
+                              -{product.price.discountPercentage}%
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
