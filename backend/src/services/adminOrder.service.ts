@@ -7,6 +7,7 @@ import { AppError } from '../utils/appError';
 import { OrderStatus } from '../types/order.types';
 import { UserModel } from '../models/user.model';
 import { User } from '../types/user.types';
+import { RiderLocation, GeoPoint } from '../types/riderLocation.types';
 
 export class AdminOrderService {
   /**
@@ -27,8 +28,11 @@ export class AdminOrderService {
     const riderLocations = await RiderLocationService.getAllRiderLocations();
 
     // Build a map of rider availability
-    const availabilityMap = new Map(
-      riderLocations.map((loc) => [loc.riderId.toString(), { isAvailable: loc.isAvailable, location: loc.location }]),
+    const availabilityMap = new Map<string, { isAvailable: boolean; location: GeoPoint }>(
+      riderLocations.map((loc: any) => [
+        loc.riderId.toString(),
+        { isAvailable: loc.isAvailable || false, location: loc.location },
+      ]),
     );
 
     // Combine rider info with availability
