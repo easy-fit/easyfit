@@ -56,4 +56,8 @@ export class RiderLocationService {
 
     return updated;
   }
+
+  static async getAllRiderLocations() {
+    return RiderLocationModel.find({}).lean();
+  }
 }
