@@ -5,6 +5,8 @@ import { RiderLocationService } from './riderLocation.service';
 import { UserService } from './user.service';
 import { AppError } from '../utils/appError';
 import { OrderStatus } from '../types/order.types';
+import { UserModel } from '../models/user.model';
+import { User } from '../types/user.types';
 
 export class AdminOrderService {
   /**
@@ -19,7 +21,7 @@ export class AdminOrderService {
     }
 
     // Get all riders from the system
-    const allRiders = await UserService.getUsersByRole('rider');
+    const allRiders = await UserModel.find({ role: 'rider' }).select('name surname email').lean();
 
     // Get rider location/availability data
     const riderLocations = await RiderLocationService.getAllRiderLocations();
@@ -30,7 +32,7 @@ export class AdminOrderService {
     );
 
     // Combine rider info with availability
-    const ridersWithAvailability = allRiders.map((rider) => {
+    const ridersWithAvailability = allRiders.map((rider: any) => {
       const availability = availabilityMap.get(rider._id.toString());
 
       return {
@@ -44,7 +46,7 @@ export class AdminOrderService {
     });
 
     // Sort: available riders first
-    ridersWithAvailability.sort((a, b) => {
+    ridersWithAvailability.sort((a: any, b: any) => {
       if (a.isAvailable && !b.isAvailable) return -1;
       if (!a.isAvailable && b.isAvailable) return 1;
       return 0;
