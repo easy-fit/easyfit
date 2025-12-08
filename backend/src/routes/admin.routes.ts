@@ -16,3 +16,9 @@ adminRoutes.get('/deliveries/active', AdminController.getActiveDeliveries);
 
 // Manual intervention endpoints
 adminRoutes.post('/retry-operation', AdminController.retryFailedOperation);
+
+// Manual order management endpoints
+adminRoutes.get('/orders/:orderId/management-details', AdminController.getOrderManagementDetails);
+adminRoutes.get('/orders/:orderId/available-riders', AdminController.getAvailableRiders);
+adminRoutes.post('/orders/:orderId/assign-rider', AdminController.manuallyAssignRider);
+adminRoutes.patch('/orders/:orderId/force-status', AdminController.forceStatusTransition);

@@ -6,6 +6,7 @@ import { OrdersClient } from './orders-client';
 import { CheckoutClient } from './checkout-client';
 import { CartClient } from './cart-client';
 import { StoreManagersClient } from './store-managers-client';
+import { AdminClient } from './admin-client';
 
 export class ApiClient {
   users: UsersClient;
@@ -16,6 +17,7 @@ export class ApiClient {
   checkout: CheckoutClient;
   cart: CartClient;
   storeManagers: StoreManagersClient;
+  admin: AdminClient;
 
   constructor(baseURL?: string) {
     this.users = new UsersClient(baseURL);
@@ -26,6 +28,7 @@ export class ApiClient {
     this.checkout = new CheckoutClient(baseURL);
     this.cart = new CartClient(baseURL);
     this.storeManagers = new StoreManagersClient(baseURL);
+    this.admin = new AdminClient(baseURL);
   }
 }
 
