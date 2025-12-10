@@ -32,12 +32,13 @@ export const useOrderManagementDetails = (orderId: string, enabled: boolean = tr
 
 /**
  * Manually assign a rider to an order
+ * Optionally accepts a rider code to immediately verify delivery
  */
 export const useAssignRider = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<ManualAssignmentResponse, Error, { orderId: string; riderId: string }>({
-    mutationFn: ({ orderId, riderId }) => api.admin.assignRider(orderId, riderId),
+  return useMutation<ManualAssignmentResponse, Error, { orderId: string; riderId: string; riderCode?: string }>({
+    mutationFn: ({ orderId, riderId, riderCode }) => api.admin.assignRider(orderId, riderId, riderCode),
     onSuccess: (data, variables) => {
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['orders'] });

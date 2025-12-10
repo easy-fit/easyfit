@@ -89,10 +89,11 @@ export class AdminController {
 
   /**
    * Manually assign a rider to an order
+   * Optionally accepts a rider code to immediately verify delivery
    */
   static manuallyAssignRider = catchAsync(async (req: Request, res: Response) => {
     const { orderId } = req.params;
-    const { riderId } = req.body;
+    const { riderId, riderCode } = req.body;
 
     if (!riderId) {
       return res.status(400).json({
@@ -101,7 +102,7 @@ export class AdminController {
       });
     }
 
-    const result = await AdminOrderService.manuallyAssignRider(orderId, riderId);
+    const result = await AdminOrderService.manuallyAssignRider(orderId, riderId, riderCode);
 
     res.status(200).json({
       status: 'success',
