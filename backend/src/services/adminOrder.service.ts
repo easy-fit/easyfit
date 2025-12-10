@@ -62,8 +62,9 @@ export class AdminOrderService {
   /**
    * Manually assign a rider to an order (admin override)
    * Bypasses the WebSocket offer system and directly assigns
+   * Optionally accepts a rider code to immediately verify delivery and trigger try-on period
    */
-  static async manuallyAssignRider(orderId: string, riderId: string) {
+  static async manuallyAssignRider(orderId: string, riderId: string, riderCode?: string) {
     // Verify order exists
     const order = await OrderService.getOrderById(orderId);
     if (!order) {
@@ -86,10 +87,36 @@ export class AdminOrderService {
 
     console.log(`Admin manually assigned rider ${riderId} to order ${orderId}`);
 
+    // If rider code is provided, verify delivery and trigger try-on period
+    if (riderCode) {
+      // Validate code format (6 digits)
+      if (!/^\d{6}$/.test(riderCode)) {
+        throw new AppError('Rider code must be a 6-digit number', 400);
+      }
+
+      // Start delivery (transition to in_transit)
+      await OrderStateManager.markAsInTransit(orderId, riderId);
+
+      // Verify delivery code (this will trigger try-on period if enabled)
+      const verificationResult = await OrderService.verifyDeliveryCode(orderId, riderCode, riderId);
+
+      if (!verificationResult.success) {
+        throw new AppError(verificationResult.message || 'Failed to verify delivery code', 400);
+      }
+
+      return {
+        success: true,
+        message: `Rider ${rider.name} ${rider.surname} assigned and delivery verified. Try-on period started.`,
+        order: await OrderService.getOrderById(orderId),
+        deliveryVerified: true,
+      };
+    }
+
     return {
       success: true,
       message: `Rider ${rider.name} ${rider.surname} assigned to order successfully`,
       order: await OrderService.getOrderById(orderId),
+      deliveryVerified: false,
     };
   }
 

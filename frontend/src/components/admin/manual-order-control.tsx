@@ -21,8 +21,10 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Settings, User, ArrowRight, CheckCircle, AlertCircle } from 'lucide-react';
+import { Settings, User, ArrowRight, CheckCircle, AlertCircle, Key } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface ManualOrderControlProps {
@@ -50,6 +52,7 @@ const STATUS_LABELS: Record<OrderStatus, string> = {
 export function ManualOrderControl({ orderId, currentStatus, onClose }: ManualOrderControlProps) {
   const [selectedStatus, setSelectedStatus] = useState<OrderStatus | ''>('');
   const [selectedRider, setSelectedRider] = useState<string>('');
+  const [riderCode, setRiderCode] = useState<string>('');
   const [showConfirmStatus, setShowConfirmStatus] = useState(false);
   const [showConfirmRider, setShowConfirmRider] = useState(false);
 
@@ -107,18 +110,32 @@ export function ManualOrderControl({ orderId, currentStatus, onClose }: ManualOr
     const rider = riders.find((r) => r._id === selectedRider);
     if (!rider) return;
 
+    // Validate rider code if provided
+    if (riderCode && !/^\d{6}$/.test(riderCode)) {
+      toast.error('Código inválido', {
+        description: 'El código debe ser de 6 dígitos',
+      });
+      return;
+    }
+
     try {
-      await assignRiderMutation.mutateAsync({
+      const result = await assignRiderMutation.mutateAsync({
         orderId,
         riderId: selectedRider,
+        riderCode: riderCode || undefined,
       });
 
+      const message = result.data.deliveryVerified
+        ? `${rider.name} ${rider.surname} asignado y entrega verificada. Periodo de prueba iniciado.`
+        : `${rider.name} ${rider.surname} ha sido asignado`;
+
       toast.success('Repartidor asignado correctamente', {
-        description: `${rider.name} ${rider.surname} ha sido asignado`,
+        description: message,
       });
 
       setShowConfirmRider(false);
       setSelectedRider('');
+      setRiderCode('');
       onClose?.();
     } catch (error: any) {
       toast.error('Error al asignar repartidor', {
@@ -247,6 +264,30 @@ export function ManualOrderControl({ orderId, currentStatus, onClose }: ManualOr
                 <p className="text-sm text-muted-foreground">No hay repartidores disponibles</p>
               )}
 
+              {/* Rider Code Input */}
+              <div className="space-y-2">
+                <Label htmlFor="riderCode" className="text-sm font-medium flex items-center gap-2">
+                  <Key className="h-4 w-4" />
+                  Código de Repartidor (Opcional)
+                </Label>
+                <Input
+                  id="riderCode"
+                  type="text"
+                  placeholder="123456"
+                  value={riderCode}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                    setRiderCode(value);
+                  }}
+                  maxLength={6}
+                  className="font-mono text-lg tracking-wider"
+                />
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  Si ingresas el código, se verificará la entrega y se iniciará el periodo de prueba automáticamente
+                </p>
+              </div>
+
               <Button
                 onClick={() => setShowConfirmRider(true)}
                 disabled={!selectedRider || assignRiderMutation.isPending}
@@ -302,7 +343,9 @@ export function ManualOrderControl({ orderId, currentStatus, onClose }: ManualOr
           <DialogHeader>
             <DialogTitle>Confirmar Asignación de Repartidor</DialogTitle>
             <DialogDescription>
-              ¿Estás seguro de que deseas asignar este repartidor al pedido?
+              {riderCode
+                ? '¿Estás seguro de que deseas asignar este repartidor y verificar la entrega?'
+                : '¿Estás seguro de que deseas asignar este repartidor al pedido?'}
             </DialogDescription>
           </DialogHeader>
           {selectedRiderData && (
@@ -323,6 +366,24 @@ export function ManualOrderControl({ orderId, currentStatus, onClose }: ManualOr
                 <span className="text-sm font-medium">Email:</span>
                 <span className="text-sm text-muted-foreground">{selectedRiderData.email}</span>
               </div>
+              {riderCode && (
+                <>
+                  <div className="border-t pt-3 mt-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Código de Verificación:</span>
+                      <Badge variant="outline" className="font-mono text-base">
+                        {riderCode}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-md p-3">
+                    <p className="text-xs text-blue-900 dark:text-blue-100 flex items-start gap-2">
+                      <CheckCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                      Al confirmar, se verificará la entrega automáticamente y se iniciará el periodo de prueba si está habilitado.
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
           )}
           <p className="text-sm text-muted-foreground">

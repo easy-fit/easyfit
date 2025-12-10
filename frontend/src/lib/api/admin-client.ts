@@ -27,6 +27,7 @@ export interface ManualAssignmentResponse {
     success: boolean;
     message: string;
     order: any;
+    deliveryVerified?: boolean;
   };
 }
 
@@ -54,11 +55,12 @@ export class AdminClient extends BaseApiClient {
 
   /**
    * Manually assign a rider to an order
+   * Optionally accepts a rider code to immediately verify delivery
    */
-  public async assignRider(orderId: string, riderId: string): Promise<ManualAssignmentResponse> {
+  public async assignRider(orderId: string, riderId: string, riderCode?: string): Promise<ManualAssignmentResponse> {
     return this.fetchApi<ManualAssignmentResponse>(`/admin/orders/${orderId}/assign-rider`, {
       method: 'POST',
-      body: JSON.stringify({ riderId }),
+      body: JSON.stringify({ riderId, riderCode }),
     });
   }
 
