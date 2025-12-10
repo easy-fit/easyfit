@@ -24,6 +24,7 @@ import {
   Settings
 } from 'lucide-react';
 import { ManualOrderDialog } from '@/components/admin/manual-order-dialog';
+import { StoreFinancesDashboard } from '@/components/admin/store-finances-dashboard';
 
 // Helper function to get status color and Spanish translation
 const getStatusInfo = (status: string): { color: 'default' | 'secondary' | 'destructive' | 'outline', label: string } => {
@@ -338,11 +339,12 @@ export default function AdminDashboard() {
 
       {/* Tabs for organized content */}
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">Resumen</TabsTrigger>
           <TabsTrigger value="users">Usuarios</TabsTrigger>
           <TabsTrigger value="orders">Pedidos</TabsTrigger>
           <TabsTrigger value="analytics">Análisis</TabsTrigger>
+          <TabsTrigger value="finances">Finanzas</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -656,6 +658,10 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="finances" className="space-y-6">
+          <StoreFinancesDashboard />
         </TabsContent>
       </Tabs>
 

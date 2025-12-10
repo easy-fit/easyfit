@@ -22,3 +22,8 @@ adminRoutes.get('/orders/:orderId/management-details', AdminController.getOrderM
 adminRoutes.get('/orders/:orderId/available-riders', AdminController.getAvailableRiders);
 adminRoutes.post('/orders/:orderId/assign-rider', AdminController.manuallyAssignRider);
 adminRoutes.patch('/orders/:orderId/force-status', AdminController.forceStatusTransition);
+
+// Store finance endpoints
+adminRoutes.get('/finances/stores', AdminController.getStoreBalances);
+adminRoutes.get('/finances/stores/:storeId', AdminController.getStoreBalanceById);
+adminRoutes.get('/finances/stores/:storeId/orders', AdminController.getStoreOrderFinancials);

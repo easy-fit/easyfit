@@ -1,5 +1,12 @@
 import { BaseApiClient } from './base-client';
 import { OrderStatus } from '@/types/order';
+import {
+  PaginatedStoreBalances,
+  StoreBalanceSummary,
+  StoreOrderDetails,
+  PaginationOptions,
+  FilterOptions,
+} from '@/types/store-finance';
 
 export interface AvailableRider {
   _id: string;
@@ -85,5 +92,48 @@ export class AdminClient extends BaseApiClient {
     return this.fetchApi<{ status: string; data: OrderManagementDetails }>(
       `/admin/orders/${orderId}/management-details`,
     );
+  }
+
+  /**
+   * Get balances for all stores
+   */
+  public async getStoreBalances(params?: PaginationOptions): Promise<{ status: string; data: PaginatedStoreBalances }> {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.sortBy) queryParams.append('sortBy', params.sortBy);
+    if (params?.sortOrder) queryParams.append('sortOrder', params.sortOrder);
+
+    const queryString = queryParams.toString();
+    const url = `/admin/finances/stores${queryString ? `?${queryString}` : ''}`;
+
+    return this.fetchApi<{ status: string; data: PaginatedStoreBalances }>(url);
+  }
+
+  /**
+   * Get balance details for a single store
+   */
+  public async getStoreBalance(storeId: string): Promise<{ status: string; data: StoreBalanceSummary }> {
+    return this.fetchApi<{ status: string; data: StoreBalanceSummary }>(`/admin/finances/stores/${storeId}`);
+  }
+
+  /**
+   * Get detailed order breakdown for a store
+   */
+  public async getStoreOrderFinancials(
+    storeId: string,
+    params?: FilterOptions,
+  ): Promise<{ status: string; data: StoreOrderDetails }> {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.startDate) queryParams.append('startDate', params.startDate.toISOString());
+    if (params?.endDate) queryParams.append('endDate', params.endDate.toISOString());
+    if (params?.status) queryParams.append('status', params.status);
+
+    const queryString = queryParams.toString();
+    const url = `/admin/finances/stores/${storeId}/orders${queryString ? `?${queryString}` : ''}`;
+
+    return this.fetchApi<{ status: string; data: StoreOrderDetails }>(url);
   }
 }

@@ -95,7 +95,7 @@ export class AdminOrderService {
       }
 
       // Start delivery (transition to in_transit)
-      await OrderStateManager.markAsInTransit(orderId, riderId);
+      await OrderStateManager.markAsPickedUp(orderId, riderId);
 
       // Verify delivery code (this will trigger try-on period if enabled)
       const verificationResult = await OrderService.verifyDeliveryCode(orderId, riderCode, riderId);
