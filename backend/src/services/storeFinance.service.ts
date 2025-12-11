@@ -112,6 +112,7 @@ export class StoreFinanceService {
             },
             totalOrders: { $sum: 1 },
             bankingInfo: { $first: '$store.billing.bankingInfo' },
+            fiscalInfo: { $first: '$store.billing.fiscalInfo' },
           },
         },
 
@@ -153,6 +154,7 @@ export class StoreFinanceService {
                 },
               ],
             },
+            cuit: { $ifNull: ['$fiscalInfo.cuit', ''] },
           },
         },
 
@@ -281,6 +283,7 @@ export class StoreFinanceService {
             },
             totalOrders: { $sum: 1 },
             bankingInfo: { $first: '$store.billing.bankingInfo' },
+            fiscalInfo: { $first: '$store.billing.fiscalInfo' },
           },
         },
 
@@ -322,6 +325,7 @@ export class StoreFinanceService {
                 },
               ],
             },
+            cuit: { $ifNull: ['$fiscalInfo.cuit', ''] },
           },
         },
       ];
@@ -351,6 +355,7 @@ export class StoreFinanceService {
             accountHolder: '',
             alias: '',
           },
+          cuit: store.billing?.fiscalInfo?.cuit || '',
         };
       }
 
