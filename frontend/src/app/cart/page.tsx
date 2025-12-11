@@ -18,6 +18,7 @@ import { useEasyFitToast } from '@/hooks/use-toast';
 import type { CartItem } from '@/types/cart';
 import type { ShippingType } from '@/types/order';
 import { buildImageUrl } from '@/lib/utils/image-url';
+import { formatPrice } from '@/utils/formatters';
 
 interface ShippingOption {
   id: ShippingType;
@@ -164,7 +165,14 @@ function CartPageContent() {
   // Calculations
   const subtotal = cartItems.reduce((sum, item) => {
     if (!item.variantId?.price) return sum;
-    return sum + item.variantId.price * item.quantity;
+    
+    const price = item.variantId.price;
+    const discount = item.variantId.discount || 0;
+    const finalPrice = discount > 0 
+      ? price - (price * discount / 100) 
+      : price;
+
+    return sum + finalPrice * item.quantity;
   }, 0);
   const selectedShippingOption = shippingOptions.find((option) => option.id === selectedShipping)!;
   const shippingCost = selectedShippingOption.price;
@@ -313,18 +321,39 @@ function CartPageContent() {
                           <div className="space-y-3 sm:space-y-0">
                             {/* Price */}
                             <div className="text-right sm:mb-3">
-                              <p className="text-lg sm:text-xl font-bold text-[#20313A] font-helvetica">
-                                $
-                                {item.variantId.price
-                                  ? (item.variantId.price * item.quantity).toLocaleString('es-AR')
-                                  : '0'}
-                              </p>
-                              {item.quantity > 1 && item.variantId.price && (
-                                <p className="text-xs sm:text-sm text-gray-500">
-                                  ${item.variantId.price.toLocaleString('es-AR')} por unidad
+                            <div className="flex flex-col items-end">
+                              {(item.variantId.discount || 0) > 0 ? (
+                                <>
+                                  <span className="text-xs text-gray-400 line-through">
+                                    {formatPrice((item.variantId.price || 0) * item.quantity)}
+                                  </span>
+                                  <div className="flex items-center gap-2">
+                                    <span className="bg-red-600 text-white text-[10px] px-1 py-0.5 rounded font-medium">
+                                      {item.variantId.discount}% OFF
+                                    </span>
+                                    <p className="text-lg sm:text-xl font-bold text-[#20313A] font-helvetica">
+                                      {formatPrice(
+                                        (item.variantId.price - (item.variantId.price * item.variantId.discount!) / 100) * item.quantity
+                                      )}
+                                    </p>
+                                  </div>
+                                </>
+                              ) : (
+                                <p className="text-lg sm:text-xl font-bold text-[#20313A] font-helvetica">
+                                  {formatPrice((item.variantId.price || 0) * item.quantity)}
                                 </p>
                               )}
                             </div>
+
+                            {item.quantity > 1 && item.variantId.price && (
+                              <p className="text-xs sm:text-sm text-gray-500">
+                                {(item.variantId.discount || 0) > 0 
+                                  ? `${formatPrice(item.variantId.price - (item.variantId.price * item.variantId.discount!) / 100)} por unidad`
+                                  : `${formatPrice(item.variantId.price)} por unidad`
+                                }
+                              </p>
+                            )}
+                          </div>
 
                             {/* Quantity Controls */}
                             <div className="flex items-center justify-between sm:justify-start gap-3">

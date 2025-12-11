@@ -61,7 +61,13 @@ export class CheckoutService {
     this.validateShippingTypeForCart(cartItems, shippingType);
 
     const subtotal = cartItems.reduce((total, item: any) => {
-      return total + item.variantId.price * item.quantity;
+      const price = item.variantId.price;
+      const discount = item.variantId.discount || 0;
+      const finalPrice = discount > 0 
+        ? price - (price * discount / 100) 
+        : price;
+        
+      return total + finalPrice * item.quantity;
     }, 0);
 
     const shipping = await CheckoutShippingService.calculateShipping(userAddress, cartItems, shippingType);
@@ -70,12 +76,20 @@ export class CheckoutService {
 
     const total = subtotal + shipping.cost;
 
-    const cartItemsSnapshot = cartItems.map((item: any) => ({
-      variantId: item.variantId._id.toString(),
-      title: item.variantId.productId.title,
-      quantity: item.quantity,
-      unit_price: item.variantId.price,
-    }));
+    const cartItemsSnapshot = cartItems.map((item: any) => {
+      const price = item.variantId.price;
+      const discount = item.variantId.discount || 0;
+      const finalPrice = discount > 0 
+        ? price - (price * discount / 100) 
+        : price;
+
+      return {
+        variantId: item.variantId._id.toString(),
+        title: item.variantId.productId.title,
+        quantity: item.quantity,
+        unit_price: finalPrice,
+      };
+    });
 
     const checkoutSession = await CheckoutSessionModel.create({
       userId: user._id,

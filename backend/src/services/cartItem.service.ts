@@ -8,7 +8,7 @@ export class CartItemService {
   static async getCartItemsByUser(userId: string) {
     return CartItemModel.find({ userId }).populate({
       path: 'variantId',
-      select: 'size color price images productId',
+      select: 'size color price discount images productId',
       populate: {
         path: 'productId',
         select: 'title allowedShippingTypes',
@@ -70,7 +70,7 @@ export class CartItemService {
   static async getCartItemsForCheckout(userId: string) {
     const items = await CartItemModel.find({ userId }).populate({
       path: 'variantId',
-      select: 'size color price productId',
+      select: 'size color price discount productId',
       populate: {
         path: 'productId',
         select: 'storeId title allowedShippingTypes',

@@ -12,6 +12,7 @@ export interface CartVariantInfo extends Omit<Variant, 'productId' | 'images'> {
   productId: CartProductInfo;
   images: VariantImage[];
   price: number;
+  discount?: number;
 }
 
 export interface CartItem {
