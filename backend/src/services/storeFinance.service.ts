@@ -11,6 +11,7 @@ import {
   FilterOptions,
 } from '../types/storeFinance.types';
 import AppError from '../utils/appError';
+import mongoose from 'mongoose';
 
 export class StoreFinanceService {
   /**
@@ -19,16 +20,21 @@ export class StoreFinanceService {
   static async getAllStoreBalances(
     options: PaginationOptions = {}
   ): Promise<PaginatedStoreBalances> {
-    const { page = 1, limit = 50, sortBy = 'netBalance', sortOrder = 'desc' } = options;
+    const { page = 1, limit = 1000, sortBy = 'netBalance', sortOrder = 'desc' } = options;
     const skip = (page - 1) * limit;
 
     try {
+      // Calculate date 7 days ago at start of day (00:00:00)
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      sevenDaysAgo.setHours(0, 0, 0, 0);
+
       // Aggregation pipeline to calculate store balances
       const pipeline: any[] = [
-        // Stage 1: Match completed orders only
+        // Stage 1: Match all orders from last 7 days (regardless of status)
         {
           $match: {
-            status: { $in: ['purchased', 'delivered'] },
+            createdAt: { $gte: sevenDaysAgo },
           },
         },
 
@@ -75,19 +81,33 @@ export class StoreFinanceService {
             storeName: { $first: '$store.name' },
             totalEarnings: {
               $sum: {
-                $ifNull: ['$payment.finalPaymentInfo.capturedAmount', 0],
+                $cond: [
+                  {
+                    $and: [
+                      { $ifNull: ['$payment.finalPaymentInfo.capturedAmount', false] },
+                      { $gt: ['$payment.finalPaymentInfo.capturedAmount', 0] },
+                    ],
+                  },
+                  '$payment.finalPaymentInfo.capturedAmount',
+                  // Fallback: Use order.total if capturedAmount is 0 or null
+                  '$total',
+                ],
               },
             },
             totalRefunds: {
               $sum: {
-                $ifNull: ['$payment.finalPaymentInfo.refundedAmount', 0],
+                $cond: [
+                  { $ifNull: ['$payment.finalPaymentInfo.refundedAmount', false] },
+                  '$payment.finalPaymentInfo.refundedAmount',
+                  0,
+                ],
               },
             },
             shippingCosts: {
               $sum: {
                 $cond: [
                   { $eq: ['$shipping.subsidizedBy', 'merchant'] },
-                  { $ifNull: ['$shipping.cost', 0] },
+                  { $cond: [{ $ifNull: ['$shipping.cost', false] }, '$shipping.cost', 0] },
                   0,
                 ],
               },
@@ -97,16 +117,16 @@ export class StoreFinanceService {
           },
         },
 
-        // Stage 7: Calculate derived fields
+        // Stage 7: Calculate derived fields (amounts already in dollars)
         {
           $project: {
             _id: 0,
             storeId: { $toString: '$_id' },
             storeName: 1,
-            totalEarnings: 1,
-            totalRefunds: 1,
-            shippingCosts: 1,
-            platformFee: { $multiply: ['$totalEarnings', 0.1] },
+            totalEarnings: '$totalEarnings', // Already in dollars
+            totalRefunds: '$totalRefunds', // Already in dollars
+            shippingCosts: '$shippingCosts', // Already in dollars
+            platformFee: { $multiply: ['$totalEarnings', 0.1] }, // 10% of totalEarnings
             netBalance: {
               $subtract: [
                 '$totalEarnings',
@@ -159,6 +179,14 @@ export class StoreFinanceService {
       // Execute aggregation
       const stores = await OrderModel.aggregate(pipeline);
 
+      // Debug logging
+      console.log(`[StoreFinance] Found ${stores.length} stores with completed orders in last 7 days`);
+      console.log('[StoreFinance] Date range: from', sevenDaysAgo.toISOString(), 'to', new Date().toISOString());
+      console.log('[StoreFinance] Store names:', stores.map(s => s.storeName).join(', '));
+      if (stores.length > 0) {
+        console.log('[StoreFinance] Sample store:', JSON.stringify(stores[0], null, 2));
+      }
+
       return {
         stores: stores as StoreBalanceSummary[],
         total,
@@ -177,12 +205,17 @@ export class StoreFinanceService {
    */
   static async getStoreBalance(storeId: string): Promise<StoreBalanceSummary> {
     try {
+      // Calculate date 7 days ago at start of day (00:00:00)
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      sevenDaysAgo.setHours(0, 0, 0, 0);
+
       const pipeline: any[] = [
-        // Stage 1: Match orders for this store only
+        // Stage 1: Match all orders for this store from last 7 days (regardless of status)
         {
           $match: {
             storeId: storeId,
-            status: { $in: ['purchased', 'delivered'] },
+            createdAt: { $gte: sevenDaysAgo },
           },
         },
 
@@ -229,7 +262,16 @@ export class StoreFinanceService {
             storeName: { $first: '$store.name' },
             totalEarnings: {
               $sum: {
-                $ifNull: ['$payment.finalPaymentInfo.capturedAmount', 0],
+                $cond: [
+                  {
+                    $and: [
+                      { $ifNull: ['$payment.finalPaymentInfo.capturedAmount', false] },
+                      { $gt: ['$payment.finalPaymentInfo.capturedAmount', 0] },
+                    ],
+                  },
+                  '$payment.finalPaymentInfo.capturedAmount',
+                  '$total', // Fallback to order.total
+                ],
               },
             },
             totalRefunds: {
@@ -251,15 +293,15 @@ export class StoreFinanceService {
           },
         },
 
-        // Stage 7: Calculate derived fields
+        // Stage 7: Calculate derived fields (amounts already in dollars)
         {
           $project: {
             _id: 0,
             storeId: { $toString: '$_id' },
             storeName: 1,
-            totalEarnings: 1,
-            totalRefunds: 1,
-            shippingCosts: 1,
+            totalEarnings: '$totalEarnings',
+            totalRefunds: '$totalRefunds',
+            shippingCosts: '$shippingCosts',
             platformFee: { $multiply: ['$totalEarnings', 0.1] },
             netBalance: {
               $subtract: [
@@ -343,12 +385,17 @@ export class StoreFinanceService {
       // First get the store balance summary
       const summary = await this.getStoreBalance(storeId);
 
-      // Build match criteria for orders
+      // Calculate date 7 days ago at start of day (00:00:00)
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      sevenDaysAgo.setHours(0, 0, 0, 0);
+
+      // Build match criteria for all orders from last 7 days
       const matchCriteria: any = {
         storeId: storeId,
-        status: { $in: ['purchased', 'delivered'] },
       };
 
+      // Default to last 7 days if no date range specified
       if (options.startDate || options.endDate) {
         matchCriteria.createdAt = {};
         if (options.startDate) {
@@ -357,8 +404,12 @@ export class StoreFinanceService {
         if (options.endDate) {
           matchCriteria.createdAt.$lte = options.endDate;
         }
+      } else {
+        // Default: last 7 days
+        matchCriteria.createdAt = { $gte: sevenDaysAgo };
       }
 
+      // Optional status filter
       if (options.status) {
         matchCriteria.status = options.status;
       }
@@ -406,7 +457,7 @@ export class StoreFinanceService {
           },
         },
 
-        // Stage 6: Project the fields we need
+        // Stage 6: Project the fields we need (amounts already in dollars)
         {
           $project: {
             orderId: { $toString: '$_id' },
@@ -419,9 +470,18 @@ export class StoreFinanceService {
               ],
             },
             customerId: { $toString: '$userId' },
-            orderTotal: '$total',
+            orderTotal: '$total', // Already in dollars
             capturedAmount: {
-              $ifNull: ['$payment.finalPaymentInfo.capturedAmount', 0],
+              $cond: [
+                {
+                  $and: [
+                    { $ifNull: ['$payment.finalPaymentInfo.capturedAmount', false] },
+                    { $gt: ['$payment.finalPaymentInfo.capturedAmount', 0] },
+                  ],
+                },
+                '$payment.finalPaymentInfo.capturedAmount',
+                '$total', // Fallback to order.total
+              ],
             },
             refundedAmount: {
               $ifNull: ['$payment.finalPaymentInfo.refundedAmount', 0],
@@ -430,13 +490,35 @@ export class StoreFinanceService {
             shippingSubsidizedBy: { $ifNull: ['$shipping.subsidizedBy', 'user'] },
             platformFee: {
               $multiply: [
-                { $ifNull: ['$payment.finalPaymentInfo.capturedAmount', 0] },
+                {
+                  $cond: [
+                    {
+                      $and: [
+                        { $ifNull: ['$payment.finalPaymentInfo.capturedAmount', false] },
+                        { $gt: ['$payment.finalPaymentInfo.capturedAmount', 0] },
+                      ],
+                    },
+                    '$payment.finalPaymentInfo.capturedAmount',
+                    '$total', // Fallback
+                  ],
+                },
                 0.1,
               ],
             },
             netToStore: {
               $subtract: [
-                { $ifNull: ['$payment.finalPaymentInfo.capturedAmount', 0] },
+                {
+                  $cond: [
+                    {
+                      $and: [
+                        { $ifNull: ['$payment.finalPaymentInfo.capturedAmount', false] },
+                        { $gt: ['$payment.finalPaymentInfo.capturedAmount', 0] },
+                      ],
+                    },
+                    '$payment.finalPaymentInfo.capturedAmount',
+                    '$total', // Fallback
+                  ],
+                },
                 {
                   $add: [
                     {
@@ -448,7 +530,18 @@ export class StoreFinanceService {
                     },
                     {
                       $multiply: [
-                        { $ifNull: ['$payment.finalPaymentInfo.capturedAmount', 0] },
+                        {
+                          $cond: [
+                            {
+                              $and: [
+                                { $ifNull: ['$payment.finalPaymentInfo.capturedAmount', false] },
+                                { $gt: ['$payment.finalPaymentInfo.capturedAmount', 0] },
+                              ],
+                            },
+                            '$payment.finalPaymentInfo.capturedAmount',
+                            '$total', // Fallback
+                          ],
+                        },
                         0.1,
                       ],
                     },
