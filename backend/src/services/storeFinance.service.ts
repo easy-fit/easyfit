@@ -17,9 +17,7 @@ export class StoreFinanceService {
   /**
    * Get balances for all stores with pagination
    */
-  static async getAllStoreBalances(
-    options: PaginationOptions = {}
-  ): Promise<PaginatedStoreBalances> {
+  static async getAllStoreBalances(options: PaginationOptions = {}): Promise<PaginatedStoreBalances> {
     const { page = 1, limit = 1000, sortBy = 'netBalance', sortOrder = 'desc' } = options;
     const skip = (page - 1) * limit;
 
@@ -131,10 +129,7 @@ export class StoreFinanceService {
               $subtract: [
                 '$totalEarnings',
                 {
-                  $add: [
-                    '$shippingCosts',
-                    { $multiply: ['$totalEarnings', 0.1] },
-                  ],
+                  $add: ['$shippingCosts', { $multiply: ['$totalEarnings', 0.1] }],
                 },
               ],
             },
@@ -182,7 +177,7 @@ export class StoreFinanceService {
       // Debug logging
       console.log(`[StoreFinance] Found ${stores.length} stores with completed orders in last 7 days`);
       console.log('[StoreFinance] Date range: from', sevenDaysAgo.toISOString(), 'to', new Date().toISOString());
-      console.log('[StoreFinance] Store names:', stores.map(s => s.storeName).join(', '));
+      console.log('[StoreFinance] Store names:', stores.map((s) => s.storeName).join(', '));
       if (stores.length > 0) {
         console.log('[StoreFinance] Sample store:', JSON.stringify(stores[0], null, 2));
       }
@@ -281,11 +276,7 @@ export class StoreFinanceService {
             },
             shippingCosts: {
               $sum: {
-                $cond: [
-                  { $eq: ['$shipping.subsidizedBy', 'merchant'] },
-                  { $ifNull: ['$shipping.cost', 0] },
-                  0,
-                ],
+                $cond: [{ $eq: ['$shipping.subsidizedBy', 'merchant'] }, { $ifNull: ['$shipping.cost', 0] }, 0],
               },
             },
             totalOrders: { $sum: 1 },
@@ -307,10 +298,7 @@ export class StoreFinanceService {
               $subtract: [
                 '$totalEarnings',
                 {
-                  $add: [
-                    '$shippingCosts',
-                    { $multiply: ['$totalEarnings', 0.1] },
-                  ],
+                  $add: ['$shippingCosts', { $multiply: ['$totalEarnings', 0.1] }],
                 },
               ],
             },
@@ -377,10 +365,7 @@ export class StoreFinanceService {
   /**
    * Get detailed order breakdown for a store
    */
-  static async getStoreOrderDetails(
-    storeId: string,
-    options: FilterOptions = {}
-  ): Promise<StoreOrderDetails> {
+  static async getStoreOrderDetails(storeId: string, options: FilterOptions = {}): Promise<StoreOrderDetails> {
     try {
       // First get the store balance summary
       const summary = await this.getStoreBalance(storeId);
@@ -463,11 +448,7 @@ export class StoreFinanceService {
             orderId: { $toString: '$_id' },
             orderDate: '$createdAt',
             customerName: {
-              $concat: [
-                { $ifNull: ['$customer.name', 'N/A'] },
-                ' ',
-                { $ifNull: ['$customer.surname', ''] },
-              ],
+              $concat: [{ $ifNull: ['$customer.name', 'N/A'] }, ' ', { $ifNull: ['$customer.surname', ''] }],
             },
             customerId: { $toString: '$userId' },
             orderTotal: '$total', // Already in dollars
@@ -522,11 +503,7 @@ export class StoreFinanceService {
                 {
                   $add: [
                     {
-                      $cond: [
-                        { $eq: ['$shipping.subsidizedBy', 'merchant'] },
-                        { $ifNull: ['$shipping.cost', 0] },
-                        0,
-                      ],
+                      $cond: [{ $eq: ['$shipping.subsidizedBy', 'merchant'] }, { $ifNull: ['$shipping.cost', 0] }, 0],
                     },
                     {
                       $multiply: [
