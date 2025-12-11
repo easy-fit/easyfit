@@ -18,6 +18,7 @@ export interface StoreBalanceSummary {
   totalOrders: number;
   completedOrders: number;
   bankingInfo: BankingInfo;
+  cuit: string;
 }
 
 export interface OrderFinancialDetail {

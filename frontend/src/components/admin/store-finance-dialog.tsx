@@ -41,6 +41,12 @@ export function StoreFinanceDialog({ storeId, open, onOpenChange }: StoreFinance
               ) : (
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
+                    <p className="text-muted-foreground">CUIT</p>
+                    <p className="font-medium">
+                      {balance?.cuit || 'No especificado'}
+                    </p>
+                  </div>
+                  <div>
                     <p className="text-muted-foreground">Tipo de Cuenta</p>
                     <p className="font-medium">
                       {balance?.bankingInfo?.accountType?.toUpperCase() || 'No especificado'}
