@@ -74,11 +74,13 @@ export class ProductService {
     );
 
     // Get signed URLs only for non-bulk variant images
-    const signedUrls = await R2Service.getSignedUrls({
-      bucket: R2.BUCKET_PRODUCTS,
-      typePrefix: 'products',
-      files: images,
-    });
+    const signedUrls = images.length > 0 
+      ? await R2Service.getSignedUrls({
+          bucket: R2.BUCKET_PRODUCTS,
+          typePrefix: 'products',
+          files: images,
+        })
+      : [];
 
     // Process non-bulk variants with signed URLs
     let currentSignedUrlIndex = 0;
