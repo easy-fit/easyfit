@@ -202,9 +202,10 @@ export function showResults(
   }
 }
 
-export const calculateDiscountedPrice = (price: number, discount: number): number => {
-  if (!discount || discount <= 0 || discount > 99) return price;
-  return Math.round(price * (1 - discount / 100));
+export const calculateDiscountedPrice = (price: number | null | undefined, discount: number): number => {
+  const safePrice = price ?? 0;
+  if (!discount || discount <= 0 || discount > 99) return safePrice;
+  return Math.round(safePrice * (1 - discount / 100));
 };
 
 export const getLowestPriceVariant = (variants: Variant[]): {
