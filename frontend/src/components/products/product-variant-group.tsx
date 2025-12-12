@@ -189,7 +189,7 @@ export function ProductVariantGroup({
                     </div>
                     {variant.newPrice !== undefined && variant.newPrice !== variant.price && (
                       <p className="text-xs text-gray-500 mt-1">
-                        Original: ${variant.price.toLocaleString('es-AR')}
+                        Original: ${(variant.price ?? 0).toLocaleString('es-AR')}
                       </p>
                     )}
                   </div>

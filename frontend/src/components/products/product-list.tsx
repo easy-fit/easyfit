@@ -267,8 +267,8 @@ export function ProductList({
                           {/* Final price */}
                           <div className="font-medium text-[#20313A]">
                             {product.price.min === product.price.max
-                              ? formatPrice(product.price.min)
-                              : `${formatPrice(product.price.min)} - ${formatPrice(product.price.max)}`}
+                              ? formatPrice(product.price.min ?? 0)
+                              : `${formatPrice(product.price.min ?? 0)} - ${formatPrice(product.price.max ?? 0)}`}
                           </div>
 
                           {/* Discount Badge */}
