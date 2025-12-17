@@ -499,8 +499,8 @@ export class BulkUploadService {
     const groupsMap = new Map<string, ProductGroup>();
 
     for (const row of rows) {
-      // Use DESCRIPTION as the unique key since it becomes the product title
-      const key = (row.DESCRIPTION || '').trim();
+      // Use TITLE as the unique key since it becomes the product title
+      const key = (row.TITLE || '').trim();
 
       if (!key) continue; // Skip rows without description
 
@@ -534,7 +534,7 @@ export class BulkUploadService {
   private static async createProductWithVariants(productGroup: ProductGroup, storeId: string): Promise<void> {
     // Use DESCRIPTION as title (which contains the full product name)
     // This ensures uniqueness since each product has a different description
-    const productTitle = productGroup.description || productGroup.title;
+    const productTitle = productGroup.title;
 
     // Validate title uniqueness
     await ProductValidationService.validateTitleUniqueness(storeId, productTitle);
