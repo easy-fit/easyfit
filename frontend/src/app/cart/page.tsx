@@ -44,7 +44,7 @@ const shippingOptions: ShippingOption[] = [
     id: 'advanced',
     name: 'Envío Avanzado',
     description: 'El rider espera mientras probás',
-    price: 2000,
+    price: 0,   // antes 2000
     tryOnTime: '10 minutos para probar',
     icon: User,
     features: ['Rider espera afuera', '10 minutos de prueba', 'Devolución inmediata'],
@@ -53,7 +53,7 @@ const shippingOptions: ShippingOption[] = [
     id: 'premium',
     name: 'Envío Premium',
     description: 'Más tiempo para decidir con tranquilidad',
-    price: 3000,
+    price: 0,  // antes 3000
     tryOnTime: '17 minutos para probar',
     icon: Zap,
     features: ['Rider espera afuera', '17 minutos de prueba', 'Devolución inmediata', 'Servicio prioritario'],

@@ -43,7 +43,7 @@ const shippingTypeConfig = {
     icon: User,
     tryOnTime: '10 minutos para probar',
     color: 'bg-purple-100 text-purple-800',
-    cost: 2000,
+    cost: 0,   // antes 2000
   },
   premium: {
     name: 'Premium',
@@ -51,7 +51,7 @@ const shippingTypeConfig = {
     icon: Zap,
     tryOnTime: '17 minutos para probar',
     color: 'bg-green-100 text-green-800',
-    cost: 3000,
+    cost: 0,  // antes 3000
   },
 };
 
