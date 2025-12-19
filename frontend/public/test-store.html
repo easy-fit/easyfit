@@ -354,6 +354,7 @@
       let socket = null;
       let currentStoreId = null;
       let enableVerboseLogging = true; // Toggle para logging detallado
+      let currentUserRole = null;
 
       // Configuration
       const API_BASE = 'http://localhost:3000/api/v1';
@@ -403,16 +404,43 @@
         element.textContent = message;
       }
 
+      // Actualiza la UI cuando cambiamos de usuario
+      function refreshOrderPermissions() {
+          const isMerchant = currentUserRole === 'merchant';
+          
+          // Buscar todos los controles de merchant y mensajes de customer
+          const merchantControls = document.querySelectorAll('.merchant-controls');
+          const customerMessages = document.querySelectorAll('.customer-message');
+          
+          merchantControls.forEach(el => {
+              // Solo mostrar si es merchant Y si la orden no ha sido finalizada (no tiene clase hidden)
+              if (!el.classList.contains('hidden-permanent')) {
+                  el.style.display = isMerchant ? 'flex' : 'none';
+              }
+          });
+          
+          customerMessages.forEach(el => {
+               // Solo mostrar si NO es merchant Y la orden no ha sido finalizada
+              if (!el.classList.contains('hidden-permanent')) {
+                  el.style.display = isMerchant ? 'none' : 'block';
+              }
+          });
+          
+          log(`UI Permissions updated for role: ${currentUserRole}`, 'info');
+      }
+
       function getAuthToken() {
         return document.getElementById('authToken').value.trim();
       }
 
       // Login and connect automatically
       async function loginAndConnect() {
-        const role = document.getElementById('userRole').value;
+        const roleSelect = document.getElementById('userRole');
+        const role = roleSelect.value; // 'customer' o 'merchant'
+        
         const credentials = {
           customer: { email: 'oviedoignacio91+100@gmail.com', password: 'test' },
-          merchant: { email: 'agustinbarbero933@gmail.com',password: 'test123' },
+          merchant: { email: 'agustinbarbero933@gmail.com', password: 'test123' },
         };
 
         try {
@@ -428,11 +456,15 @@
           const data = await response.json();
 
           if (response.ok) {
-            // Set the token and connect
             document.getElementById('authToken').value = data.token;
-            log(`Logged in successfully as ${role}`, 'api');
+            
+            // --- ACTUALIZACIÓN DE ROL ---
+            currentUserRole = role; 
+            log(`Logged in successfully as ${role.toUpperCase()}`, 'api');
+            
+            // Actualizar visibilidad de botones en ordenes existentes
+            refreshOrderPermissions(); 
 
-            // Connect WebSocket
             connectWebSocket();
           } else {
             showStatus('connectionStatus', `Login failed: ${data.message}`, 'error');
@@ -490,8 +522,15 @@
         });
 
         // Listen for order updates
-        socket.on('order:status_update', (data) => {
-          log(`Order status update: ${data.orderId} -> ${data.status}`, 'websocket');
+        socket.on('order:status_update', (event) => {
+          // El backend envía: { type: 'status_update', data: { order: {...}, newStatus: '...', previousStatus: '...' } }
+          const update = event.data; 
+          // Usamos validación segura por si 'update' viene vacío
+          if (update && update.order) {
+              log(`Order status update: ${update.order._id} | ${update.previousStatus} ➡️ ${update.newStatus}`, 'websocket');
+          } else {
+              log(`Order status update received (raw): ${JSON.stringify(event)}`, 'websocket');
+          }
         });
 
         // Listen for store response confirmations
@@ -632,6 +671,10 @@
             );
             log(`Order created: ${data.data.order._id} - Total: $${data.data.total}`, 'api');
             currentStoreId = data.data.storeId;
+
+            // Forzar la visualización de la orden ---
+            fetchAndDisplayOrder(data.data.order._id); 
+
           } else {
             showStatus('orderCreationStatus', `Error: ${data.message}`, 'error');
             log(`Order creation failed: ${data.message}`, 'error');
@@ -640,6 +683,32 @@
           showStatus('orderCreationStatus', `Network error: ${error.message}`, 'error');
           log(`Order creation error: ${error.message}`, 'error');
         }
+      }
+
+      // Obtener y mostrar la orden manualmente
+      async function fetchAndDisplayOrder(orderId) {
+          const token = getAuthToken();
+          try {
+              // Usamos el endpoint de test para obtener detalles
+              const response = await fetch(`${API_BASE}/test/orders/${orderId}`, {
+                  headers: { Authorization: `Bearer ${token}` }
+              });
+              const data = await response.json();
+              
+              if (response.ok && data.data.order) {
+                  // Preparamos los datos como los espera la función displayIncomingOrder
+                  const orderPayload = {
+                      order: data.data.order,
+                      // Si items no viene populado, enviamos array vacío para evitar error
+                      orderItems: data.data.order.items || [] 
+                  };
+                  
+                  log(`Manually fetching order ${orderId} for display`, 'info');
+                  displayIncomingOrder(orderPayload);
+              }
+          } catch (e) {
+              log(`Failed to fetch order details: ${e.message}`, 'error');
+          }
       }
 
       // Display incoming order
@@ -653,9 +722,17 @@
 
         const order = orderData.order;
         const orderItems = orderData.orderItems || [];
+        
+        // Determinar visibilidad según el rol actual
+        const showActions = currentUserRole === 'merchant';
+        const displayStyle = showActions ? 'flex' : 'none';
+        const messageStyle = showActions ? 'none' : 'block';
 
         const orderCard = document.createElement('div');
         orderCard.className = 'order-card';
+        
+        orderCard.dataset.orderId = order._id;
+        
         orderCard.innerHTML = `
                 <div class="order-header">
                     <span class="order-id">Order #${order._id}</span>
@@ -664,51 +741,154 @@
                 <p><strong>Total:</strong> $${order.total.toLocaleString('es-AR')}</p>
                 <p><strong>Shipping:</strong> ${order.shipping?.type || 'Unknown'}</p>
                 <p><strong>Items:</strong> ${orderItems.length} items</p>
-                <div class="order-actions">
+                
+                <div class="order-actions merchant-controls" style="display: ${displayStyle}; gap: 10px; margin-top: 10px;">
                     <button class="button" onclick="respondToOrder('${order._id}', true)">✅ Accept Order</button>
-                    <button class="button danger" onclick="respondToOrder('${
-                      order._id
-                    }', false)">❌ Reject Order</button>
+                    <button class="button danger" onclick="respondToOrder('${order._id}', false)">❌ Reject Order</button>
                 </div>
+
+                <div class="customer-message" style="display: ${messageStyle}; margin-top: 10px; color: #856404; background-color: #fff3cd; padding: 10px; border-radius: 4px; font-size: 13px;">
+                    ⏳ Esperando a que el Store Owner acepte la orden...
+                    <br><small>(Cambia a usuario Merchant para ver los botones)</small>
+                </div>
+                
+                <div class="final-status hidden" style="margin-top: 10px; font-style: italic; color: #6c757d;"></div>
             `;
 
         container.appendChild(orderCard);
       }
 
-      // Respond to order (accept/reject) via WebSocket
-      function respondToOrder(orderId, accepted) {
-        if (!socket || !socket.connected) {
-          log('WebSocket not connected', 'error');
-          return;
+      // Respond to order (Versión completa con validación de rol y actualización de UI)
+      async function respondToOrder(orderId, accepted) {
+        // 1. Validación de seguridad en el cliente
+        if (currentUserRole !== 'merchant') {
+            alert("⛔ Acceso Denegado: Solo el usuario 'Store Owner' puede aceptar o rechazar órdenes.\n\nPor favor, cambia el usuario a 'Store Owner' en el panel de conexión.");
+            return;
         }
 
         if (!currentStoreId) {
-          log('Store ID not available', 'error');
+          log('Error: No se encontró el ID de la tienda. Asegúrate de estar logueado como Merchant.', 'error');
           return;
         }
 
-        log(`${accepted ? 'Accepting' : 'Rejecting'} order ${orderId} via WebSocket...`, 'websocket');
+        const actionText = accepted ? 'Accepting' : 'Rejecting';
+        log(`${actionText} order ${orderId} via Test API...`, 'api');
 
-        // Send store response via WebSocket
-        socket.emit('store:order:response', {
-          orderId: orderId,
-          storeId: currentStoreId,
-          accepted: accepted,
-          reason: accepted ? 'Order accepted for testing' : 'Order rejected for testing',
-        });
+        // Referencia a la tarjeta específica usando el dataset que agregamos en displayIncomingOrder
+        // Si no encuentras la tarjeta por ID, intentamos buscarla por contenido (fallback)
+        let orderCard = document.querySelector(`.order-card[data-order-id="${orderId}"]`);
+        
+        // Fallback por si la tarjeta es antigua y no tiene el data-attribute aún
+        if (!orderCard) {
+            const allCards = document.querySelectorAll('.order-card');
+            allCards.forEach(c => {
+                if (c.innerHTML.includes(orderId)) orderCard = c;
+            });
+        }
 
-        // Update the order card immediately for better UX
-        const orderCards = document.querySelectorAll('.order-card');
-        orderCards.forEach((card) => {
-          if (card.innerHTML.includes(orderId)) {
-            const statusSpan = card.querySelector('.order-status');
-            statusSpan.textContent = accepted ? 'Accepting...' : 'Rejecting...';
-            statusSpan.className = `order-status ${accepted ? 'accepting' : 'rejecting'}`;
+        // Feedback visual inmediato (deshabilitar botones)
+        if (orderCard) {
+            const buttons = orderCard.querySelectorAll('button');
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                btn.style.opacity = '0.7';
+                btn.style.cursor = 'wait';
+            });
+            const statusSpan = orderCard.querySelector('.order-status');
+            if (statusSpan) statusSpan.textContent = `${actionText}...`;
+        }
 
-            const actions = card.querySelector('.order-actions');
-            actions.innerHTML = `<span style="color: #6c757d; font-style: italic;">Processing response...</span>`;
-          }
-        });
+        try {
+            const token = getAuthToken();
+            
+            // 2. Llamada a la API de Test (Bypasea restricciones de websocket)
+            const response = await fetch(`${API_BASE}/test/store-response`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    orderId: orderId,
+                    storeId: currentStoreId,
+                    accepted: accepted,
+                    reason: accepted ? 'Order accepted via Test Interface' : 'Order rejected via Test Interface'
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                 log(`Store response confirmed: Order ${accepted ? 'ACCEPTED' : 'REJECTED'}`, 'success');
+                 
+                 // 3. Actualización final de la Interfaz
+                 if (orderCard) {
+                    // Ocultar controles y mensajes de espera permanentemente
+                    const controls = orderCard.querySelector('.merchant-controls');
+                    const message = orderCard.querySelector('.customer-message');
+                    const finalStatus = orderCard.querySelector('.final-status');
+                    
+                    if(controls) {
+                        controls.style.display = 'none';
+                        controls.classList.add('hidden-permanent'); // Marca para que refreshOrderPermissions no los vuelva a mostrar
+                    }
+                    if(message) {
+                        message.style.display = 'none';
+                        message.classList.add('hidden-permanent');
+                    }
+                    
+                    // Actualizar Badge de estado
+                    const statusSpan = orderCard.querySelector('.order-status');
+                    if (statusSpan) {
+                        statusSpan.textContent = accepted ? 'Accepted' : 'Rejected';
+                        // Mantenemos estilos visuales: success (verde) o error (rojo)
+                        statusSpan.className = `order-status ${accepted ? 'success' : 'error'}`;
+                        if (accepted) {
+                            // Si tienes una clase específica para 'accepted' en tu CSS, úsala, sino 'success' funciona
+                            statusSpan.style.backgroundColor = '#d4edda';
+                            statusSpan.style.color = '#155724';
+                        }
+                    }
+
+                    // Mostrar mensaje final en la tarjeta
+                    if(finalStatus) {
+                        finalStatus.classList.remove('hidden');
+                        finalStatus.style.display = 'block';
+                        finalStatus.innerHTML = accepted 
+                            ? '✅ <strong>Orden Aceptada</strong><br>Esperando asignación de rider...' 
+                            : '❌ <strong>Orden Rechazada</strong><br>El reembolso ha sido procesado.';
+                    } else {
+                        // Si no existe el div final-status (en tarjetas viejas), lo creamos
+                        const newStatusDiv = document.createElement('div');
+                        newStatusDiv.className = 'final-status';
+                        newStatusDiv.style.marginTop = '10px';
+                        newStatusDiv.style.fontStyle = 'italic';
+                        newStatusDiv.style.color = '#6c757d';
+                        newStatusDiv.innerHTML = accepted 
+                            ? '✅ Orden Aceptada - Esperando asignación de rider...' 
+                            : '❌ Orden Rechazada';
+                        orderCard.appendChild(newStatusDiv);
+                    }
+                 }
+            } else {
+                throw new Error(data.message || 'Error desconocido en el servidor');
+            }
+        } catch (e) {
+             log(`Error responding to order: ${e.message}`, 'error');
+             alert(`Error al procesar la orden: ${e.message}`);
+             
+             // Restaurar estado en caso de error
+             if (orderCard) {
+                const buttons = orderCard.querySelectorAll('button');
+                buttons.forEach(btn => {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                    btn.style.cursor = 'pointer';
+                });
+                const statusSpan = orderCard.querySelector('.order-status');
+                if (statusSpan) statusSpan.textContent = 'New Order';
+             }
+        }
       }
 
       // Initialize
