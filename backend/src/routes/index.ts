@@ -13,7 +13,7 @@ import { adminRoutes } from './admin.routes';
 import { paymentRoutes } from './payment.routes';
 import { riderRoutes } from './rider.routes';
 import { storeManagerRoutes } from './storeManager.routes';
-import { testingRoutes } from './testing.routes';
+import testingRoutes from './testing.routes';
 
 const router = Router();
 
