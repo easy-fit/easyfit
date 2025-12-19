@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EasyFit - Store Testing Interface</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: #f5f5f5;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+
+      .header {
+        background: #20313a;
+        color: white;
+        padding: 20px;
+        text-align: center;
+      }
+
+      .header h1 {
+        margin-bottom: 5px;
+      }
+
+      .header p {
+        opacity: 0.8;
+        font-size: 14px;
+      }
+
+      .content {
+        padding: 30px;
+      }
+
+      .section {
+        margin-bottom: 30px;
+        padding: 20px;
+        border: 1px solid #e1e5e9;
+        border-radius: 8px;
+      }
+
+      .section h3 {
+        color: #20313a;
+        margin-bottom: 15px;
+        font-size: 18px;
+      }
+
+      .form-group {
+        margin-bottom: 15px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+        color: #333;
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 14px;
+      }
+
+      textarea {
+        resize: vertical;
+        height: 80px;
+      }
+
+      .button {
+        background: #9ee493;
+        color: #20313a;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+
+      .button:hover {
+        background: #8bd480;
+      }
+
+      .button.secondary {
+        background: #f8f9fa;
+        color: #495057;
+        border: 1px solid #dee2e6;
+      }
+
+      .button.secondary:hover {
+        background: #e9ecef;
+      }
+
+      .button.danger {
+        background: #dc3545;
+        color: white;
+      }
+
+      .button.danger:hover {
+        background: #c82333;
+      }
+
+      .button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .status {
+        padding: 10px;
+        border-radius: 6px;
+        margin: 10px 0;
+        font-size: 14px;
+      }
+
+      .status.success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+
+      .status.error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+
+      .status.info {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+      }
+
+      .logs {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        padding: 15px;
+        height: 200px;
+        overflow-y: auto;
+        font-family: 'Monaco', 'Courier New', monospace;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .log-entry {
+        margin-bottom: 5px;
+        padding: 2px 0;
+      }
+
+      .log-time {
+        color: #6c757d;
+      }
+
+      .log-websocket {
+        color: #007bff;
+      }
+
+      .log-api {
+        color: #28a745;
+      }
+
+      .log-error {
+        color: #dc3545;
+      }
+
+      .order-card {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        padding: 15px;
+        margin: 10px 0;
+      }
+
+      .order-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+
+      .order-id {
+        font-weight: 600;
+        color: #20313a;
+      }
+
+      .order-status {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+      }
+
+      .order-status.order_placed {
+        background: #fff3cd;
+        color: #856404;
+      }
+
+      .order-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🏪 EasyFit Store Testing</h1>
+        <p>Mobile Development Testing Interface</p>
+      </div>
+
+      <div class="section" style="margin: 30px">
+        <h3>🚴 Estado de Disponibilidad del Rider (rider:availability:toggle)</h3>
+        <pre
+          style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 6px; padding: 15px; margin-bottom: 10px"
+        >
+      {
+          "riderId": "688d0f7457271eebe1248b57",
+          "isAvailable": true,
+          "location": {
+              "latitude": -62.276103,
+              "longitud": -38.707918
+          },
+          "timestamp": "2024-01-01T10:00:00Z"
+      }
+        </pre>
+        <div class="status info" style="margin-bottom: 0">
+          Esto es para ponerte como <strong>disponible</strong> como rider luego de aceptar una orden, ya que el sistema
+          te setea como <strong>no disponible</strong>.
+        </div>
+      </div>
+
+      <div class="content">
+        <!-- Connection Status -->
+        <div class="section">
+          <h3>🔌 Connection Status</h3>
+          <div id="connectionStatus" class="status info">Connecting to server...</div>
+          <div class="form-group">
+            <label for="userRole">Login As</label>
+            <select id="userRole">
+              <option value="customer">Customer (Creates Orders)</option>
+              <option value="merchant">Store Owner (Responds to Orders)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <button class="button" onclick="loginAndConnect()">Login & Connect</button>
+          </div>
+          <div class="form-group">
+            <label for="authToken">Or Manual JWT Token</label>
+            <input type="password" id="authToken" placeholder="Paste your JWT token here" />
+            <button class="button secondary" onclick="connectWebSocket()" style="margin-top: 10px">
+              Connect with Token
+            </button>
+          </div>
+        </div>
+
+        <!-- Order Creation -->
+        <div class="section">
+          <h3>📦 Create Test Order</h3>
+          <div class="form-group">
+            <label for="shippingType">Shipping Type</label>
+            <select id="shippingType">
+              <option value="simple">Simple (No try-on)</option>
+              <option value="advanced">Advanced (10 min try-on)</option>
+              <option value="premium">Premium (17 min try-on)</option>
+            </select>
+          </div>
+          <button class="button" onclick="createTestOrder()">Create Test Order</button>
+          <div id="orderCreationStatus"></div>
+        </div>
+
+        <!-- Incoming Orders -->
+        <div class="section">
+          <h3>📨 Incoming Orders</h3>
+          <div id="incomingOrders">
+            <p style="color: #6c757d; font-style: italic">
+              No incoming orders yet. Create a test order to see notifications here.
+            </p>
+          </div>
+        </div>
+
+        <!-- WebSocket Logs -->
+        <div class="section">
+          <h3>🔊 WebSocket Events</h3>
+          <div style="margin-bottom: 10px; display: flex; gap: 10px; align-items: center;">
+            <label style="display: flex; align-items: center; cursor: pointer;">
+              <input type="checkbox" id="verboseLogging" checked onchange="toggleVerboseLogging()" style="margin-right: 5px; cursor: pointer;" />
+              <span>Logging detallado de todos los eventos</span>
+            </label>
+          </div>
+          <div id="logs" class="logs">
+            <div class="log-entry"><span class="log-time">[Loading...]</span> Ready to connect...</div>
+          </div>
+          <button class="button secondary" onclick="clearLogs()" style="margin-top: 10px">Clear Logs</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" style="margin: 30px">
+      <h3>🚴 Credenciales y Testing para Rider (Android)</h3>
+      <div style="margin-bottom: 10px">
+        <strong>Usuario (email):</strong> <code>testrider@easyfit.com</code><br />
+        <strong>Contraseña:</strong> <code>Test123!</code><br />
+        <strong>Propósito:</strong> Para pruebas de la app Android como rider.<br />
+        <strong>WebSocket Channel:</strong> <code>rider:&lt;riderId&gt;</code><br />
+        <strong>Flujo:</strong>
+        <ul style="margin: 8px 0 0 18px; padding: 0">
+          <li>1. Logueate con las credenciales usando la API</li>
+          <li>2. Conéctate al WebSocket (en tu cliente) usando el JWT recibido.</li>
+          <li>3. Escucha todos los eventos necesarios</li>
+          <li>4. El flujo es real: asignación de pedidos, cambios de estado, etc.</li>
+        </ul>
+        <strong>Notas:</strong>
+        <ul style="margin: 8px 0 0 18px; padding: 0">
+          <li>
+            El canal WebSocket es <code>rider:&lt;riderId&gt;</code> (el <code>riderId</code> lo obtienes tras login o
+            en el JWT).
+          </li>
+          <li>El flujo de pedidos es 100% real, solo se omite el pago y validaciones estrictas de stock.</li>
+        </ul>
+      </div>
+      <div class="status info" style="margin-bottom: 0">
+        Usa estas credenciales para probar la app Android como rider. Recibirás eventos reales de asignación y estado de
+        pedidos.<br />
+      </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script>
+      let socket = null;
+      let currentStoreId = null;
+      let enableVerboseLogging = true; // Toggle para logging detallado
+
+      // Configuration
+      const API_BASE = 'http://localhost:3000/api/v1';
+      const WEBSOCKET_URL = 'ws://localhost:3000';
+
+      // Utility functions
+      function log(message, type = 'info') {
+        const logs = document.getElementById('logs');
+        const time = new Date().toLocaleTimeString();
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        entry.innerHTML = `<span class="log-time">[${time}]</span> <span class="log-${type}">${message}</span>`;
+        logs.appendChild(entry);
+        logs.scrollTop = logs.scrollHeight;
+      }
+
+      // Función para formatear datos complejos en el log
+      function formatLogData(data) {
+        try {
+          if (typeof data === 'string') {
+            return data;
+          }
+          // Limitar la profundidad y el tamaño del JSON para evitar logs muy largos
+          return JSON.stringify(data, null, 2).substring(0, 500) + (JSON.stringify(data).length > 500 ? '...' : '');
+        } catch (e) {
+          return String(data);
+        }
+      }
+
+      function clearLogs() {
+        document.getElementById('logs').innerHTML = '';
+      }
+
+      function toggleVerboseLogging() {
+        enableVerboseLogging = document.getElementById('verboseLogging').checked;
+        log(`Logging detallado ${enableVerboseLogging ? 'habilitado' : 'deshabilitado'}`, 'info');
+        // Si ya hay un socket conectado, necesitamos reconectar para aplicar el cambio
+        // (en una implementación más completa, podríamos agregar/remover listeners dinámicamente)
+        if (socket && socket.connected) {
+          log('Nota: Reconecta para aplicar el cambio en el logging', 'info');
+        }
+      }
+
+      function showStatus(elementId, message, type) {
+        const element = document.getElementById(elementId);
+        element.className = `status ${type}`;
+        element.textContent = message;
+      }
+
+      function getAuthToken() {
+        return document.getElementById('authToken').value.trim();
+      }
+
+      // Login and connect automatically
+      async function loginAndConnect() {
+        const role = document.getElementById('userRole').value;
+        const credentials = {
+          customer: { email: 'oviedoignacio91+100@gmail.com', password: 'test' },
+          merchant: { email: 'agustinbarbero933@gmail.com',password: 'test123' },
+        };
+
+        try {
+          showStatus('connectionStatus', 'Logging in...', 'info');
+          log(`Logging in as ${role}...`, 'api');
+
+          const response = await fetch(`${API_BASE}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(credentials[role]),
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            // Set the token and connect
+            document.getElementById('authToken').value = data.token;
+            log(`Logged in successfully as ${role}`, 'api');
+
+            // Connect WebSocket
+            connectWebSocket();
+          } else {
+            showStatus('connectionStatus', `Login failed: ${data.message}`, 'error');
+            log(`Login failed: ${data.message}`, 'error');
+          }
+        } catch (error) {
+          showStatus('connectionStatus', `Login error: ${error.message}`, 'error');
+          log(`Login error: ${error.message}`, 'error');
+        }
+      }
+
+      // WebSocket connection
+      function connectWebSocket() {
+        const token = getAuthToken();
+        if (!token) {
+          showStatus('connectionStatus', 'Please enter your JWT token first', 'error');
+          return;
+        }
+
+        if (socket) {
+          socket.disconnect();
+        }
+
+        showStatus('connectionStatus', 'Connecting...', 'info');
+        log('Attempting WebSocket connection...', 'websocket');
+
+        socket = io(WEBSOCKET_URL, {
+          auth: {
+            token: token,
+          },
+        });
+
+        socket.on('connect', () => {
+          showStatus('connectionStatus', 'Connected! Listening for orders...', 'success');
+          log('WebSocket connected successfully', 'websocket');
+
+          // Get user info to determine store
+          fetchUserInfo();
+        });
+
+        socket.on('disconnect', () => {
+          showStatus('connectionStatus', 'Disconnected from server', 'error');
+          log('WebSocket disconnected', 'websocket');
+        });
+
+        socket.on('connect_error', (error) => {
+          showStatus('connectionStatus', `Connection failed: ${error.message}`, 'error');
+          log(`Connection error: ${error.message}`, 'error');
+        });
+
+        // Listen for new order notifications
+        socket.on('order:new', (eventData) => {
+          log(`New order received: ${eventData.data.order._id}`, 'websocket');
+          displayIncomingOrder(eventData.data);
+        });
+
+        // Listen for order updates
+        socket.on('order:status_update', (data) => {
+          log(`Order status update: ${data.orderId} -> ${data.status}`, 'websocket');
+        });
+
+        // Listen for store response confirmations
+        socket.on('order:response_confirmed', (data) => {
+          log(`Store response confirmed: ${formatLogData(data)}`, 'websocket');
+
+          // Update the order card with final status
+          const orderCards = document.querySelectorAll('.order-card');
+          orderCards.forEach((card) => {
+            if (card.innerHTML.includes(data.data.orderId)) {
+              const statusSpan = card.querySelector('.order-status');
+              statusSpan.textContent = data.data.accepted ? 'Accepted' : 'Rejected';
+              statusSpan.className = `order-status ${data.data.accepted ? 'accepted' : 'rejected'}`;
+
+              const actions = card.querySelector('.order-actions');
+              actions.innerHTML = `<span style="color: #6c757d; font-style: italic;">${
+                data.data.accepted
+                  ? 'Order accepted - waiting for rider assignment'
+                  : 'Order rejected - refund processed'
+              }</span>`;
+            }
+          });
+        });
+
+        // Generic event listener para capturar TODOS los eventos recibidos
+        // Se ejecuta para todos los eventos, incluso los que tienen handlers específicos arriba
+        // Leer el estado actual del checkbox
+        const shouldLogVerbose = document.getElementById('verboseLogging')?.checked ?? enableVerboseLogging;
+        if (shouldLogVerbose) {
+          socket.onAny((event, ...args) => {
+            // Evitar duplicar eventos de conexión que ya se manejan arriba
+            if (['connect', 'disconnect', 'connect_error'].includes(event)) {
+              return;
+            }
+            
+            const eventData = args.length === 1 ? args[0] : args;
+            log(`📨 Evento recibido: "${event}" | Datos: ${formatLogData(eventData)}`, 'websocket');
+          });
+
+          // Interceptar eventos emitidos también (usando una función wrapper)
+          const originalEmit = socket.emit.bind(socket);
+          socket.emit = function(event, ...args) {
+            const eventData = args.length === 1 ? args[0] : args;
+            log(`📤 Evento enviado: "${event}" | Datos: ${formatLogData(eventData)}`, 'websocket');
+            return originalEmit(event, ...args);
+          };
+        }
+      }
+
+      // Fetch user info and join store channel
+      async function fetchUserInfo() {
+        try {
+          const token = getAuthToken();
+          const response = await fetch(`${API_BASE}/users/me`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            log(`Connected as: ${data.data.user.name} (${data.data.user.email})`, 'api');
+
+            // Get test store ID and join store channel
+            await joinStoreChannel();
+          } else {
+            log('Failed to fetch user info', 'error');
+          }
+        } catch (error) {
+          log(`Error fetching user info: ${error.message}`, 'error');
+        }
+      }
+
+      // Join store channel for receiving orders
+      async function joinStoreChannel() {
+        try {
+          const token = getAuthToken();
+          const response = await fetch(`${API_BASE}/stores`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            const testStore = data.data.stores.find(
+              (store) => store.name.toLowerCase().includes('test') || store.slug.includes('test'),
+            );
+
+            if (testStore) {
+              currentStoreId = testStore._id;
+              // Join store WebSocket channel
+              socket.emit('join_store_channel', { storeId: currentStoreId });
+              log(`Joined store channel: ${testStore.name} (${currentStoreId})`, 'websocket');
+            } else {
+              log('No test store found. Please run setup-test-data first.', 'error');
+            }
+          } else {
+            log('Failed to fetch stores', 'error');
+          }
+        } catch (error) {
+          log(`Error joining store channel: ${error.message}`, 'error');
+        }
+      }
+
+      // Create test order
+      async function createTestOrder() {
+        const token = getAuthToken();
+        if (!token) {
+          showStatus('orderCreationStatus', 'Please connect WebSocket first', 'error');
+          return;
+        }
+
+        const shippingType = document.getElementById('shippingType').value;
+
+        try {
+          showStatus('orderCreationStatus', 'Creating test order...', 'info');
+          log(`Creating test order with ${shippingType} shipping...`, 'api');
+
+          const response = await fetch(`${API_BASE}/test/create-order`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              shippingType: shippingType,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            showStatus(
+              'orderCreationStatus',
+              `Order created successfully! Order ID: ${data.data.order._id}`,
+              'success',
+            );
+            log(`Order created: ${data.data.order._id} - Total: $${data.data.total}`, 'api');
+            currentStoreId = data.data.storeId;
+          } else {
+            showStatus('orderCreationStatus', `Error: ${data.message}`, 'error');
+            log(`Order creation failed: ${data.message}`, 'error');
+          }
+        } catch (error) {
+          showStatus('orderCreationStatus', `Network error: ${error.message}`, 'error');
+          log(`Order creation error: ${error.message}`, 'error');
+        }
+      }
+
+      // Display incoming order
+      function displayIncomingOrder(orderData) {
+        const container = document.getElementById('incomingOrders');
+
+        // Clear "no orders" message
+        if (container.children.length === 1 && container.firstElementChild.tagName === 'P') {
+          container.innerHTML = '';
+        }
+
+        const order = orderData.order;
+        const orderItems = orderData.orderItems || [];
+
+        const orderCard = document.createElement('div');
+        orderCard.className = 'order-card';
+        orderCard.innerHTML = `
+                <div class="order-header">
+                    <span class="order-id">Order #${order._id}</span>
+                    <span class="order-status order_placed">New Order</span>
+                </div>
+                <p><strong>Total:</strong> $${order.total.toLocaleString('es-AR')}</p>
+                <p><strong>Shipping:</strong> ${order.shipping?.type || 'Unknown'}</p>
+                <p><strong>Items:</strong> ${orderItems.length} items</p>
+                <div class="order-actions">
+                    <button class="button" onclick="respondToOrder('${order._id}', true)">✅ Accept Order</button>
+                    <button class="button danger" onclick="respondToOrder('${
+                      order._id
+                    }', false)">❌ Reject Order</button>
+                </div>
+            `;
+
+        container.appendChild(orderCard);
+      }
+
+      // Respond to order (accept/reject) via WebSocket
+      function respondToOrder(orderId, accepted) {
+        if (!socket || !socket.connected) {
+          log('WebSocket not connected', 'error');
+          return;
+        }
+
+        if (!currentStoreId) {
+          log('Store ID not available', 'error');
+          return;
+        }
+
+        log(`${accepted ? 'Accepting' : 'Rejecting'} order ${orderId} via WebSocket...`, 'websocket');
+
+        // Send store response via WebSocket
+        socket.emit('store:order:response', {
+          orderId: orderId,
+          storeId: currentStoreId,
+          accepted: accepted,
+          reason: accepted ? 'Order accepted for testing' : 'Order rejected for testing',
+        });
+
+        // Update the order card immediately for better UX
+        const orderCards = document.querySelectorAll('.order-card');
+        orderCards.forEach((card) => {
+          if (card.innerHTML.includes(orderId)) {
+            const statusSpan = card.querySelector('.order-status');
+            statusSpan.textContent = accepted ? 'Accepting...' : 'Rejecting...';
+            statusSpan.className = `order-status ${accepted ? 'accepting' : 'rejecting'}`;
+
+            const actions = card.querySelector('.order-actions');
+            actions.innerHTML = `<span style="color: #6c757d; font-style: italic;">Processing response...</span>`;
+          }
+        });
+      }
+
+      // Initialize
+      document.addEventListener('DOMContentLoaded', () => {
+        // Inicializar el estado del logging desde el checkbox
+        enableVerboseLogging = document.getElementById('verboseLogging').checked;
+        log('Store testing interface loaded', 'info');
+        log('Choose your role and click "Login & Connect" to start testing', 'info');
+        log('Customer: Creates orders | Store Owner: Responds to orders', 'info');
+      });
+    </script>
+  </body>
+</html>

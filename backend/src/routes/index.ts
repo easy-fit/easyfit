@@ -13,6 +13,7 @@ import { adminRoutes } from './admin.routes';
 import { paymentRoutes } from './payment.routes';
 import { riderRoutes } from './rider.routes';
 import { storeManagerRoutes } from './storeManager.routes';
+import { testingRoutes } from './testing.routes';
 
 const router = Router();
 
@@ -29,5 +30,6 @@ router.use('/admin', adminRoutes);
 router.use('/payments', paymentRoutes);
 router.use('/riders', riderRoutes);
 router.use('/store-managers', storeManagerRoutes);
+router.use('/test', testingRoutes);
 
 export default router;
