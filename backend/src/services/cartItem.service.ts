@@ -6,20 +6,31 @@ import { VariantService } from './variant/variant.service';
 
 export class CartItemService {
   static async getCartItemsByUser(userId: string) {
-    return CartItemModel.find({ userId }).populate({
+    const items = await CartItemModel.find({ userId }).populate({
       path: 'variantId',
       select: 'size color price discount images productId',
       populate: {
         path: 'productId',
         select: 'title allowedShippingTypes',
       },
-      // transform: (variant) => {
-      //   if (variant && variant.images && variant.images.length > 0) {
-      //     variant.images = [variant.images[0]];
-      //   }
-      //   return variant;
-      // },
     });
+
+    // 1. Filtrar ítems válidos (donde la variante y el producto aún existen en la DB)
+    const validItems = items.filter((item) => item.variantId && (item.variantId as any).productId);
+
+    // 2. Si encontramos ítems corruptos/fantasmas, los borramos de la DB
+    if (validItems.length !== items.length) {
+      const invalidIds = items
+        .filter((item) => !item.variantId || !(item.variantId as any).productId)
+        .map((item) => item._id);
+      
+      if (invalidIds.length > 0) {
+        // Borrado asíncrono para limpiar la basura de la base de datos
+        CartItemModel.deleteMany({ _id: { $in: invalidIds } }).catch(console.error);
+      }
+    }
+
+    return validItems;
   }
 
   static async addCartItem(data: CreateCartItemDTO, userId: string) {
@@ -77,10 +88,12 @@ export class CartItemService {
       },
     });
 
-    if (!items || items.length === 0) {
-      throw new AppError('Cart is empty', 400);
+    const validItems = items.filter((item) => item.variantId && (item.variantId as any).productId);
+
+    if (!validItems || validItems.length === 0) {
+      throw new AppError('Cart is empty or contains only invalid items', 400);
     }
-    return items;
+    return validItems;
   }
 
   private static async checkTotalCartItems(userId: string, itemQuantity: number = 0) {
@@ -103,7 +116,9 @@ export class CartItemService {
       })
       .lean();
 
-    if (cartItems.length === 0) return;
+    const validCartItems = cartItems.filter(item => item.variantId && (item.variantId as any).productId);
+
+    if (validCartItems.length === 0) return;
 
     const newVariant = await VariantModel.findById(variantId)
       .populate({
@@ -117,7 +132,7 @@ export class CartItemService {
     }
 
     const newStoreId = (newVariant.productId as any).storeId.toString();
-    const existingStoreId = (cartItems[0].variantId as any).productId.storeId.toString();
+    const existingStoreId = (validCartItems[0].variantId as any).productId.storeId.toString();
 
     if (newStoreId !== existingStoreId) {
       throw new AppError('Cannot mix products from different stores in cart', 400);
