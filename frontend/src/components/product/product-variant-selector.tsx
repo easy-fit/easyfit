@@ -80,7 +80,7 @@ export function ProductVariantSelector({
 
       {/* Current Selection Info */}
       <div className="bg-gray-50 p-3 rounded-lg">
-        <p className="text-sm text-gray-600 flex items-center gap-2">
+        <div className="text-sm text-gray-600 flex items-center gap-2">
           Seleccionado: <span className="font-medium text-[#20313A]">Talle {selectedSize}</span> •{' '}
           <span className="font-medium text-[#20313A] flex items-center gap-1">
             Color
@@ -89,7 +89,7 @@ export function ProductVariantSelector({
               style={{ backgroundColor: selectedColor }}
             />
           </span>
-        </p>
+        </div>
       </div>
 
       {/* Stock Info */}

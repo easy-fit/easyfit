@@ -10,6 +10,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (credentials: LoginCredentials) => Promise<User>;
+  loginWithGoogle: (idToken: string) => Promise<User>;
   logout: () => Promise<void>;
   registerCustomer: (data: RegisterCustomerDTO) => Promise<void>;
   registerMerchant: (data: RegisterMerchantDTO) => Promise<void>;
@@ -79,6 +80,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return response.data.user;
     } catch (error) {
       throw error; // Re-throw to handle in the calling component
+    }
+  };
+
+  const loginWithGoogle = async (idToken: string) => {
+    try {
+      const response = await api.auth.googleLogin(idToken);
+      setUser(response.data.user);
+      return response.data.user;
+    } catch (error) {
+      throw error;
     }
   };
 
@@ -160,6 +171,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     isAuthenticated: !!user,
     isLoading,
     login,
+    loginWithGoogle,
     logout,
     registerCustomer,
     registerMerchant,

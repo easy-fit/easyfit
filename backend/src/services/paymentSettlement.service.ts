@@ -80,8 +80,11 @@ export class PaymentSettlementService {
 
       await PaymentService.updateInternalPayment(payment._id.toString(), {
         status: 'captured',
-        capturedAmount: order.total,
-        settledAt: new Date(),
+        finalPaymentInfo: {
+          capturedAmount: order.total,
+          refundedAmount: 0,
+          settledAt: new Date(),
+        },
       });
 
       return {
@@ -193,9 +196,11 @@ export class PaymentSettlementService {
 
       await PaymentService.updateInternalPayment(payment._id.toString(), {
         status: paymentStatus,
-        capturedAmount: totalCaptureAmount,
-        refundedAmount: refundAmount,
-        settledAt: new Date(),
+        finalPaymentInfo: {
+          capturedAmount: totalCaptureAmount,
+          refundedAmount: refundAmount,
+          settledAt: new Date(),
+        },
       });
 
       const message = `Settlement: ${keptItems.length} kept, ${damagedItems.length} damaged, ${successfullyReturnedItems.length} returned`;
@@ -248,8 +253,11 @@ export class PaymentSettlementService {
 
       await PaymentService.updateInternalPayment(payment._id.toString(), {
         status: 'captured',
-        capturedAmount: captureAmount,
-        settledAt: new Date(),
+        finalPaymentInfo: {
+          capturedAmount: captureAmount,
+          refundedAmount: 0,
+          settledAt: new Date(),
+        },
       });
 
       return {

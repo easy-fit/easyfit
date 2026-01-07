@@ -20,6 +20,7 @@ import { useEasyFitToast } from '@/hooks/use-toast';
 import { CategoryUtils } from '@/lib/utils/categoryUtils';
 import type { Variant } from '@/types/variant';
 import { ShippingTypeBadge } from '@/components/product/shipping-type-badge';
+import { calculateDiscountedPrice } from '@/lib/utils/variant-operations';
 
 export default function ProductPage() {
   const params = useParams();
@@ -258,9 +259,29 @@ export default function ProductPage() {
               </Badge>
             </div>
 
-            {/* Price */}
+            {/* Discounted Price */}
             <div className="space-y-2">
-              <div className="text-3xl font-bold text-[#20313A]">${selectedVariant?.price.toLocaleString('es-AR')}</div>
+              {selectedVariant && selectedVariant.discount > 0 ? (
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge variant="destructive" className="bg-red-600 text-white px-1.5 py-0.5 rounded text-[12px] font-bold z-10 shadow-sm">
+                      {selectedVariant.discount}% OFF
+                    </Badge>
+                  </div>
+                  <div className="flex items-baseline gap-3">
+                    <span className="text-lg text-gray-400 line-through">
+                      ${selectedVariant.price.toLocaleString('es-AR')}
+                    </span>
+                    <span className="text-3xl font-bold text-[#20313A]">
+                      ${calculateDiscountedPrice(selectedVariant.price, selectedVariant.discount).toLocaleString('es-AR')}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-3xl font-bold text-[#20313A]">
+                  ${selectedVariant?.price.toLocaleString('es-AR')}
+                </div>
+              )}
               <p className="text-sm text-gray-600">Precio por prenda</p>
             </div>
 

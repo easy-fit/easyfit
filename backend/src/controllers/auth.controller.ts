@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
 import { AuthService } from '../services/auth/auth.service';
+import { OAuthService } from '../services/auth/oauth.service';
 import { catchAsync } from '../utils/catchAsync';
 import { AppError } from '../utils/appError';
-import { RegisterDTO, CreateManagerDTO } from '../types/user.types';
+import { RegisterDTO, CreateManagerDTO, GoogleAuthDTO } from '../types/user.types';
 import { createSendToken } from '../middlewares/auth';
 import { accessTokenCookieOptions } from '../utils/jwt';
 
@@ -141,13 +142,24 @@ export class AuthController {
   static createManager = catchAsync(async (req: Request, res: Response) => {
     const data: CreateManagerDTO = req.body;
     const createdBy = req.user._id.toString();
-    
+
     const manager = await AuthService.createManager(data, createdBy);
-    
+
     res.status(201).json({
       status: 'success',
       message: 'Manager created successfully',
       data: { user: manager },
     });
+  });
+
+  static googleAuth = catchAsync(async (req: Request, res: Response) => {
+    const { idToken }: GoogleAuthDTO = req.body;
+
+    if (!idToken) {
+      throw new AppError('Google ID token is required', 400);
+    }
+
+    const user = await OAuthService.googleLogin(idToken);
+    createSendToken(user, 200, res);
   });
 }

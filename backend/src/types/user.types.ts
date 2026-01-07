@@ -51,7 +51,7 @@ export interface EmailVerification {
 
 interface AdditionalInfo {
   dni?: string;
-  dniType?: 'DNI' | 'CI' | 'LC' | 'LE';
+  dniType?: 'DNI' | 'CI' | 'LC' | 'LE' | 'dni';
   birthDate?: Date;
   phone?: {
     areaCode?: string;
@@ -64,7 +64,8 @@ export interface User {
   name: string;
   surname: string;
   email: string;
-  passwordHash: string;
+  passwordHash?: string;
+  googleId?: string;
   additionalInfo?: AdditionalInfo;
   role: UserRole;
   address?: Address;
@@ -76,6 +77,10 @@ export interface User {
   riderInfo?: RiderInfo;
   merchantInfo?: MerchantInfo;
   managerInfo?: ManagerInfo;
+}
+
+export interface GoogleAuthDTO {
+  idToken: string;
 }
 
 export interface CreateUserDTO {

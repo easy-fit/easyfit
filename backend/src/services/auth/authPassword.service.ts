@@ -5,6 +5,7 @@ import { AppError } from '../../utils/appError';
 import { hashPassword, comparePasswords } from '../../utils/password';
 import { EmailService } from '../email.service';
 import { AuthTokenService } from './authToken.service';
+import { Types } from 'mongoose';
 
 export class AuthPasswordService {
   static async forgotPassword(email: string) {
@@ -32,14 +33,28 @@ export class AuthPasswordService {
       throw new AppError('Token is invalid or has expired', 400);
     }
 
-    user.passwordHash = await hashPassword(newPassword);
+    const hashedPassword = await hashPassword(newPassword);
+    const refreshToken = AuthTokenService.signRefreshToken(user._id);
+
+    // Use direct MongoDB collection update to bypass schema validation
+    await UserModel.collection.updateOne(
+      { _id: new Types.ObjectId(user._id) },
+      {
+        $set: {
+          passwordHash: hashedPassword,
+          refreshToken,
+        },
+        $unset: {
+          passwordResetToken: '',
+          passwordResetExpires: '',
+        },
+      }
+    );
+
+    user.passwordHash = hashedPassword;
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
-
-    const refreshToken = AuthTokenService.signRefreshToken(user._id);
     user.refreshToken = refreshToken;
-
-    await user.save({ validateBeforeSave: false });
 
     return user;
   }
@@ -50,14 +65,31 @@ export class AuthPasswordService {
       throw new AppError('User not found', 404);
     }
 
+    if (!user.passwordHash) {
+      throw new AppError('Cannot update password for OAuth accounts', 400);
+    }
+
     const isMatch = await comparePasswords(currentPassword, user.passwordHash);
     if (!isMatch) {
       throw new AppError('Current password is incorrect', 401);
     }
 
-    user.passwordHash = await hashPassword(newPassword);
-    user.refreshToken = AuthTokenService.signRefreshToken(user._id);
-    await user.save({ validateBeforeSave: false });
+    const hashedPassword = await hashPassword(newPassword);
+    const refreshToken = AuthTokenService.signRefreshToken(user._id);
+
+    // Use direct MongoDB collection update to bypass schema validation
+    await UserModel.collection.updateOne(
+      { _id: new Types.ObjectId(userId) },
+      {
+        $set: {
+          passwordHash: hashedPassword,
+          refreshToken,
+        },
+      }
+    );
+
+    user.passwordHash = hashedPassword;
+    user.refreshToken = refreshToken;
 
     return user;
   }
@@ -69,9 +101,16 @@ export class AuthPasswordService {
     const resetToken = crypto.randomBytes(32).toString('hex');
     const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
 
-    user.passwordResetToken = hashedToken;
-    user.passwordResetExpires = new Date(Date.now() + 10 * 60 * 1000);
-    await user.save({ validateBeforeSave: false });
+    // Use direct MongoDB collection update to bypass schema validation
+    await UserModel.collection.updateOne(
+      { _id: new Types.ObjectId(user._id) },
+      {
+        $set: {
+          passwordResetToken: hashedToken,
+          passwordResetExpires: new Date(Date.now() + 10 * 60 * 1000),
+        },
+      }
+    );
 
     await EmailService.sendPasswordReset(email, resetToken);
   }

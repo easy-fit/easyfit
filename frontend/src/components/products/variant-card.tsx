@@ -83,7 +83,7 @@ export function VariantCard({
       </div>
 
       {/* Variant Details */}
-      <VariantFormFields control={control} variantIndex={variantIndex} watchedCategory={watchedCategory} />
+      <VariantFormFields control={control} variantIndex={variantIndex} watchedCategory={watchedCategory} watch={watch} />
 
       {/* Images Section */}
       <VariantImageUpload images={variantImages} onImagesChange={handleImagesChange} variantIndex={variantIndex} />

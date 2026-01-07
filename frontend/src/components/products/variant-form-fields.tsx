@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { Control } from 'react-hook-form';
+import type { Control, UseFormWatch } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,19 +9,24 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/comp
 import { getSizeOptions } from './product-form-constants';
 import { ColorSelector } from './edit/ColorSelector';
 import type { ProductFormValues } from './product-form-schema';
+import { calculateDiscountedPrice } from '@/lib/utils/variant-operations';
 
 interface VariantFormFieldsProps {
   control: Control<ProductFormValues>;
   variantIndex: number;
   watchedCategory: string;
+  watch: UseFormWatch<ProductFormValues>;
 }
 
-export function VariantFormFields({ control, variantIndex, watchedCategory }: VariantFormFieldsProps) {
+export function VariantFormFields({ control, variantIndex, watchedCategory, watch }: VariantFormFieldsProps) {
   const [showSizeSuggestions, setShowSizeSuggestions] = useState(false);
   const suggestedSizes = getSizeOptions(watchedCategory);
 
+  const price = watch(`variants.${variantIndex}.price`);
+  const discount = watch(`variants.${variantIndex}.discount`);
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
       <FormField
         control={control}
         name={`variants.${variantIndex}.size`}
@@ -143,6 +148,46 @@ export function VariantFormFields({ control, variantIndex, watchedCategory }: Va
                 }}
               />
             </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name={`variants.${variantIndex}.discount`}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Descuento (%)</FormLabel>
+            <FormControl>
+              <Input
+                type="number"
+                min="0"
+                max="99"
+                placeholder="0"
+                {...field}
+                value={field.value === 0 ? '' : field.value}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '') {
+                    field.onChange(0);
+                  } else {
+                    const numValue = Number.parseInt(value) || 0;
+                    field.onChange(Math.min(Math.max(numValue, 0), 99));
+                  }
+                }}
+                onBlur={(e) => {
+                  if (e.target.value === '') {
+                    field.onChange(0);
+                  }
+                }}
+              />
+            </FormControl>
+            {discount > 0 && price > 0 && (
+              <p className="text-xs text-green-600 mt-1">
+                Precio final: ${calculateDiscountedPrice(price, discount).toLocaleString('es-AR')}
+              </p>
+            )}
             <FormMessage />
           </FormItem>
         )}

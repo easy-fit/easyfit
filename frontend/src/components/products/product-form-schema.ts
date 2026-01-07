@@ -6,6 +6,7 @@ export const variantSchema = z.object({
   color: z.string().min(1, 'Color requerido'),
   stock: z.number().min(0, 'Stock debe ser mayor o igual a 0'),
   price: z.number().min(500, 'Precio debe ser mayor a 0'),
+  discount: z.number().min(0, 'Descuento debe ser 0 o mayor').max(99, 'Descuento máximo es 99%'),
   sku: z.string().min(1, 'SKU requerido'),
   isDefault: z.boolean(),
   isBulk: z.boolean().optional(),

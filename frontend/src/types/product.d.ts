@@ -6,8 +6,26 @@ import { ShippingType } from './order';
 export type ProductStatus = 'published' | 'draft' | 'deleted';
 
 // Hierarchical category system
-export type Gender = 'hombre' | 'mujer' | 'ninos';
+export type Gender = 'hombre' | 'mujer' | 'ninos' | 'unisex';
 export type AgeGroup = '1-6' | '6-14' | '0-18m';
+
+// Unisex subcategories (common to both hombre and mujer)
+export type UnisexCategoryKeys =
+  | 'ver-todo'
+  | 'abrigos'
+  | 'blazers'
+  | 'buzos'
+  | 'camisetas'
+  | 'camisas'
+  | 'deportivo'
+  | 'jeans'
+  | 'mochilas-bolsos'
+  | 'pantalones'
+  | 'sweaters'
+  | 'trajes'
+  | 'zapatillas'
+  | 'zapatos'
+  | 'accesorios';
 
 // Main category types
 export type HombreCategoryKeys =
@@ -113,6 +131,8 @@ export type ProductCategory =
   | `hombre.${HombreCategoryKeys}`
   // Mujer categories
   | `mujer.${MujerCategoryKeys}`
+  // Unisex categories
+  | `unisex.${UnisexCategoryKeys}`
   // Niños categories
   | `ninos.nina.1-6.${NinaSubcategoryKeys}`
   | `ninos.nina.6-14.${NinaSubcategoryKeys}`

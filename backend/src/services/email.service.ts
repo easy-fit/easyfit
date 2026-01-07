@@ -75,6 +75,64 @@ export class EmailService {
     });
   }
 
+  static async sendNewOrderNotification(orderId: string, total: number, storeName: string, customerEmail: string) {
+    const timestamp = new Date().toLocaleString('es-AR', {
+      timeZone: 'America/Argentina/Buenos_Aires',
+      hour12: false,
+    });
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #28a745; color: white; padding: 15px; border-radius: 5px 5px 0 0; }
+            .content { background: #f8f9fa; padding: 20px; border: 1px solid #ddd; }
+            .footer { background: #6c757d; color: white; padding: 10px; text-align: center; border-radius: 0 0 5px 5px; }
+            .field { margin-bottom: 10px; }
+            .label { font-weight: bold; color: #495057; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h2>Nueva Orden Creada</h2>
+            </div>
+            <div class="content">
+              <div class="field">
+                <span class="label">Order ID:</span> ${orderId}
+              </div>
+              <div class="field">
+                <span class="label">Tienda:</span> ${storeName}
+              </div>
+              <div class="field">
+                <span class="label">Total:</span> $${total.toFixed(2)}
+              </div>
+              <div class="field">
+                <span class="label">Cliente:</span> ${customerEmail}
+              </div>
+              <div class="field">
+                <span class="label">Fecha:</span> ${timestamp}
+              </div>
+            </div>
+            <div class="footer">
+              <p>EasyFit - Nueva orden recibida</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    return this.sendEmail({
+      to: 'npussetto@easyfit.com.ar',
+      subject: `Nueva Orden - ${storeName} - $${total.toFixed(2)}`,
+      html,
+    });
+  }
+
   static async sendLoginAlert(email: string, browser: string) {
     const loginTime = new Date().toLocaleString('es-AR', {
       timeZone: 'America/Argentina/Buenos_Aires',

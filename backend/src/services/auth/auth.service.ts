@@ -10,6 +10,7 @@ import { StoreManagerModel } from '../../models/storeManager.model';
 import { StoreModel } from '../../models/store.model';
 import { comparePasswords, hashPassword } from '../../utils/password';
 import { EmailService } from '../email.service';
+import { Types } from 'mongoose';
 
 export class AuthService {
   static async register(data: RegisterDTO) {
@@ -44,8 +45,14 @@ export class AuthService {
     });
 
     const refreshToken = AuthTokenService.signRefreshToken(user._id);
+
+    // Use direct MongoDB collection update to bypass schema validation
+    await UserModel.collection.updateOne(
+      { _id: new Types.ObjectId(user._id) },
+      { $set: { refreshToken } }
+    );
+
     user.refreshToken = refreshToken;
-    await user.save({ validateBeforeSave: false });
 
     AuthVerificationService.sendVerificationCode(user.email).catch((err) => {
       console.error(`Error sending verification code to ${user.email}:`, err);
@@ -57,26 +64,38 @@ export class AuthService {
   static async login({ email, password }: LoginDTO, userAgent?: string) {
     const user = await UserModel.findOne({ email }).select('+passwordHash');
 
-    if (!user || !(await comparePasswords(password, user.passwordHash))) {
+    if (!user || !user.passwordHash || !(await comparePasswords(password, user.passwordHash))) {
       throw new AppError('Invalid email or password', 401);
     }
 
     const refreshToken = AuthTokenService.signRefreshToken(user._id);
+
+    // Use direct MongoDB collection update to bypass schema validation
+    await UserModel.collection.updateOne(
+      { _id: new Types.ObjectId(user._id) },
+      { $set: { refreshToken } }
+    );
+
     user.refreshToken = refreshToken;
-    await user.save({ validateBeforeSave: false });
 
     if (!userAgent) userAgent = 'Desconocido';
-    if (user.role === 'merchant') EmailService.sendLoginAlert(email, userAgent);
+    if (user.role === 'merchant') {
+      EmailService.sendLoginAlert(email, userAgent).catch((err) => {
+        console.error(`Error sending login alert to ${email}:`, err);
+      });
+    }
 
     return user;
   }
 
   static async logout(userId: string) {
-    const user = await UserModel.findById(userId);
-    if (!user) throw new AppError('User not found', 404);
+    // Use direct MongoDB collection update to bypass schema validation
+    const result = await UserModel.collection.updateOne(
+      { _id: new Types.ObjectId(userId) },
+      { $unset: { refreshToken: '' } }
+    );
 
-    user.refreshToken = undefined;
-    await user.save({ validateBeforeSave: false });
+    if (result.matchedCount === 0) throw new AppError('User not found', 404);
   }
 
   static async refreshToken(token: string) {
@@ -124,7 +143,6 @@ export class AuthService {
       name: data.name,
       surname: data.surname,
       email: data.email,
-      password: data.password,
       passwordHash: hashedPassword,
       role: 'manager',
       additionalInfo: data.additionalInfo,

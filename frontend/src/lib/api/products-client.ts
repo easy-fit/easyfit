@@ -31,7 +31,7 @@ export class ProductsClient extends BaseApiClient {
     if (modifiedFilters?.category) {
       const category = modifiedFilters.category;
       // Check if it's a gender-only filter (no dots in the category)
-      if (category === 'hombre' || category === 'mujer' || category === 'ninos') {
+      if (category === 'hombre' || category === 'mujer' || category === 'ninos' || category === 'unisex') {
         // Send as a pattern to match all categories starting with this gender
         // Most backends support regex patterns prefixed with ^
         modifiedFilters.category = `^${category}`;

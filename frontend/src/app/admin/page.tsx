@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import { useUsers } from '@/hooks/api/use-users';
 import { useOrders } from '@/hooks/api/use-orders';
 import { useCheckoutSessions } from '@/hooks/api/use-checkouts';
@@ -19,8 +20,11 @@ import {
   TrendingUp,
   AlertTriangle,
   Clock,
-  CheckCircle
+  CheckCircle,
+  Settings
 } from 'lucide-react';
+import { ManualOrderDialog } from '@/components/admin/manual-order-dialog';
+import { StoreFinancesDashboard } from '@/components/admin/store-finances-dashboard';
 
 // Helper function to get status color and Spanish translation
 const getStatusInfo = (status: string): { color: 'default' | 'secondary' | 'destructive' | 'outline', label: string } => {
@@ -174,6 +178,9 @@ export default function AdminDashboard() {
   const { data: checkoutData, isLoading: checkoutLoading } = useCheckoutSessions();
   const { data: storesData, isLoading: storesLoading } = useStores();
 
+  const [manualOrderDialogOpen, setManualOrderDialogOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
   const users = usersData?.users || [];
   const orders = ordersData?.data || [];
   const checkoutSessions = checkoutData?.data?.checkoutSessions ? [checkoutData.data.checkoutSessions] : [];
@@ -182,6 +189,11 @@ export default function AdminDashboard() {
   const analytics = calculateAnalytics(users, orders, stores);
 
   const isLoading = usersLoading || ordersLoading || checkoutLoading || storesLoading;
+
+  const handleOpenManualControl = (order: Order) => {
+    setSelectedOrder(order);
+    setManualOrderDialogOpen(true);
+  };
 
   if (isLoading) {
     return (
@@ -327,11 +339,12 @@ export default function AdminDashboard() {
 
       {/* Tabs for organized content */}
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">Resumen</TabsTrigger>
           <TabsTrigger value="users">Usuarios</TabsTrigger>
           <TabsTrigger value="orders">Pedidos</TabsTrigger>
           <TabsTrigger value="analytics">Análisis</TabsTrigger>
+          <TabsTrigger value="finances">Finanzas</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -382,9 +395,18 @@ export default function AdminDashboard() {
                             {order.createdAt ? new Date(order.createdAt).toLocaleDateString('es-ES') : 'Fecha no disponible'}
                           </p>
                         </div>
-                        <Badge variant={statusInfo.color}>
-                          {statusInfo.label}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={statusInfo.color}>
+                            {statusInfo.label}
+                          </Badge>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleOpenManualControl(order)}
+                          >
+                            <Settings className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     );
                   })}
@@ -531,9 +553,19 @@ export default function AdminDashboard() {
                             {order.createdAt ? `${new Date(order.createdAt).toLocaleDateString('es-ES')} - ${new Date(order.createdAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}` : 'Fecha no disponible'}
                           </p>
                         </div>
-                        <Badge variant={statusInfo.color}>
-                          {statusInfo.label}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={statusInfo.color}>
+                            {statusInfo.label}
+                          </Badge>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleOpenManualControl(order)}
+                            title="Gestionar manualmente"
+                          >
+                            <Settings className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     );
                   })}
@@ -627,7 +659,22 @@ export default function AdminDashboard() {
             </Card>
           </div>
         </TabsContent>
+
+        <TabsContent value="finances" className="space-y-6">
+          <StoreFinancesDashboard />
+        </TabsContent>
       </Tabs>
+
+      {/* Manual Order Management Dialog */}
+      {selectedOrder && (
+        <ManualOrderDialog
+          open={manualOrderDialogOpen}
+          onOpenChange={setManualOrderDialogOpen}
+          orderId={selectedOrder._id}
+          currentStatus={selectedOrder.status}
+          orderNumber={selectedOrder._id.slice(-8)}
+        />
+      )}
     </div>
   );
 }

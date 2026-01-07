@@ -49,6 +49,7 @@ export interface BulkUploadRowDTO {
   SIZE: string;
   COLOR: string;
   PRICE: number;
+  DISCOUNT?: number;
   STOCK: number;
   SKU: string;
 }

@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { ENV } from '@/config/env';
 import { StructuredData, generateProductSchema, generateBreadcrumbSchema } from '@/components/seo/StructuredData';
+import { ProductPixelTracking } from '@/components/tracking/product-pixel-tracking';
 
 async function fetchProductData(storeSlug: string, productSlug: string) {
   try {
@@ -102,6 +103,7 @@ export default async function ProductLayout({
     <>
       {children}
       <ProductStructuredData storeSlug={storeSlug} productSlug={productSlug} />
+      <ProductPixelTracking storeSlug={storeSlug} productSlug={productSlug} />
     </>
   );
 }

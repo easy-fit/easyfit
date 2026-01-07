@@ -610,6 +610,35 @@ export class StoreService {
         },
         {
           $addFields: {
+            variants: {
+              $map: {
+                input: '$variants',
+                as: 'variant',
+                in: {
+                  $mergeObjects: [
+                    '$$variant',
+                    {
+                      finalPrice: {
+                        $cond: {
+                          if: { $gt: [{ $ifNull: ['$$variant.discount', 0] }, 0] },
+                          then: {
+                            $subtract: [
+                              '$$variant.price',
+                              { $multiply: ['$$variant.price', { $divide: ['$$variant.discount', 100] }] }
+                            ]
+                          },
+                          else: '$$variant.price'
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          $addFields: {
             variantCount: { $size: '$variants' },
             totalStock: {
               $cond: {
@@ -618,8 +647,12 @@ export class StoreService {
                 else: { $sum: '$variants.stock' },
               },
             },
-            minPrice: { $min: '$variants.price' },
-            maxPrice: { $max: '$variants.price' },
+            minPrice: { $min: '$variants.finalPrice' },
+            maxPrice: { $max: '$variants.finalPrice' },
+            minOriginalPrice: { $min: '$variants.price' },
+            maxOriginalPrice: { $max: '$variants.price' },
+            maxDiscount: { $max: '$variants.discount' },
+
             defaultVariant: {
               $arrayElemAt: [
                 {
@@ -696,6 +729,9 @@ export class StoreService {
             stockStatus: 1,
             minPrice: 1,
             maxPrice: 1,
+            minOriginalPrice: 1,
+            maxOriginalPrice: 1,
+            maxDiscount: 1,
             defaultImageKey: 1,
             slug: 1,
           },
@@ -733,6 +769,9 @@ export class StoreService {
         price: {
           min: product.minPrice,
           max: product.maxPrice,
+          originalMin: product.minOriginalPrice,
+          originalMax: product.maxOriginalPrice,
+          discountPercentage: product.maxDiscount || 0,
         },
         status: product.status,
         createdAt: product.createdAt.toISOString().split('T')[0],

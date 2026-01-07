@@ -2,17 +2,18 @@
 
 import type React from 'react';
 
-import { useState, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Eye, EyeOff, Mail, Lock, User, Phone, Store, ChevronDown, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, Store, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useRegisterCustomer } from '@/hooks/api/use-auth';
 import { useEasyFitToast } from '@/hooks/use-toast';
+import { GoogleLogin } from '@react-oauth/google';
+import { useAuthContext } from '@/providers/auth-provider';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -21,41 +22,41 @@ export default function RegisterPage() {
     email: '',
     password: '',
     confirmPassword: '',
-    dni: '',
-    dniType: 'DNI' as 'DNI' | 'CI' | 'LC' | 'LE',
-    birthDate: '',
-    phone: '',
-    areaCode: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [showAdditionalFields, setShowAdditionalFields] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
   const registerMutation = useRegisterCustomer();
   const toast = useEasyFitToast();
+  const { loginWithGoogle } = useAuthContext();
+  const googleButtonRef = useRef<HTMLDivElement>(null);
 
-  // Check if basic fields are completed to show additional fields
-  useEffect(() => {
-    const basicFieldsCompleted =
-      formData.name.trim() !== '' &&
-      formData.surname.trim() !== '' &&
-      formData.email.trim() !== '' &&
-      formData.password.trim() !== '' &&
-      formData.confirmPassword.trim() !== '';
-
-    if (basicFieldsCompleted && !showAdditionalFields) {
-      setShowAdditionalFields(true);
+  const handleCustomGoogleClick = () => {
+    const googleButton = googleButtonRef.current?.querySelector('div[role="button"]') as HTMLElement;
+    if (googleButton) {
+      googleButton.click();
     }
-  }, [
-    formData.name,
-    formData.surname,
-    formData.email,
-    formData.password,
-    formData.confirmPassword,
-    showAdditionalFields,
-  ]);
+  };
+
+  const handleGoogleSuccess = async (credentialResponse: { credential?: string }) => {
+    if (!credentialResponse.credential) {
+      toast.error('Error al registrarse con Google');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await loginWithGoogle(credentialResponse.credential);
+      toast.success('¡Cuenta creada exitosamente!');
+      router.push('/');
+    } catch (error: any) {
+      toast.smartError(error, 'Error al registrarse con Google');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -69,22 +70,6 @@ export default function RegisterPage() {
       return;
     }
 
-    // Validate required additional fields
-    if (!formData.dni.trim()) {
-      toast.validationError('número de documento');
-      return;
-    }
-
-    if (!formData.birthDate) {
-      toast.validationError('fecha de nacimiento');
-      return;
-    }
-
-    if (!formData.areaCode.trim() || !formData.phone.trim()) {
-      toast.validationError('teléfono');
-      return;
-    }
-
     setIsLoading(true);
 
     try {
@@ -93,15 +78,6 @@ export default function RegisterPage() {
         surname: formData.surname,
         email: formData.email,
         password: formData.password,
-        additionalInfo: {
-          dni: formData.dni,
-          dniType: formData.dniType,
-          birthDate: new Date(formData.birthDate),
-          phone: {
-            areaCode: formData.areaCode,
-            number: formData.phone,
-          },
-        },
       };
 
       await registerMutation.mutateAsync(registerData);
@@ -143,6 +119,53 @@ export default function RegisterPage() {
             <CardDescription className="text-gray-600">Completá tus datos para registrarte</CardDescription>
           </CardHeader>
           <CardContent>
+            {/* Custom Google Sign Up Button */}
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full h-12 border-2 border-gray-300 hover:border-[#9EE493] hover:bg-[#F8FFF8] text-[#20313A] font-semibold mb-4 relative"
+              onClick={handleCustomGoogleClick}
+              disabled={isLoading}
+            >
+              <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                />
+              </svg>
+              Registrarse con Google
+            </Button>
+
+            {/* Hidden Google Login */}
+            <div ref={googleButtonRef} className="hidden">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => toast.error('Error al registrarse con Google')}
+              />
+            </div>
+
+            {/* Divider */}
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">o registrate con email</span>
+              </div>
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Name and Surname */}
               <div className="grid grid-cols-2 gap-3">
@@ -262,84 +285,11 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              {/* Additional Fields - Show when basic fields are completed */}
-              {showAdditionalFields && (
-                <div className="pt-4 border-t border-gray-100 space-y-4 animate-in slide-in-from-top-2 duration-300">
-                  <div className="flex items-center gap-2 text-[#20313A]">
-                    <ChevronDown className="h-4 w-4" />
-                    <p className="text-sm font-medium">Datos adicionales</p>
-                  </div>
-
-                  {/* DNI */}
-                  <div className="grid grid-cols-3 gap-2">
-                    <Select value={formData.dniType} onValueChange={(value) => handleInputChange('dniType', value)}>
-                      <SelectTrigger className="border-gray-200">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="DNI">DNI</SelectItem>
-                        <SelectItem value="CI">CI</SelectItem>
-                        <SelectItem value="LC">LC</SelectItem>
-                        <SelectItem value="LE">LE</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <div className="col-span-2">
-                      <Input
-                        placeholder="Número de documento"
-                        value={formData.dni}
-                        onChange={(e) => handleInputChange('dni', e.target.value)}
-                        className="border-gray-200 focus:border-[#9EE493] focus:ring-[#9EE493]"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  {/* Birth Date */}
-                  <div className="space-y-2">
-                    <Label htmlFor="birthDate" className="text-[#20313A] font-medium text-sm">
-                      Fecha de nacimiento
-                    </Label>
-                    <Input
-                      id="birthDate"
-                      type="date"
-                      value={formData.birthDate}
-                      onChange={(e) => handleInputChange('birthDate', e.target.value)}
-                      className="border-gray-200 focus:border-[#9EE493] focus:ring-[#9EE493]"
-                      required
-                    />
-                  </div>
-
-                  {/* Phone */}
-                  <div className="space-y-2">
-                    <Label className="text-[#20313A] font-medium text-sm">Teléfono</Label>
-                    <div className="grid grid-cols-3 gap-2">
-                      <Input
-                        placeholder="Área"
-                        value={formData.areaCode}
-                        onChange={(e) => handleInputChange('areaCode', e.target.value)}
-                        className="border-gray-200 focus:border-[#9EE493] focus:ring-[#9EE493]"
-                        required
-                      />
-                      <div className="col-span-2 relative">
-                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                        <Input
-                          placeholder="Número de teléfono"
-                          value={formData.phone}
-                          onChange={(e) => handleInputChange('phone', e.target.value)}
-                          className="pl-10 border-gray-200 focus:border-[#9EE493] focus:ring-[#9EE493]"
-                          required
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               {/* Submit Button */}
               <Button
                 type="submit"
                 className="w-full bg-[#9EE493] hover:bg-[#8BD480] text-[#20313A] font-semibold py-2.5 mt-6"
-                disabled={isLoading || !showAdditionalFields}
+                disabled={isLoading}
               >
                 {isLoading ? 'Creando cuenta...' : 'Crear Cuenta'}
               </Button>

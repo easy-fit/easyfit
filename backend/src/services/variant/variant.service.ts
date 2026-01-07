@@ -22,7 +22,16 @@ export class VariantService {
     return variants.length > 0;
   }
 
+  private static validateDiscount(discount: number | undefined): void {
+    if (discount !== undefined && discount !== null) {
+      if (typeof discount !== 'number' || discount < 0 || discount > 99) {
+        throw new AppError('Discount must be a number between 0 and 99', 400);
+      }
+    }
+  }
+
   static async createVariant(productId: string, data: CreateVariantDTO) {
+    this.validateDiscount(data.discount);
     const existingVariants = await VariantModel.find({ productId });
     if (existingVariants.length === 0) {
       data.isDefault = true;
@@ -34,6 +43,7 @@ export class VariantService {
     const imageProcessingResult = await VariantImageService.processVariantImages(data.images);
     const processedData = {
       ...data,
+      discount: data.discount || 0,
       images: imageProcessingResult.processedImages,
     };
 
@@ -59,6 +69,7 @@ export class VariantService {
   }
 
   static async updateVariant(variantId: string, data: UpdateVariantDTO) {
+    this.validateDiscount(data.discount);
     const variant = await VariantModel.findById(variantId);
     this.ensureVariantExists(variant);
 
@@ -170,11 +181,17 @@ export class VariantService {
             await VariantStockService.validateStockLevel(update.stock);
           }
 
+          // Validate discount if being updated
+          if (update.discount !== undefined) {
+            this.validateDiscount(update.discount);
+          }
+
           const variant = await VariantModel.findByIdAndUpdate(
             update.variantId,
             {
               ...(update.stock !== undefined && { stock: update.stock }),
               ...(update.price !== undefined && { price: update.price }),
+              ...(update.discount !== undefined && { discount: update.discount }),
               ...(update.sku !== undefined && { sku: update.sku })
             },
             { new: true, runValidators: true }
