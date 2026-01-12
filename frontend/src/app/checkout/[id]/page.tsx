@@ -59,13 +59,15 @@ export default function CheckoutPage() {
   const params = useParams();
   const router = useRouter();
   const toast = useEasyFitToast();
-  const { user, isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const sessionId = params.id as string;
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   // Initialize MercadoPago
   useEffect(() => {
-    initMercadoPago('APP_USR-11d16a6b-6a02-449b-b864-e70da63c7789');
+    initMercadoPago(ENV.MERCADO_PAGO_PUBLIC_KEY, {
+      locale: 'es-AR'
+    });
   }, []);
 
   // API calls
@@ -127,28 +129,42 @@ export default function CheckoutPage() {
 
   const customization = {
     paymentMethods: {
+      maxInstallments: 1,
+      minInstallments: 1,
       creditCard: 'all' as const,
-      prepaidCard: 'all' as const,
       debitCard: 'all' as const,
-      mercadoPago: 'wallet_purchase' as const,
+      mercadoPago: ['wallet_purchase'] as any,
     },
+    visual: {
+      style: {
+        theme: 'default' as const
+      },
+      hidePaymentButton: false,
+    }
   };
 
   const onSubmit = async ({ selectedPaymentMethod, formData }: any) => {
+    if (selectedPaymentMethod === 'wallet_purchase') {
+      return;
+    }
+
     setIsProcessingPayment(true);
 
     return new Promise(async (resolve, reject) => {
       try {
-        // Map MercadoPago formData to your PaymentProcessingRequest structure
+        if (!formData || !formData.token) {
+          throw new Error('Token de pago no disponible');
+        }
+
         const paymentData: PaymentProcessingRequest = {
           token: formData.token,
-          issuer_id: formData.issuer_id || '',
+          issuer_id: formData.issuer_id?.toString() || '',
           payment_method_id: formData.payment_method_id,
           transaction_amount: checkoutSession.total,
           selectedPaymentMethod: selectedPaymentMethod,
           payment_method_option_id: formData.payment_method_option_id || null,
           processing_mode: formData.processing_mode || null,
-          installments: formData.installments || 1,
+          installments: Number(formData.installments) || 1,
           payer: {
             email: user?.email || formData.payer?.email || '',
             identification: {
@@ -157,7 +173,7 @@ export default function CheckoutPage() {
             },
           },
           additional_info: {
-            items: checkoutSession.cartItems.map((item) => ({
+            items: checkoutSession.cartItems.map((item: any) => ({
               id: item.variantId,
               title: item.title,
               quantity: item.quantity,
@@ -184,8 +200,7 @@ export default function CheckoutPage() {
           toast.paymentError(response);
           reject(new Error('Payment failed'));
         }
-      } catch (error) {
-        console.error('Payment processing error:', error);
+      } catch (error: any) {
         toast.paymentError(error);
         reject(error);
       } finally {
