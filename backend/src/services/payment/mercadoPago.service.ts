@@ -207,27 +207,39 @@ export class MercadoPagoService {
   static async createPreference(user: User, data: any, sessionId: string, cost: number) {
     try {
       const preferenceData: CreatePreferenceRequest = {
-        items: data,
+        items: data.map((item: any) => ({
+          id: item.id,
+          title: item.title,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          currency_id: 'ARS',
+        })),
         payer: {
-          name: user.name,
-          surname: user.surname,
+          name: user.name || 'Usuario',
+          surname: user.surname || 'EasyFit',
           email: user.email,
-          phone: {
-            area_code: user.additionalInfo?.phone?.areaCode || '',
-            number: user.additionalInfo?.phone?.number || '',
-          },
-          identification: {
-            type: user.additionalInfo?.dniType || '',
-            number: user.additionalInfo?.dni || '',
-          },
-          address: {
-            zip_code: user.address?.formatted.postalCode || '',
-            street_name: user.address?.formatted.street || '',
-            street_number: user.address?.formatted.streetNumber || '',
-          },
+          phone: user.additionalInfo?.phone?.number
+            ? {
+              area_code: user.additionalInfo.phone.areaCode || '11',
+              number: user.additionalInfo.phone.number,
+            }
+            : undefined,
+          identification: user.additionalInfo?.dni
+            ? {
+              type: user.additionalInfo.dniType || 'DNI',
+              number: user.additionalInfo.dni,
+            }
+            : undefined,
+          address: user.address?.formatted.postalCode
+            ? {
+              zip_code: user.address.formatted.postalCode,
+              street_name: user.address.formatted.street || 'Calle',
+              street_number: user.address.formatted.streetNumber || '1',
+            }
+            : undefined,
         },
         back_urls: {
-          success: 'google.com',
+          success: 'https://google.com',
           failure: `${ENV.FRONTEND_URL}/checkout/failure?session=${sessionId}`,
           pending: `${ENV.FRONTEND_URL}/checkout/pending?session=${sessionId}`,
         },
@@ -237,14 +249,17 @@ export class MercadoPagoService {
           excluded_payment_types: [{ id: 'ticket' }],
           installments: 1,
         },
-        shipments: {
-          mode: 'custom',
-          cost: cost,
-          free_shipping: false,
-        },
+        statement_descriptor: 'EASYFIT',
+        external_reference: sessionId,
         notification_url: MERCADO_PAGO.MP_WEBHOOK_URL,
-        external_reference: `session-${sessionId}`,
       };
+
+      if (cost > 0) {
+        preferenceData.shipments = {
+          cost: cost,
+          mode: 'not_specified',
+        };
+      }
 
       const response = await mercadoPagoClient.preference.create({
         body: preferenceData,

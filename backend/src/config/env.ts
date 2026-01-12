@@ -48,10 +48,23 @@ export const R2 = {
   BUCKET_STORE_TAX: process.env.R2_BUCKET_STORES_TAX!,
 };
 
+// Determinar si estamos en modo producción basado en NODE_ENV
+const isProduction = process.env.NODE_ENV === 'production';
+
 export const MERCADO_PAGO = {
-  MP_ACCESS_TOKEN: process.env.MP_ACCESS_TOKEN || '',
+  // Usar credenciales de producción o prueba según el entorno
+  MP_ACCESS_TOKEN: isProduction 
+    ? process.env.MP_PROD_ACCESS_TOKEN 
+    : process.env.MP_ACCESS_TOKEN,
+  MP_PUBLIC_KEY: isProduction 
+    ? process.env.MP_PROD_PUBLIC_KEY 
+    : process.env.MP_PUBLIC_KEY,
   MP_WEBHOOK_SECRET: process.env.MP_WEBHOOK_SECRET || '',
   MP_WEBHOOK_URL: process.env.MP_WEBHOOK_URL || '',
+  // Info adicional para producción
+  MP_CLIENT_ID: process.env.MP_PROD_CLIENT_ID || '',
+  MP_CLIENT_SECRET: process.env.MP_PROD_CLIENT_SECRET || '',
+  IS_PRODUCTION: isProduction,
 };
 
 export const GOOGLE_OAUTH = {

@@ -9,8 +9,14 @@ export class MercadoPagoClient {
   public paymentRefund: PaymentRefund;
 
   private constructor() {
+    const accessToken = MERCADO_PAGO.MP_ACCESS_TOKEN;
+
+    if (!accessToken) {
+      throw new Error('MP_ACCESS_TOKEN no está configurado en las variables de entorno');
+    }
+
     this.config = new MercadoPagoConfig({
-      accessToken: MERCADO_PAGO.MP_ACCESS_TOKEN,
+      accessToken: accessToken,
       options: {
         timeout: 5000,
       },

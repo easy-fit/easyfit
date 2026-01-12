@@ -501,7 +501,7 @@ function CartPageContent() {
                       <span className="text-xs text-blue-800 font-medium">Compra 100% segura</span>
                     </div>
                     <p className="text-xs text-blue-700 mt-1">
-                      Solo se cobrará por los productos que decidas quedarte después de probarlos.
+                      Solo se cobrará por los productos que decidas quedarte después de probarlos. La cantidad de dias de la devolución del dinero dependerá del banco con el que se haya realizado la compra.
                     </p>
                   </div>
                 </CardContent>
