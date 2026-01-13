@@ -66,10 +66,10 @@ export interface CreatePreferenceRequest {
       type?: string;
       number?: string;
     };
-    address: {
+    address?: {
       zip_code?: string;
       street_name?: string;
-      street_number?: string;
+      street_number?: number;
     };
   };
   back_urls?: {
@@ -83,13 +83,14 @@ export interface CreatePreferenceRequest {
     excluded_payment_types?: Array<{ id: string }>;
     installments?: number;
   };
-  shipments: {
-    cost: number;
-    free_shipping: boolean;
-    mode: string;
+  shipments?: {
+    cost?: number;
+    free_shipping?: boolean;
+    mode?: string;
   };
   notification_url?: string;
   external_reference?: string;
+  statement_descriptor?: string;
 }
 
 export interface PreferenceItem {
@@ -98,6 +99,7 @@ export interface PreferenceItem {
   description?: string;
   quantity: number;
   unit_price: number;
+  currency_id: string;
 }
 
 export interface MercadoPagoWebhookPayload {

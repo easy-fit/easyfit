@@ -1,5 +1,5 @@
 import { mercadoPagoClient } from '../../lib/mercadopago.client';
-import { CreatePaymentRequest, CreatePreferenceRequest, PaymentProcessingRequest } from '../../types/mercadoPago.types';
+import { CreatePaymentRequest, PaymentProcessingRequest } from '../../types/mercadoPago.types';
 import { MERCADO_PAGO, ENV } from '../../config/env';
 import { AppError } from '../../utils/appError';
 import { User } from '../../types/user.types';
@@ -10,9 +10,13 @@ export class MercadoPagoService {
   static async createPayment(paymentData: CreatePaymentRequest) {
     try {
       const idempotencyKey = uuidv4();
+      const issuerId = Number(paymentData.issuer_id);
+      if (isNaN(issuerId)) {
+        throw new Error(`Invalid issuer_id: ${paymentData.issuer_id}`);
+      }
 
       const response = await mercadoPagoClient.payment.create({
-        body: { ...paymentData, issuer_id: Number(paymentData.issuer_id) },
+        body: { ...paymentData, issuer_id: issuerId },
         requestOptions: {
           idempotencyKey,
         },
@@ -51,6 +55,11 @@ export class MercadoPagoService {
     try {
       const capture = paymentData.selectedPaymentMethod === 'credit_card' ? false : true;
 
+      const payerInfo = paymentData.additional_info?.payer;
+      if (payerInfo?.address?.street_number) {
+         payerInfo.address.street_number = String(payerInfo.address.street_number);
+      }
+
       const paymentRequest: CreatePaymentRequest = {
         transaction_amount: paymentData.transaction_amount,
         installments: paymentData.installments,
@@ -74,10 +83,10 @@ export class MercadoPagoService {
           items: cartItems.map((item) => ({
             id: item.variantId,
             title: item.title,
-            quantity: item.quantity,
-            unit_price: item.unit_price,
+            quantity: Number(item.quantity),
+            unit_price: Number(item.unit_price),
           })),
-          payer: paymentData.additional_info?.payer,
+          payer: payerInfo,
         },
       };
 
@@ -206,38 +215,67 @@ export class MercadoPagoService {
 
   static async createPreference(user: User, data: any, sessionId: string, cost: number) {
     try {
-      const preferenceData: CreatePreferenceRequest = {
-        items: data.map((item: any) => ({
-          id: item.id,
-          title: item.title,
-          quantity: item.quantity,
-          unit_price: item.unit_price,
-          currency_id: 'ARS',
-        })),
-        payer: {
-          name: user.name || 'Usuario',
-          surname: user.surname || 'EasyFit',
-          email: user.email,
-          phone: user.additionalInfo?.phone?.number
-            ? {
-              area_code: user.additionalInfo.phone.areaCode || '11',
-              number: user.additionalInfo.phone.number,
-            }
-            : undefined,
-          identification: user.additionalInfo?.dni
-            ? {
-              type: user.additionalInfo.dniType || 'DNI',
-              number: user.additionalInfo.dni,
-            }
-            : undefined,
-          address: user.address?.formatted.postalCode
-            ? {
-              zip_code: user.address.formatted.postalCode,
-              street_name: user.address.formatted.street || 'Calle',
-              street_number: user.address.formatted.streetNumber || '1',
-            }
-            : undefined,
-        },
+      const payerData: any = {
+        email: user.email,
+      };
+
+      if (user.name) payerData.name = user.name;
+      if (user.surname) payerData.surname = user.surname;
+
+      if (user.additionalInfo?.phone?.number) {
+        payerData.phone = {
+          number: user.additionalInfo.phone.number,
+        };
+        if (user.additionalInfo.phone.areaCode) {
+          payerData.phone.area_code = user.additionalInfo.phone.areaCode;
+        }
+      }
+
+      if (user.additionalInfo?.dni) {
+        payerData.identification = {
+          number: user.additionalInfo.dni,
+        };
+        if (user.additionalInfo.dniType) {
+          payerData.identification.type = user.additionalInfo.dniType;
+        }
+      }
+
+      if (user.address?.formatted.postalCode) {
+        payerData.address = {
+          zip_code: user.address.formatted.postalCode,
+        };
+        if (user.address.formatted.street) {
+          payerData.address.street_name = user.address.formatted.street;
+        }
+        if (user.address.formatted.streetNumber) {
+          const streetNum = Number(user.address.formatted.streetNumber);
+          // Si es un número válido, lo usamos. Si es NaN, enviamos undefined (la API lo ignora y no falla).
+          payerData.address.street_number = !isNaN(streetNum) ? streetNum : undefined;
+        }
+      }
+
+      const preferenceData: any = {
+        items: data.map((item: any) => {
+          // Validar y asegurar tipos correctos
+          const unitPrice = Number(item.unit_price);
+          const quantity = Number(item.quantity);
+
+          if (isNaN(unitPrice) || unitPrice <= 0) {
+            throw new Error(`Invalid unit_price for item ${item.id || item.title}: ${item.unit_price}`);
+          }
+          if (isNaN(quantity) || quantity <= 0) {
+            throw new Error(`Invalid quantity for item ${item.id || item.title}: ${item.quantity}`);
+          }
+
+          return {
+            id: item.id || `item-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            title: item.title,
+            quantity: quantity,
+            unit_price: unitPrice,
+            currency_id: 'ARS',
+          };
+        }),
+        payer: payerData,
         back_urls: {
           success: 'https://google.com',
           failure: `${ENV.FRONTEND_URL}/checkout/failure?session=${sessionId}`,
@@ -256,7 +294,7 @@ export class MercadoPagoService {
 
       if (cost > 0) {
         preferenceData.shipments = {
-          cost: cost,
+          cost: Number(cost),
           mode: 'not_specified',
         };
       }
