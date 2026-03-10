@@ -4,6 +4,12 @@ import { StoreModel } from '../../models/store.model';
 import { AppError } from '../../utils/appError';
 import mongoose from 'mongoose';
 
+// Stores to boost in discovery sort (pushed to top)
+const BOOSTED_STORE_IDS = [
+  new mongoose.Types.ObjectId('69304c2bb514dcd959d1ab6a'),
+  new mongoose.Types.ObjectId('693acf8daacd65a2d47d2ec8'),
+];
+
 // Stores to deprioritize in discovery sort (pushed to bottom)
 const DEPRIORITIZED_STORE_IDS = [
   new mongoose.Types.ObjectId('68c7870b26718100fa87696c'), // Area Cocot
@@ -144,6 +150,8 @@ export class ProductFilterService {
               { $multiply: [{ $size: '$availableColors' }, 2] },
               // Price-based variation for mixing
               { $multiply: [{ $mod: ['$minPrice', 7] }, 0.5] },
+              // Boost specific stores (push to top)
+              { $cond: [{ $in: ['$storeId', BOOSTED_STORE_IDS] }, 9999, 0] },
               // Deprioritize specific stores (push to bottom)
               { $cond: [{ $in: ['$storeId', DEPRIORITIZED_STORE_IDS] }, -9999, 0] }
             ]
