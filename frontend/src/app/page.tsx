@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Sparkles, Clock, Shield, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Header } from '@/components/layout/header';
 import { StoreCard } from '@/components/home/store-card';
 import { ProductCard } from '@/components/home/product-card';
@@ -148,55 +148,6 @@ function HomePageContent() {
         </div>
       )}
 
-      {/* Hero Section - Only show for stores view and no search */}
-      {viewMode === 'stores' && !searchQuery && (
-        <main className="container mx-auto px-4 py-6">
-          <div className="mb-8">
-            <div className="text-center mb-6">
-              <h1 className="text-2xl md:text-3xl font-bold text-[#20313A] mb-3 font-helvetica">
-                Descubrí las mejores tiendas de ropa
-              </h1>
-              <p className="text-base text-gray-600 max-w-2xl mx-auto leading-relaxed font-satoshi">
-                Probá antes de comprar. Elegí tu tienda favorita, pedí lo que te gusta y pagá solo por lo que te quedás.
-              </p>
-            </div>
-
-            {/* Features */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex items-center gap-3 p-4 bg-white rounded-lg border border-gray-100">
-                <div className="bg-[#DBF7DC] p-2 rounded-full">
-                  <Sparkles className="h-5 w-5 text-[#20313A]" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-sm text-[#20313A]">Probá en casa</h3>
-                  <p className="text-xs text-gray-500">Sin compromiso de compra</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 p-4 bg-white rounded-lg border border-gray-100">
-                <div className="bg-[#DBF7DC] p-2 rounded-full">
-                  <Clock className="h-5 w-5 text-[#20313A]" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-sm text-[#20313A]">Tiempo flexible</h3>
-                  <p className="text-xs text-gray-500">Decidí con calma</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 p-4 bg-white rounded-lg border border-gray-100">
-                <div className="bg-[#DBF7DC] p-2 rounded-full">
-                  <Shield className="h-5 w-5 text-[#20313A]" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-sm text-[#20313A]">Pago seguro</h3>
-                  <p className="text-xs text-gray-500">Solo por lo que elegís</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </main>
-      )}
-
       {/* Gender Selection Hero - Full screen when in products view with no gender selected */}
       {showGenderSelection && <GenderHeroSelection />}
 
@@ -213,7 +164,7 @@ function HomePageContent() {
           )}
 
           {/* Main Content */}
-          <main className={selectedGender ? "flex-1 px-4 md:px-6 py-6" : "container mx-auto px-4 py-6"}>
+          <main className={selectedGender ? 'flex-1 px-4 md:px-6 py-6' : 'container mx-auto px-4 py-6'}>
             {/* Back Button */}
             <div className="mb-4">
               <Button
@@ -239,9 +190,7 @@ function HomePageContent() {
                     <h2 className="text-xl font-bold text-[#20313A] font-helvetica">
                       Resultados para &quot;{searchQuery}&quot;
                     </h2>
-                    <p className="text-gray-600 text-sm">
-                      {totalProducts || 0} productos encontrados
-                    </p>
+                    <p className="text-gray-600 text-sm">{totalProducts || 0} productos encontrados</p>
                   </div>
                 ) : selectedGender ? (
                   <div>
@@ -250,9 +199,7 @@ function HomePageContent() {
                       {selectedGender === 'mujer' && 'Mujer'}
                       {selectedGender === 'ninos' && 'Niños'}
                     </h2>
-                    <p className="text-gray-600 text-sm mt-1">
-                      {totalProducts || 0} productos disponibles
-                    </p>
+                    <p className="text-gray-600 text-sm mt-1">{totalProducts || 0} productos disponibles</p>
                   </div>
                 ) : null}
 
@@ -266,11 +213,7 @@ function HomePageContent() {
                   >
                     Tiendas
                   </Button>
-                  <Button
-                    variant="default"
-                    size="sm"
-                    className="bg-[#9EE493] text-[#20313A] hover:bg-[#8BD480]"
-                  >
+                  <Button variant="default" size="sm" className="bg-[#9EE493] text-[#20313A] hover:bg-[#8BD480]">
                     Productos
                   </Button>
                 </div>
@@ -305,7 +248,10 @@ function HomePageContent() {
             {hasError && (
               <div className="text-center py-12">
                 <p className="text-gray-600 mb-4">Hubo un error al cargar los productos</p>
-                <Button onClick={() => window.location.reload()} className="bg-[#9EE493] hover:bg-[#8BD480] text-[#20313A]">
+                <Button
+                  onClick={() => window.location.reload()}
+                  className="bg-[#9EE493] hover:bg-[#8BD480] text-[#20313A]"
+                >
                   Reintentar
                 </Button>
               </div>
@@ -363,9 +309,7 @@ function HomePageContent() {
             {!isLoading && !hasError && displayedProducts.length === 0 && (
               <div className="text-center py-12">
                 <p className="text-gray-600 mb-4">
-                  {searchQuery
-                    ? `No se encontraron productos para "${searchQuery}"`
-                    : 'No hay productos disponibles'}
+                  {searchQuery ? `No se encontraron productos para "${searchQuery}"` : 'No hay productos disponibles'}
                 </p>
                 {searchQuery && (
                   <Button
@@ -385,6 +329,20 @@ function HomePageContent() {
       {/* Stores View */}
       {viewMode === 'stores' && (
         <main className="container mx-auto px-4">
+          {/* Tagline - Only when not searching */}
+          {!searchQuery && (
+            <div className="py-6 md:py-8">
+              <div className="text-center mb-3">
+                <h1 className="text-2xl md:text-3xl font-bold text-[#20313A] font-helvetica mb-3">
+                  Descubrí las mejores tiendas de ropa
+                </h1>
+                <p className="text-base text-gray-600 max-w-2xl mx-auto leading-relaxed font-satoshi">
+                  Probá antes de comprar. Elegí tu tienda favorita, pedí lo que te gusta y pagá solo por lo que te quedás.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Header with Title and Toggle */}
           <div className="mb-5">
             <div className="flex items-center justify-between mb-4">
@@ -393,23 +351,17 @@ function HomePageContent() {
                   <h2 className="text-xl font-bold text-[#20313A] font-helvetica">
                     Resultados para &quot;{searchQuery}&quot;
                   </h2>
-                  <p className="text-gray-600 text-sm">
-                    {storesData?.results || 0} tiendas encontradas
-                  </p>
+                  <p className="text-gray-600 text-sm">{storesData?.results || 0} tiendas encontradas</p>
                 </div>
               ) : (
-                <h2 className="text-xl font-bold text-[#20313A] font-helvetica">
+                <h2 className="text-lg font-semibold text-[#20313A] font-helvetica">
                   Tiendas destacadas
                 </h2>
               )}
 
               {/* View Toggle */}
               <div className="flex bg-gray-100 rounded-lg p-1">
-                <Button
-                  variant="default"
-                  size="sm"
-                  className="bg-[#9EE493] text-[#20313A] hover:bg-[#8BD480]"
-                >
+                <Button variant="default" size="sm" className="bg-[#9EE493] text-[#20313A] hover:bg-[#8BD480]">
                   Tiendas
                 </Button>
                 <Button
@@ -422,17 +374,6 @@ function HomePageContent() {
                 </Button>
               </div>
             </div>
-          </div>
-
-          {/* Filters */}
-          <div className="mb-5">
-            <Filters
-              filters={combinedStoreFilters}
-              onFiltersChange={handleStoreFiltersChange}
-              isOpen={isFilterOpen}
-              onToggle={() => setIsFilterOpen(!isFilterOpen)}
-              type="stores"
-            />
           </div>
 
           {/* Loading State */}
@@ -452,7 +393,10 @@ function HomePageContent() {
           {hasError && (
             <div className="text-center py-12">
               <p className="text-gray-600 mb-4">Hubo un error al cargar las tiendas</p>
-              <Button onClick={() => window.location.reload()} className="bg-[#9EE493] hover:bg-[#8BD480] text-[#20313A]">
+              <Button
+                onClick={() => window.location.reload()}
+                className="bg-[#9EE493] hover:bg-[#8BD480] text-[#20313A]"
+              >
                 Reintentar
               </Button>
             </div>
@@ -460,7 +404,7 @@ function HomePageContent() {
 
           {/* Stores Grid */}
           {!isLoading && !hasError && storesData?.data?.stores && storesData.data.stores.length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
               {storesData.data.stores.map((store) => (
                 <StoreCard
                   key={store._id}
@@ -478,9 +422,7 @@ function HomePageContent() {
           {!isLoading && !hasError && storesData?.data?.stores.length === 0 && (
             <div className="text-center py-12">
               <p className="text-gray-600 mb-4">
-                {searchQuery
-                  ? `No se encontraron tiendas para "${searchQuery}"`
-                  : 'No hay tiendas disponibles'}
+                {searchQuery ? `No se encontraron tiendas para "${searchQuery}"` : 'No hay tiendas disponibles'}
               </p>
               {searchQuery && (
                 <Button
@@ -495,17 +437,22 @@ function HomePageContent() {
           )}
         </main>
       )}
+
+      {/* Bottom spacing */}
+      <div className="pb-12" />
     </div>
   );
 }
 
 export default function HomePage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-[#F7F7F7] flex items-center justify-center">
-        <div className="animate-pulse text-gray-400">Cargando...</div>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#F7F7F7] flex items-center justify-center">
+          <div className="animate-pulse text-gray-400">Cargando...</div>
+        </div>
+      }
+    >
       <HomePageContent />
     </Suspense>
   );

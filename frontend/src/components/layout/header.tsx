@@ -3,8 +3,20 @@
 
 import type React from 'react';
 import { buildQueryString } from '@/lib/utils';
-import { useState, useEffect } from 'react';
-import { Search, MapPin, User, ShoppingCart, Menu, X, LogOut, Package, HelpCircle, UserCircle, Store } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import {
+  Search,
+  MapPin,
+  User,
+  ShoppingCart,
+  Menu,
+  X,
+  LogOut,
+  Package,
+  HelpCircle,
+  UserCircle,
+  Store,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -73,15 +85,22 @@ export function Header({ onSearch, searchQuery = '', hideMobileSearch = false }:
     }
   };
 
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  const debouncedSearch = useCallback((value: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      if (onSearch) onSearch(value.trim());
+    }, 350);
+  }, [onSearch]);
+
+  useEffect(() => {
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, []);
+
   const handleSearchInputChange = (value: string) => {
     setLocalSearchQuery(value);
-
-    // Trigger search callback for real-time filtering on home page
-    if (onSearch && value.trim()) {
-      onSearch(value.trim());
-    } else if (onSearch && !value.trim()) {
-      onSearch('');
-    }
+    debouncedSearch(value);
   };
 
   const clearSearch = () => {
@@ -129,7 +148,7 @@ export function Header({ onSearch, searchQuery = '', hideMobileSearch = false }:
     <>
       <header className="border-b border-gray-200 bg-white sticky top-0 z-50">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16 relative">
+          <div className="flex items-center justify-between h-16 md:grid md:grid-cols-3 md:gap-4">
             {/* Left side - Menu + Logo */}
             <div className="flex items-center gap-4">
               <Button
@@ -146,8 +165,8 @@ export function Header({ onSearch, searchQuery = '', hideMobileSearch = false }:
             </div>
 
             {/* Center - Search */}
-            <div className="absolute left-1/2 transform -translate-x-1/2 w-full max-w-lg px-4 hidden md:block">
-              <form onSubmit={handleSearch} className="relative">
+            <div className="hidden md:flex justify-center">
+              <form onSubmit={handleSearch} className="relative w-full max-w-lg">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   placeholder="Busca productos, marcas o categorías"
@@ -172,22 +191,22 @@ export function Header({ onSearch, searchQuery = '', hideMobileSearch = false }:
             </div>
 
             {/* Right side - Location, User, Cart */}
-            <div className="flex items-center gap-2 absolute right-4">
+            <div className="flex items-center gap-1 justify-end">
               {/* Location Button */}
               {isAuthenticated ? (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setIsLocationModalOpen(true)}
-                  className="hidden md:flex items-center gap-1 text-sm hover:bg-[#DBF7DC] max-w-48"
+                  className="hidden md:flex items-center gap-1 text-sm hover:bg-[#DBF7DC]"
                 >
-                  <MapPin className="h-4 w-4" />
-                  <span className="truncate">{currentLocation}</span>
+                  <MapPin className="h-4 w-4 flex-shrink-0" />
+                  <span className="max-w-[12ch] truncate">{currentLocation}</span>
                 </Button>
               ) : (
-                <div className="hidden md:flex items-center gap-1 text-sm text-gray-500 max-w-48 px-3 py-2">
-                  <MapPin className="h-4 w-4" />
-                  <span className="truncate">Bahía Blanca, Centro</span>
+                <div className="hidden md:flex items-center gap-1 text-sm text-gray-500 px-3 py-2">
+                  <MapPin className="h-4 w-4 flex-shrink-0" />
+                  <span className="max-w-[12ch] truncate">{currentLocation}</span>
                 </div>
               )}
 

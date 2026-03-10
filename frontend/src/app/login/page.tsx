@@ -104,7 +104,7 @@ function LoginForm() {
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => router.back()}
+        onClick={() => redirectTo ? router.push('/') : router.back()}
         className="absolute top-4 left-4 hover:bg-[#DBF7DC] text-[#20313A]"
       >
         <ArrowLeft className="h-6 w-6" />

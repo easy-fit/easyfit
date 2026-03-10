@@ -17,7 +17,7 @@ export function AuthGuard({ children, fallback }: AuthGuardProps) {
     if (!isLoading && !isAuthenticated) {
       // Get current path for redirect after login
       const currentPath = window.location.pathname;
-      router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
+      router.replace(`/login?redirect=${encodeURIComponent(currentPath)}`);
     }
   }, [isAuthenticated, isLoading, router]);
 
