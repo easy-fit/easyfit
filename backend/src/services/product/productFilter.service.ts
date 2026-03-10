@@ -2,6 +2,13 @@ import { ProductModel } from '../../models/product.model';
 import { ProductFilterOptions } from '../../types/product.types';
 import { StoreModel } from '../../models/store.model';
 import { AppError } from '../../utils/appError';
+import mongoose from 'mongoose';
+
+// Stores to deprioritize in discovery sort (pushed to bottom)
+const DEPRIORITIZED_STORE_IDS = [
+  new mongoose.Types.ObjectId('68c7870b26718100fa87696c'), // Area Cocot
+  new mongoose.Types.ObjectId('68c786e026718100fa876958'), // Adorate
+];
 
 export class ProductFilterService {
   static async getFilteredProducts(options: ProductFilterOptions = {}) {
@@ -136,7 +143,9 @@ export class ProductFilterService {
               // Boost products with more color variety
               { $multiply: [{ $size: '$availableColors' }, 2] },
               // Price-based variation for mixing
-              { $multiply: [{ $mod: ['$minPrice', 7] }, 0.5] }
+              { $multiply: [{ $mod: ['$minPrice', 7] }, 0.5] },
+              // Deprioritize specific stores (push to bottom)
+              { $cond: [{ $in: ['$storeId', DEPRIORITIZED_STORE_IDS] }, -9999, 0] }
             ]
           }
         }
